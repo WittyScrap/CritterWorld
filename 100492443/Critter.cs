@@ -45,6 +45,10 @@ namespace _100492443.Critters.AI
 			throw new NotImplementedException();
 		}
 
+		/// <summary>
+		/// Control to open a Window Form to configure
+		/// various aspects of the critter.
+		/// </summary>
 		public void LaunchUI()
 		{
 			/// TODO: Actually implement the method!!!
