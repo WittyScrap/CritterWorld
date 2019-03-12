@@ -61,7 +61,7 @@ namespace _100492443.Critters.AI
         /// <summary>
         /// Container for every submitted message awaiting a response.
         /// </summary>
-        private Dictionary<int, Action> AllSubmittedRequests { get; set; } = new Dictionary<int, Action>();
+        private Dictionary<int, Action<object[]>> AllSubmittedRequests { get; set; } = new Dictionary<int, Action<object[]>>();
         
 		/// <summary>
 		/// The logger obejct to show debugging messages.
@@ -82,6 +82,36 @@ namespace _100492443.Critters.AI
         /// The last known position of the critter.
         /// </summary>
         protected Point Position { get; private set; }
+
+        /// <summary>
+        /// The last known speed.
+        /// </summary>
+        protected static Point Speed { get; private set; }
+
+        /// <summary>
+        /// The last known health value.
+        /// </summary>
+        protected float Health { get; private set; }
+
+        /// <summary>
+        /// The last known energy amount.
+        /// </summary>
+        protected float Energy { get; private set; }
+
+        /// <summary>
+        /// The current known arena size.
+        /// </summary>
+        protected static Size ArenaSize { get; private set; }
+
+        /// <summary>
+        /// The last known level duration.
+        /// </summary>
+        protected static int LevelDuration { get; private set; }
+
+        /// <summary>
+        /// The remaining level time.
+        /// </summary>
+        protected static int TimeRemaining { get; private set; }
 
         /// <summary>
         /// Returns all detected objects one by one.
@@ -119,7 +149,7 @@ namespace _100492443.Critters.AI
         /// <param name="message">The message to send.</param>
         /// <param name="callback">The callback method that will be called when a response is received.</param>
         /// <param name="requestID">The ID of the request, it MUST match the one in the message string.</param>
-        protected void SubmitRequest(string message, int requestID, Action callback)
+        protected void SubmitRequest(string message, int requestID, Action<object[]> callback)
         {
             Responder(message);
             AllSubmittedRequests[requestID] = callback;
@@ -146,11 +176,11 @@ namespace _100492443.Critters.AI
         /// requests list.
         /// </summary>
         /// <param name="requestID">The request to be resolved.</param>
-        private void ResolveRequest(int requestID)
+        private void ResolveRequest(int requestID, params object[] args)
         {
             if (AllSubmittedRequests.ContainsKey(requestID))
             {
-                AllSubmittedRequests[requestID]?.Invoke();
+                AllSubmittedRequests[requestID]?.Invoke(args);
                 AllSubmittedRequests.Remove(requestID);
             }
         }
@@ -181,7 +211,7 @@ namespace _100492443.Critters.AI
         /// Crash event detected from the CritterWorld environment.
         /// </summary>
         /// <param name="crashReport">The body of the CRASHED message.</param>
-        private void OnCrashed(string crashReport)
+        protected virtual void OnCrashed(string crashReport)
         {
             string[] components = crashReport.Split(':');
             Debugger.LogError(components[1]);
@@ -253,14 +283,64 @@ namespace _100492443.Critters.AI
                 break;
 
 			case "SEE":
-				MessageSee(body);
+				ParseSee(body);
 				break;
 
 			case "SCAN":
-				MessageScan(body);
+				ParseScan(body);
 				break;
+
+            case "LEVEL_DURATION":
+                OnTimeElapsed(body);
+                break;
+
+            case "LEVEL_TIME_REMAINING":
+                OnTimeRemaining(body);
+                break;
+
+
 			}
 		}
+
+        /// <summary>
+        /// Updates the known level duration from
+        /// a raw string message.
+        /// </summary>
+        /// <param name="message">The message that contains both the request number and the elapsed time.</param>
+        protected virtual void OnTimeElapsed(string message)
+        {
+            string[] messageParts = message.Split(':');
+            
+            if (int.TryParse(messageParts[0], out int requestID) && int.TryParse(messageParts[1], out int elapsedTime))
+            {
+                ResolveRequest(requestID, elapsedTime);
+                LevelDuration = elapsedTime;
+            }
+            else
+            {
+                Debugger.LogWarning("A new LEVEL_DURATION message was received but it could not be parsed: " + message);
+            }
+        }
+
+        /// <summary>
+        /// Updates the level time duration from
+        /// a raw string message.
+        /// </summary>
+        /// <param name="message">The message that contains both the request number and the remaining time.</param>
+        protected virtual void OnTimeRemaining(string message)
+        {
+            string[] messageParts = message.Split(':');
+
+            if (int.TryParse(messageParts[0], out int requestID) && int.TryParse(messageParts[1], out int remainingTime))
+            {
+                ResolveRequest(requestID, remainingTime);
+                LevelDuration = remainingTime;
+            }
+            else
+            {
+                Debugger.LogWarning("A new LEVEL_TIME_REMAINING message was received but it could not be parsed: " + message);
+            }
+        }
 
         /// <summary>
         /// Parses a coordinate block in the format of
@@ -286,7 +366,7 @@ namespace _100492443.Critters.AI
             }
             else
             {
-                Debugger.LogError("Unable to parse X component from received coordinate: " + coordinateMessage);
+                Debugger.LogError("Unable to parse X or Y component from received coordinate: " + coordinateMessage);
             }
 
             return result;
@@ -297,7 +377,7 @@ namespace _100492443.Critters.AI
 		/// and feeds the results to <seealso cref="OnSee(string[], int)"/>.
 		/// </summary>
 		/// <param name="messageBody">The body of the message.</param>
-		private void MessageSee(string messageBody)
+		private void ParseSee(string messageBody)
 		{
 			string[] components = messageBody.Split('\n');
 			string messageData = components[1];
@@ -315,7 +395,7 @@ namespace _100492443.Critters.AI
 		/// and feeds the results to <seealso cref="OnScan(string[])"/>.
 		/// </summary>
 		/// <param name="messageBody"></param>
-		private void MessageScan(string messageBody)
+		private void ParseScan(string messageBody)
 		{
 			string[] components = messageBody.Split('\n');
 
@@ -327,7 +407,7 @@ namespace _100492443.Critters.AI
 			}
 			else
 			{
-				Debugger.LogWarning("A new SCAN message was received, but the requestID cannot be parsed: " + components[0]);
+				Debugger.LogWarning("A new SCAN message was received, but the requestID cannot be parsed: " + messageBody);
 			}
 		}
 
@@ -347,9 +427,12 @@ namespace _100492443.Critters.AI
 		/// </summary>
 		protected virtual void OnScan(string[] sightElements, int requestID)
 		{
+            ResolveRequest(requestID, sightElements);
+
             /// TODO: Actually implement this!!!
             throw new NotImplementedException();
         }
+
 
 		#endregion
 	}
