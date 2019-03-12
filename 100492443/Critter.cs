@@ -15,16 +15,14 @@ namespace _100492443.Critters.AI
 	/// </summary>
 	abstract class Critter : ICritterController
 	{
-		#region ICritterController interface components
-		/// <summary>
-		/// The actual logger object.
-		/// </summary>
 		private Send m_loggerObject;
+        private static int m_nextRequestID = 0;
 
-		/// <summary>
-		/// The name given to the current critter.
-		/// </summary>
-		public string Name { get; protected set; }
+        #region ICritterController interface components
+        /// <summary>
+        /// The name given to the current critter.
+        /// </summary>
+        public string Name { get; protected set; }
 
 		/// <summary>
 		/// The filepath that this critter controller can 
@@ -60,63 +58,135 @@ namespace _100492443.Critters.AI
 		/// </summary>
 		private List<ReadonlyObject> AllDetectedObjects { get; set; } = new List<ReadonlyObject>();
 
-		/// <summary>
-		/// Represents a terrain entity/tile.
-		/// </summary>
-		protected enum TerrainEntity
-		{
-			None = 0,
-			Wall = 1 << 0,
-			Bomb = 1 << 1,
-			Gift = 1 << 2,
-			Food = 1 << 3
-		}
-
+        /// <summary>
+        /// Container for every submitted message awaiting a response.
+        /// </summary>
+        private Dictionary<int, Action> AllSubmittedRequests { get; set; } = new Dictionary<int, Action>();
+        
 		/// <summary>
 		/// The logger obejct to show debugging messages.
 		/// </summary>
 		protected Debug Debugger { get; private set; }
 
 		/// <summary>
-		/// Collection of all terrain entities.
-		/// If the array is of size 0, then the arena size has not been
-		/// returned yet.
-		/// </summary>
-		protected TerrainEntity[,] TerrainEntities { get; private set; }
-
-		/// <summary>
 		/// The location of the escape hatch, if it was detected.
 		/// </summary>
 		protected Point EscapeHatch { get; private set; }
 
-		/// <summary>
-		/// Returns all detected objects one by one.
-		/// </summary>
-		protected IEnumerable<ReadonlyObject> AllObjects {
-			get
+        /// <summary>
+        /// Returns true if the CritterController can send messages.
+        /// </summary>
+        protected bool HasLaunched { get; private set; }
+
+        /// <summary>
+        /// The last known position of the critter.
+        /// </summary>
+        protected Point Position { get; private set; }
+
+        /// <summary>
+        /// Returns all detected objects one by one.
+        /// </summary>
+        protected IEnumerable<ReadonlyObject> GetAllObjects()
+        {
+			foreach (ReadonlyObject readonlyObject in AllDetectedObjects)
 			{
-				foreach (ReadonlyObject readonlyObject in AllDetectedObjects)
-				{
-					yield return readonlyObject;
-				}
+				yield return readonlyObject;
 			}
 		}
 
 		/// <summary>
 		/// Returns all detected critters one by one.
 		/// </summary>
-		protected IEnumerable<DetectedCritter> Critters {
-			get
+		protected IEnumerable<DetectedCritter> GetDetectedCritters()
+        {
+			foreach (ReadonlyObject readonlyObject in AllDetectedObjects.Where(obj => obj is DetectedCritter))
 			{
-				foreach (ReadonlyObject readonlyObject in AllDetectedObjects)
-				{
-					if (readonlyObject is DetectedCritter)
-					{
-						yield return (DetectedCritter)readonlyObject;
-					}
-				}
+				yield return (DetectedCritter)readonlyObject;
 			}
 		}
+
+        /// <summary>
+        /// The next available unique request ID.
+        /// </summary>
+        protected static int NextRequestID
+        {
+            get => m_nextRequestID++;
+        }
+
+        /// <summary>
+        /// Submits a message to the CritterWorld environment.
+        /// </summary>
+        /// <param name="message">The message to send.</param>
+        /// <param name="callback">The callback method that will be called when a response is received.</param>
+        /// <param name="requestID">The ID of the request, it MUST match the one in the message string.</param>
+        protected void SubmitRequest(string message, int requestID, Action callback)
+        {
+            Responder(message);
+            AllSubmittedRequests[requestID] = callback;
+        }
+
+        /// <summary>
+        /// Cancel a previously submitted request.
+        /// </summary>
+        /// <param name="requestID">The ID of the request to cancel.</param>
+        protected void CancelRequest(int requestID)
+        {
+            if (AllSubmittedRequests.ContainsKey(requestID))
+            {
+                AllSubmittedRequests.Remove(requestID);
+            }
+            else
+            {
+                Debugger.LogWarning("Invalid request ID specified when asking to cancel a request: " + requestID);
+            }
+        }
+
+        /// <summary>
+        /// Resolves a submitted request and removes it from the
+        /// requests list.
+        /// </summary>
+        /// <param name="requestID">The request to be resolved.</param>
+        private void ResolveRequest(int requestID)
+        {
+            if (AllSubmittedRequests.ContainsKey(requestID))
+            {
+                AllSubmittedRequests[requestID]?.Invoke();
+                AllSubmittedRequests.Remove(requestID);
+            }
+        }
+
+        /// <summary>
+        /// Sets the critter as running and
+        /// updates the last known point.
+        /// </summary>
+        /// <param name="coordinates">The received coordinates.</param>
+        private void Start(string coordinates)
+        {
+            HasLaunched = true;
+            Position = ParseCoordinate(coordinates);
+        }
+
+        /// <summary>
+        /// Sets the critter as not running and
+        /// updates the last known point.
+        /// </summary>
+        /// <param name="coordinates">The received coordinates.</param>
+        private void Stop(string coordinates)
+        {
+            HasLaunched = false;
+            Position = ParseCoordinate(coordinates);
+        }
+
+        /// <summary>
+        /// Crash event detected from the CritterWorld environment.
+        /// </summary>
+        /// <param name="crashReport">The body of the CRASHED message.</param>
+        private void OnCrashed(string crashReport)
+        {
+            string[] components = crashReport.Split(':');
+            Debugger.LogError(components[1]);
+            Stop(components[0]);
+        }
 
 		/// <summary>
 		/// Handles an incoming message from the CritterWorld
@@ -162,18 +232,65 @@ namespace _100492443.Critters.AI
 		private void MessageDecoder(string header, string body)
 		{
 			switch (header)
-			{
-			case "ERROR":
+            {
+            case "FATALITY":
+            case "STARVED":
+            case "BOMBED":
+            case "REACHED_DESTINATION":
+                Stop(body);
+                break;
+
+            case "ERROR":
 				Debugger.LogError(body);
 				break;
+
+            case "CRASHED":
+                OnCrashed(body);
+                break;
+
+            case "LAUNCH":
+                Start(body);
+                break;
+
 			case "SEE":
 				MessageSee(body);
 				break;
+
 			case "SCAN":
 				MessageScan(body);
 				break;
 			}
 		}
+
+        /// <summary>
+        /// Parses a coordinate block in the format of
+        /// {X=&lt;x-coord&gt;,Y=&lt;y-coord&gt;} into a Point object.
+        /// </summary>
+        /// <param name="coordinateMessage">The coordinate block to parse.</param>
+        /// <returns>A parsed point from the passed coordinates.</returns>
+        protected Point ParseCoordinate(string coordinateMessage)
+        {
+            Point result = new Point();
+            
+            string removedBrackets = coordinateMessage.Replace('{', '\0').Replace('}', '\0');
+            string[] blocks = removedBrackets.Split(',');
+            string[] xBlock = blocks[0].Split('=');
+            string[] yBlock = blocks[1].Split('=');
+            string xCoordinate = xBlock[1];
+            string yCoordinate = yBlock[1];
+
+            if (int.TryParse(xCoordinate, out int parsedX) && int.TryParse(yCoordinate, out int parsedY))
+            {
+                result.X = parsedX;
+                result.Y = parsedY;
+            }
+            else
+            {
+                Debugger.LogError("Unable to parse X component from received coordinate: " + coordinateMessage);
+            }
+
+            return result;
+        }
 
 		/// <summary>
 		/// Decodes the SEE request into different sections
@@ -220,7 +337,8 @@ namespace _100492443.Critters.AI
 		/// </summary>
 		protected virtual void OnSee(string[] sightElements)
 		{
-
+            /// TODO: Actually implement this!!!
+            throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -229,8 +347,9 @@ namespace _100492443.Critters.AI
 		/// </summary>
 		protected virtual void OnScan(string[] sightElements, int requestID)
 		{
-
-		}
+            /// TODO: Actually implement this!!!
+            throw new NotImplementedException();
+        }
 
 		#endregion
 	}
