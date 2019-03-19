@@ -48,6 +48,8 @@
     <Compile Include="DetectedCritter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReadonlyObject.cs" />
+    <Compile Include="Request.cs" />
+    <Compile Include="TimeElapsedRequest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CritterController\CritterController.csproj">

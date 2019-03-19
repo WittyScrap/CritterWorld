@@ -56,12 +56,12 @@ namespace _100492443.Critters.AI
 		/// <summary>
 		/// List containing every object detected in the scene.
 		/// </summary>
-		private List<ReadonlyObject> AllDetectedObjects { get; set; } = new List<ReadonlyObject>();
+		private HashSet<ReadonlyObject> AllDetectedObjects { get; set; } = new HashSet<ReadonlyObject>();
 
         /// <summary>
         /// Container for every submitted message awaiting a response.
         /// </summary>
-        private Dictionary<int, Action<object[]>> AllSubmittedRequests { get; set; } = new Dictionary<int, Action<object[]>>();
+        private Dictionary<int, Request> AllSubmittedRequests { get; set; } = new Dictionary<int, Request>();
         
 		/// <summary>
 		/// The logger obejct to show debugging messages.
@@ -102,6 +102,12 @@ namespace _100492443.Critters.AI
         /// The current known arena size.
         /// </summary>
         protected static Size ArenaSize { get; private set; }
+
+        /// <summary>
+        /// Navigational map data. Ensure the map's resolution
+        /// is large enough to avoid losing too much detail.
+        /// </summary>
+        protected static bool[,] NavmapData { get; private set; }
 
         /// <summary>
         /// The last known level duration.
@@ -149,10 +155,10 @@ namespace _100492443.Critters.AI
         /// <param name="message">The message to send.</param>
         /// <param name="callback">The callback method that will be called when a response is received.</param>
         /// <param name="requestID">The ID of the request, it MUST match the one in the message string.</param>
-        protected void SubmitRequest(string message, int requestID, Action<object[]> callback)
+        protected void SubmitRequest(string message, int requestID, Request request)
         {
             Responder(message);
-            AllSubmittedRequests[requestID] = callback;
+            AllSubmittedRequests[requestID] = request;
         }
 
         /// <summary>
@@ -176,11 +182,11 @@ namespace _100492443.Critters.AI
         /// requests list.
         /// </summary>
         /// <param name="requestID">The request to be resolved.</param>
-        private void ResolveRequest(int requestID, params object[] args)
+        private void ResolveRequest(int requestID, EventArgs args)
         {
             if (AllSubmittedRequests.ContainsKey(requestID))
             {
-                AllSubmittedRequests[requestID]?.Invoke(args);
+                AllSubmittedRequests[requestID].OnRequestResolved(args);
                 AllSubmittedRequests.Remove(requestID);
             }
         }
@@ -297,8 +303,6 @@ namespace _100492443.Critters.AI
             case "LEVEL_TIME_REMAINING":
                 OnTimeRemaining(body);
                 break;
-
-
 			}
 		}
 
@@ -313,7 +317,7 @@ namespace _100492443.Critters.AI
             
             if (int.TryParse(messageParts[0], out int requestID) && int.TryParse(messageParts[1], out int elapsedTime))
             {
-                ResolveRequest(requestID, elapsedTime);
+                ResolveRequest(requestID, new TimeElapsedRequest.Args() { ElapsedTime = elapsedTime });
                 LevelDuration = elapsedTime;
             }
             else
