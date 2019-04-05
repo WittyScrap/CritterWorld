@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System;
 
 /// <summary>
 /// Project bounds namespace.
@@ -9,7 +10,7 @@ namespace _100492443.Critters.AI
 	/// Represents a critter detected by a
 	/// SCAN or SEE operation.
 	/// </summary>
-	class DetectedCritter : ReadonlyObject
+	class DetectedCritter : ReadonlyObject, IEquatable<DetectedCritter>
 	{
 		/// <summary>
 		/// The name of the critter.
@@ -32,6 +33,14 @@ namespace _100492443.Critters.AI
 		{
 			Name = critterName;
 			Health = critterHealth;
+		}
+
+		/// <summary>
+		/// Equals override.
+		/// </summary>
+		public bool Equals(DetectedCritter compareTo)
+		{
+			return base.Equals(compareTo) && compareTo.Name.Equals(Name);
 		}
 	}
 }

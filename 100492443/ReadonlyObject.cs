@@ -1,4 +1,6 @@
 ﻿using System.Drawing;
+using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// Project bounds namespace.
@@ -10,8 +12,38 @@ namespace _100492443.Critters.AI
 	/// The object cannot be written to, it is
 	/// simply the result of SCAN and SEE operations.
 	/// </summary>
-	class ReadonlyObject
+	class ReadonlyObject : IEquatable<ReadonlyObject>
 	{
+		/// <summary>
+		/// Creates a <see cref="ReadonlyObject"/> from a real object
+		/// name.
+		/// </summary>
+		/// <param name="realObjectName">The actual name of the object, for example Critter.</param>
+		/// <returns>An instance of a <see cref="ReadonlyObject"/> generated from the actual name.</returns>
+		public static ReadonlyObject Create(string realObjectName, Point coordinates)
+		{
+			Type objectType = ObjectNameAttribute.GetClass(realObjectName);
+
+			if (objectType != null && objectType.IsSubclassOf(typeof(ReadonlyObject)))
+			{
+				return (ReadonlyObject)Activator.CreateInstance(objectType, coordinates);
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Parses a string of object data into
+		/// the class fields.
+		/// </summary>
+		/// <param name="data">The object data (excluding position).</param>
+		public virtual void ParseObjectData(ICollection<string> data)
+		{
+
+		}
+
 		/// <summary>
 		/// The position of this object.
 		/// </summary>
@@ -25,6 +57,14 @@ namespace _100492443.Critters.AI
 		public ReadonlyObject(Point position)
 		{
 			Position = position;
+		}
+
+		/// <summary>
+		/// Equals override.
+		/// </summary>
+		public bool Equals(ReadonlyObject compareTo)
+		{
+			return GetType().Equals(compareTo.GetType());
 		}
 	}
 }

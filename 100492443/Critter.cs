@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using CritterController;
 
 /// <summary>
@@ -58,18 +59,15 @@ namespace _100492443.Critters.AI
 		/// <summary>
 		/// List containing every object detected in the scene.
 		/// </summary>
-		private List<ReadonlyObject> AllDetectedObjects { get; set; } = new List<ReadonlyObject>();
+		private HashSet<ReadonlyObject> AllDetectedObjects { get; set; } = new HashSet<ReadonlyObject>();
 
 		/// <summary>
 		/// Represents a terrain entity/tile.
 		/// </summary>
 		protected enum TerrainEntity
 		{
-			None = 0,
-			Wall = 1 << 0,
-			Bomb = 1 << 1,
-			Gift = 1 << 2,
-			Food = 1 << 3
+			NonTraversable,
+			Traversable
 		}
 
 		/// <summary>
@@ -177,7 +175,7 @@ namespace _100492443.Critters.AI
 
 		/// <summary>
 		/// Decodes the SEE request into different sections
-		/// and feeds the results to <seealso cref="OnSee(string[], int)"/>.
+		/// and feeds the results to <seealso cref="OnSee(ICollection{string}, int)"/>.
 		/// </summary>
 		/// <param name="messageBody">The body of the message.</param>
 		private void MessageSee(string messageBody)
@@ -195,7 +193,7 @@ namespace _100492443.Critters.AI
 
 		/// <summary>
 		/// Decodes the SCAN request into different sections
-		/// and feeds the results to <seealso cref="OnScan(string[])"/>.
+		/// and feeds the results to <seealso cref="OnScan(ICollection{string})"/>.
 		/// </summary>
 		/// <param name="messageBody"></param>
 		private void MessageScan(string messageBody)
@@ -210,15 +208,109 @@ namespace _100492443.Critters.AI
 			}
 			else
 			{
-				Debugger.LogWarning("A new SCAN message was received, but the requestID cannot be parsed: " + components[0]);
+				Debugger.LogWarning("A new SCAN message was received, but the requestID could be parsed: " + components[0]);
 			}
+		}
+
+		/// <summary>
+		/// Converts a semi parsed detected object into a
+		/// <see cref="ReadonlyObject"/> instance.
+		/// </summary>
+		/// <param name="objectName">The name of the object.</param>
+		/// <param name="coordinate">The location of the object.</param>
+		/// <param name="data">Generic data about the object.</param>
+		/// <returns>An instance of <see cref="ReadonlyObject"/> to match the object specification.</returns>
+		private ReadonlyObject GetDetectedObject(string objectName, Point coordinate, params string[] data)
+		{
+			ReadonlyObject generatedObject = ReadonlyObject.Create(objectName, coordinate);
+
+			if (generatedObject != null)
+			{
+				generatedObject.ParseObjectData(data);
+				return generatedObject;
+			}
+			else
+			{
+				Debugger.LogError("There was an error parsing a detected object with name: " + objectName);
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Parses a formatted coordinate string into
+		/// a <see cref="Point"/>.
+		/// </summary>
+		/// <param name="coordinateFormat">The formatted point string.</param>
+		/// <returns>A point parsed from the string, <seealso cref="Point.Empty"/> if the parsing is unsuccessful.</returns>
+		/// <example>
+		/// <code>
+		/// Point parsedCoordinate = ParseCoordinate("{X=24,Y=765}");
+		/// </code>
+		/// </example>
+		protected Point ParseCoordinate(string coordinateFormat)
+		{
+			coordinateFormat = coordinateFormat.Replace('{', ' ').Replace('}', ' ');
+			string[] components = coordinateFormat.Split(',');
+
+			if (components.Length != 2)
+			{
+				Debugger.LogError("Coordinate string was formatted incorrectly, number of components detected was not exactly 2: " + coordinateFormat);
+				return Point.Empty;
+			}
+
+			string xFormat = components[0].Split('=')[1];
+			string yFormat = components[1].Split('=')[1];
+			
+			if (int.TryParse(xFormat, out int x) && int.TryParse(yFormat, out int y))
+			{
+				return new Point(x, y);
+			}
+			else
+			{
+				Debugger.LogError("Coordinate string was formatted incorrectly and could not be parsed: " + coordinateFormat);
+				return Point.Empty;
+			}
+		}
+
+		/// <summary>
+		/// Parses a detected element into an instace of a
+		/// <see cref="ReadonlyObject"/> and saves it into the
+		/// list of known elements.
+		/// </summary>
+		/// <param name="element">The element to parse.</param>
+		private void ParseDetectedObject(string element)
+		{
+			string[] elementProperties = element.Split(':');
+			if (elementProperties.Length <= 1)
+			{
+				Debugger.LogError("Invalid element string, coordinate block could not be detected: " + element);
+				return;
+			}
+			string objectName = elementProperties[0];
+			Point coordinate = ParseCoordinate(elementProperties[1]);
+			string[] objectData = elementProperties.Skip(2).ToArray();
+			ReadonlyObject detectedObject = GetDetectedObject(objectName, coordinate, objectData);
+			if (detectedObject != null)
+			{
+				AllDetectedObjects.Remove(detectedObject);
+				AllDetectedObjects.Add(detectedObject);
+			}
+		}
+
+		/// <summary>
+		/// Updates map surroundings after a SCAN or SEE call.
+		/// </summary>
+		/// <param name="scannedElements">List of scanned elements.</param>
+		private void UpdateSurroundings(ICollection<string> scannedElements)
+		{
+			Parallel.ForEach(scannedElements, ParseDetectedObject);
 		}
 
 		/// <summary>
 		/// Short-range scan that is called automatically
 		/// by the CritterWorld environmnent continuously.
 		/// </summary>
-		protected virtual void OnSee(string[] sightElements)
+		protected virtual void OnSee(ICollection<string> sightElements)
 		{
 
 		}
@@ -227,7 +319,7 @@ namespace _100492443.Critters.AI
 		/// Long-range scan that is called as a response
 		/// from a SCAN request that as to be sent in advance.
 		/// </summary>
-		protected virtual void OnScan(string[] sightElements, int requestID)
+		protected virtual void OnScan(ICollection<string> sightElements, int requestID)
 		{
 
 		}
