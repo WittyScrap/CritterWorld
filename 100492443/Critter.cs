@@ -11,7 +11,7 @@ using CritterController;
 namespace _100492443.Critters.AI
 {
 	/// <summary>
-	/// Base class that implements basic functionality for
+	/// Implements basic functionality for
 	/// all types of Critter AI.
 	/// </summary>
 	abstract class Critter : ICritterController
@@ -62,25 +62,9 @@ namespace _100492443.Critters.AI
 		private HashSet<ReadonlyObject> AllDetectedObjects { get; set; } = new HashSet<ReadonlyObject>();
 
 		/// <summary>
-		/// Represents a terrain entity/tile.
-		/// </summary>
-		protected enum TerrainEntity
-		{
-			NonTraversable,
-			Traversable
-		}
-
-		/// <summary>
 		/// The logger obejct to show debugging messages.
 		/// </summary>
 		protected Debug Debugger { get; private set; }
-
-		/// <summary>
-		/// Collection of all terrain entities.
-		/// If the array is of size 0, then the arena size has not been
-		/// returned yet.
-		/// </summary>
-		protected TerrainEntity[,] TerrainEntities { get; private set; }
 
 		/// <summary>
 		/// The location of the escape hatch, if it was detected.

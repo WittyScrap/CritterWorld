@@ -10,6 +10,7 @@ namespace _100492443.Critters.AI
 	/// Represents a critter detected by a
 	/// SCAN or SEE operation.
 	/// </summary>
+	[ObjectName("Critter", typeof(DetectedCritter))]
 	class DetectedCritter : ReadonlyObject, IEquatable<DetectedCritter>
 	{
 		/// <summary>

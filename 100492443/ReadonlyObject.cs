@@ -22,7 +22,7 @@ namespace _100492443.Critters.AI
 		/// <returns>An instance of a <see cref="ReadonlyObject"/> generated from the actual name.</returns>
 		public static ReadonlyObject Create(string realObjectName, Point coordinates)
 		{
-			Type objectType = ObjectNameAttribute.GetClass(realObjectName);
+			Type objectType = ObjectParser.FromName(realObjectName);
 
 			if (objectType != null && objectType.IsSubclassOf(typeof(ReadonlyObject)))
 			{
