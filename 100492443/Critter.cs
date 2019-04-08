@@ -57,11 +57,6 @@ namespace _100492443.Critters.AI
 		#endregion
 
 		/// <summary>
-		/// List containing every object detected in the scene.
-		/// </summary>
-		private HashSet<ReadonlyObject> AllDetectedObjects { get; set; } = new HashSet<ReadonlyObject>();
-
-		/// <summary>
 		/// The logger obejct to show debugging messages.
 		/// </summary>
 		protected Debug Debugger { get; private set; }
@@ -70,35 +65,6 @@ namespace _100492443.Critters.AI
 		/// The location of the escape hatch, if it was detected.
 		/// </summary>
 		protected Point EscapeHatch { get; private set; }
-
-		/// <summary>
-		/// Returns all detected objects one by one.
-		/// </summary>
-		protected IEnumerable<ReadonlyObject> AllObjects {
-			get
-			{
-				foreach (ReadonlyObject readonlyObject in AllDetectedObjects)
-				{
-					yield return readonlyObject;
-				}
-			}
-		}
-
-		/// <summary>
-		/// Returns all detected critters one by one.
-		/// </summary>
-		protected IEnumerable<DetectedCritter> Critters {
-			get
-			{
-				foreach (ReadonlyObject readonlyObject in AllDetectedObjects)
-				{
-					if (readonlyObject is DetectedCritter)
-					{
-						yield return (DetectedCritter)readonlyObject;
-					}
-				}
-			}
-		}
 
 		/// <summary>
 		/// Handles an incoming message from the CritterWorld
@@ -197,30 +163,6 @@ namespace _100492443.Critters.AI
 		}
 
 		/// <summary>
-		/// Converts a semi parsed detected object into a
-		/// <see cref="ReadonlyObject"/> instance.
-		/// </summary>
-		/// <param name="objectName">The name of the object.</param>
-		/// <param name="coordinate">The location of the object.</param>
-		/// <param name="data">Generic data about the object.</param>
-		/// <returns>An instance of <see cref="ReadonlyObject"/> to match the object specification.</returns>
-		private ReadonlyObject GetDetectedObject(string objectName, Point coordinate, params string[] data)
-		{
-			ReadonlyObject generatedObject = ReadonlyObject.Create(objectName, coordinate);
-
-			if (generatedObject != null)
-			{
-				generatedObject.ParseObjectData(data);
-				return generatedObject;
-			}
-			else
-			{
-				Debugger.LogError("There was an error parsing a detected object with name: " + objectName);
-				return null;
-			}
-		}
-
-		/// <summary>
 		/// Parses a formatted coordinate string into
 		/// a <see cref="Point"/>.
 		/// </summary>
@@ -273,12 +215,6 @@ namespace _100492443.Critters.AI
 			string objectName = elementProperties[0];
 			Point coordinate = ParseCoordinate(elementProperties[1]);
 			string[] objectData = elementProperties.Skip(2).ToArray();
-			ReadonlyObject detectedObject = GetDetectedObject(objectName, coordinate, objectData);
-			if (detectedObject != null)
-			{
-				AllDetectedObjects.Remove(detectedObject);
-				AllDetectedObjects.Add(detectedObject);
-			}
 		}
 
 		/// <summary>
