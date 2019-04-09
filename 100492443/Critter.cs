@@ -72,6 +72,31 @@ namespace UOD100492443.Critters.AI
 		protected Vector Velocity { get; private set; } = Vector.Zero;
 
 		/// <summary>
+		/// The current location of the critter.
+		/// </summary>
+		protected Point Location { get; private set; } = Point.Empty;
+
+		/// <summary>
+		/// The amount of time elapsed since the start of the level.
+		/// </summary>
+		protected float ElapsedTime { get; private set; } = 0f;
+
+		/// <summary>
+		/// The amount of time left before the end of the level.
+		/// </summary>
+		protected float RemainingTime { get; private set; } = 0f;
+
+		/// <summary>
+		/// The current health of the critter.
+		/// </summary>
+		protected float Health { get; private set; } = 1f;
+
+		/// <summary>
+		/// The current energy of the critter.
+		/// </summary>
+		protected float Energy { get; private set; } = 1f;
+
+		/// <summary>
 		/// If this is false, no messages can be sent to the CritterWorld
 		/// enviroment.
 		/// </summary>
@@ -167,6 +192,13 @@ namespace UOD100492443.Critters.AI
 			if (Map == null)
 			{
 				Map = new Arena(arenaSize.Width, arenaSize.Height, pixelSize);
+
+				Map.Desirability[Arena.TileContents.Bomb]		 = -1.0f;
+				Map.Desirability[Arena.TileContents.Empty]		 = 0.0f;
+				Map.Desirability[Arena.TileContents.EscapeHatch] = 0.5f;
+				Map.Desirability[Arena.TileContents.Food]		 = 1.0f;
+				Map.Desirability[Arena.TileContents.Gift]		 = 1.0f;
+				Map.Desirability[Arena.TileContents.Terrain]	 = -1.0f;
 			}
 		}
 
@@ -279,11 +311,61 @@ namespace UOD100492443.Critters.AI
 		}
 
 		/// <summary>
+		/// Updates the location of this critter to
+		/// the result of a GET_LOCATION request.
+		/// </summary>
+		/// <param name="message">The message containig the results of the GET_LOCATION request.</param>
+		private void UpdateTimeRemaining(string message)
+		{
+
+		}
+
+		/// <summary>
+		/// Updates the elapsed time since the beginning of the level to
+		/// the result of a GET_LEVEL_DURATION request.
+		/// </summary>
+		/// <param name="message">The message containig the results of the GET_LEVEL_DURATION request.</param>
+		private void UpdateTimeElapsed(string message)
+		{
+
+		}
+
+		/// <summary>
+		/// Updates the remainig time before the end of the level to
+		/// the result of a GET_LEVEL_TIME_REMAINING request.
+		/// </summary>
+		/// <param name="message">The message containig the results of the GET_LEVEL_TIME_REMAINING request.</param>
+		private void UpdateHealth(string message)
+		{
+
+		}
+
+		/// <summary>
+		/// Updates the amount of energy left for this critter to
+		/// the result of a GET_ENERGY request.
+		/// </summary>
+		/// <param name="message">The message containig the results of the GET_ENERGY request.</param>
+		private void UpdateEnergy(string message)
+		{
+
+		}
+
+		/// <summary>
 		/// Updates the velocity of this critter to
 		/// the result of a GET_VELOCITY request.
 		/// </summary>
 		/// <param name="message">The message containig the results of the GET_VELOCITY request.</param>
 		private void UpdateVelocity(string message)
+		{
+
+		}
+
+		/// <summary>
+		/// Updates the location of this critter to
+		/// the result of a GET_LOCATION request.
+		/// </summary>
+		/// <param name="message">The message containig the results of the GET_LOCATION request.</param>
+		private void UpdateLocation(string message)
 		{
 
 		}
@@ -307,7 +389,7 @@ namespace UOD100492443.Critters.AI
 		protected void Scan()
 		{
 			var scanRequester = CreateRequest<ScanRequest>();
-			scanRequester.OnResolved += (sender, message) => { MessageScan(message); };
+			scanRequester.OnResolved += (sender, message) => MessageScan(message);
 			scanRequester.Submit(Responder);
 		}
 
@@ -317,10 +399,59 @@ namespace UOD100492443.Critters.AI
 		protected void CheckSpeed()
 		{
 			var speedRequester = CreateRequest<SpeedRequest>();
-			speedRequester.OnResolved += (sender, message) => { UpdateVelocity(message); };
+			speedRequester.OnResolved += (sender, message) => UpdateVelocity(message);
+			speedRequester.Submit(Responder);
 		}
 
+		/// <summary>
+		/// Updates the stored location to the current critter's position.
+		/// </summary>
+		protected void CheckLocation()
+		{
+			var locationRequester = CreateRequest<LocationRequest>();
+			locationRequester.OnResolved += (sender, message) => UpdateLocation(message);
+			locationRequester.Submit(Responder);
+		}
 
+		/// <summary>
+		/// Updates the stored elapsed time to the current level's timer.
+		/// </summary>
+		protected void CheckElapsedTime()
+		{
+			var elapsedTimeRequester = CreateRequest<LevelDurationRequest>();
+			elapsedTimeRequester.OnResolved += (sender, message) => UpdateTimeElapsed(message);
+			elapsedTimeRequester.Submit(Responder);
+		}
+
+		/// <summary>
+		/// Updates the remaining time to the current level's timer.
+		/// </summary>
+		protected void CheckRemainingTime()
+		{
+			var remainingTimeRequester = CreateRequest<TimeRemainingRequest>();
+			remainingTimeRequester.OnResolved += (sender, message) => UpdateTimeRemaining(message);
+			remainingTimeRequester.Submit(Responder);
+		}
+
+		/// <summary>
+		/// Updates the current local health to the critter's health value.
+		/// </summary>
+		protected void CheckHealth()
+		{
+			var healthChecker = CreateRequest<HealthRequest>();
+			healthChecker.OnResolved += (sender, message) => UpdateHealth(message);
+			healthChecker.Submit(Responder);
+		}
+
+		/// <summary>
+		/// Updates the current local energy to the critter's energy value.
+		/// </summary>
+		protected void CheckEnergy()
+		{
+			var energyChecker = CreateRequest<EnergyRequest>();
+			energyChecker.OnResolved += (sender, message) => UpdateEnergy(message);
+			energyChecker.Submit(Responder);
+		}
 
 		#endregion
 	}
