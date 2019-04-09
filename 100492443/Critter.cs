@@ -311,13 +311,118 @@ namespace UOD100492443.Critters.AI
 		}
 
 		/// <summary>
+		/// Parses a generic message into any
+		/// type of parsable output.
+		/// </summary>
+		/// <typeparam name="TParam1">Type of the first parameter.</typeparam>
+		/// <typeparam name="TParam2">Type of the second parameter.</typeparam>
+		/// <typeparam name="TParam3">Type of the third parameter.</typeparam>
+		/// <param name="message">The source message.</param>
+		/// <param name="param1">The first output.</param>
+		/// <param name="param2">The second output.</param>
+		/// <param name="param3">The third output.</param>
+		private bool ParseMessage<TParam1, TParam2, TParam3>(string message, out TParam1 param1, out TParam2 param2, out TParam3 param3)
+		{
+			if (ParseMessage(message, out param1, out param2))
+			{
+				try
+				{
+					string[] components = message.Split(':');
+					param3 = (TParam3)Convert.ChangeType(components[2], typeof(TParam3));
+
+					return true;
+				}
+				catch (InvalidCastException)
+				{
+					Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
+					param3 = default(TParam3);
+
+					return false;
+				}
+			}
+			else
+			{
+				param1 = default(TParam1);
+				param2 = default(TParam2);
+				param3 = default(TParam3);
+
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Generic parsing system to convert a message body into
+		/// two output types.
+		/// </summary>
+		/// <typeparam name="TParam1">The first output type.</typeparam>
+		/// <typeparam name="TParam2">The second output type.</typeparam>
+		/// <param name="message">The message to parse.</param>
+		/// <param name="param1">The first output object.</param>
+		/// <param name="param2">The second output object.</param>
+		private bool ParseMessage<TParam1, TParam2>(string message, out TParam1 param1, out TParam2 param2)
+		{
+			if (ParseMessage(message, out param1))
+			{
+				try
+				{
+					string[] components = message.Split(':');
+					param2 = (TParam2)Convert.ChangeType(components[1], typeof(TParam2));
+
+					return true;
+				}
+				catch (InvalidCastException)
+				{
+					Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
+					param2 = default(TParam2);
+
+					return false;
+				}
+			}
+			else
+			{
+				param1 = default(TParam1);
+				param2 = default(TParam2);
+
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Generic parsing system to convert a message body into
+		/// one output type.
+		/// </summary>
+		/// <typeparam name="TParam">The output type.</typeparam>
+		/// <param name="message">The message body.</param>
+		/// <param name="param">The output object.</param>
+		private bool ParseMessage<TParam>(string message, out TParam param)
+		{
+			try
+			{
+				string[] components = message.Split(':');
+				param = (TParam)Convert.ChangeType(components[0], typeof(TParam));
+
+				return true;
+			}
+			catch (InvalidCastException)
+			{
+				Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
+				param = default(TParam);
+
+				return false;
+			}
+		}
+
+		/// <summary>
 		/// Updates the location of this critter to
 		/// the result of a GET_LOCATION request.
 		/// </summary>
 		/// <param name="message">The message containig the results of the GET_LOCATION request.</param>
 		private void UpdateTimeRemaining(string message)
 		{
-
+			if (ParseMessage(message, out float timeRemaining))
+			{
+				RemainingTime = timeRemaining;
+			}
 		}
 
 		/// <summary>
@@ -327,7 +432,10 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message containig the results of the GET_LEVEL_DURATION request.</param>
 		private void UpdateTimeElapsed(string message)
 		{
-
+			if (ParseMessage(message, out float timeElapsed))
+			{
+				ElapsedTime = timeElapsed;
+			}
 		}
 
 		/// <summary>
@@ -337,7 +445,10 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message containig the results of the GET_LEVEL_TIME_REMAINING request.</param>
 		private void UpdateHealth(string message)
 		{
-
+			if (ParseMessage(message, out int healthPercentage))
+			{
+				Health = healthPercentage / 100.0f;
+			}
 		}
 
 		/// <summary>
@@ -347,7 +458,10 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message containig the results of the GET_ENERGY request.</param>
 		private void UpdateEnergy(string message)
 		{
-
+			if (ParseMessage(message, out int energyPercentage))
+			{
+				Energy = energyPercentage / 100.0f;
+			}
 		}
 
 		/// <summary>
@@ -357,7 +471,10 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message containig the results of the GET_VELOCITY request.</param>
 		private void UpdateVelocity(string message)
 		{
-
+			if (ParseMessage(message, out double xVelocity, out double yVelocity, out double magnitude))
+			{
+				Velocity = new Vector(xVelocity, yVelocity);
+			}
 		}
 
 		/// <summary>
@@ -367,7 +484,10 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message containig the results of the GET_LOCATION request.</param>
 		private void UpdateLocation(string message)
 		{
-
+			if (ParseMessage(message, out string coordinate))
+			{
+				Location = Arena.ParseCoordinate(coordinate);
+			}
 		}
 
 		/// <summary>
