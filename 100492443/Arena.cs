@@ -56,7 +56,7 @@ namespace _100492443.Critters
 		/// <summary>
 		/// Accesses the internal desirability map.
 		/// </summary>
-		public float[,] DesriabilityMap { get; private set; }
+		public float[,] DesirabilityMap { get; private set; }
 
 		/// <summary>
 		/// The size of a cell in pixels.
@@ -105,16 +105,34 @@ namespace _100492443.Critters
 			);
 		}
 
+        /// <summary>
+        /// Checks if the <paramref name="check"/> bit is set to
+        /// 1 in the <paramref name="mask"/>.
+        /// </summary>
+        /// <param name="check">The single bit to check.</param>
+        /// <param name="mask">The mask to check against.</param>
+        /// <returns>1 if the bit is set, 0 if it is not.</returns>
+        private int IsSet(TileContents check, TileContents mask)
+        {
+            return ((check & mask) == check) ? 1 : 0;
+        }
+
 		/// <summary>
 		/// Returns a floating point value for the current cell's desirability.
 		/// </summary>
 		/// <param name="cell">The contents of the cell.</param>
 		/// <returns>A desirability value for the specified cell.</returns>
-		private float CalculateCellDesirability(TileContents cell)
+		private float CalculateDesirability(TileContents cell)
 		{
 			float desirabilitySum = 0.0f;
+            var tileKeys = Enum.GetValues(cell.GetType()).Cast<TileContents>();
 			
-			for (int i = 0; i < )
+			foreach (TileContents tileKey in tileKeys)
+            {
+                desirabilitySum += DesirabilityWeights[tileKey] * IsSet(tileKey, cell);
+            }
+
+            return desirabilitySum / tileKeys.Count();
 		}
 
 		/// <summary>
@@ -136,6 +154,7 @@ namespace _100492443.Critters
 				lock (TerrainHandlerLock)
 				{
 					TerrainMap[entityCell.X, entityCell.Y] = tileContents;
+                    DesirabilityMap[entityCell.X, entityCell.Y] = CalculateDesirability(tileContents);
 				}
 			}
 		}
