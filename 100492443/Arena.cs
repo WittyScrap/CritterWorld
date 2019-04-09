@@ -201,6 +201,10 @@ namespace _100492443.Critters
 			{
 				TerrainMap[cellCoordinate.X, cellCoordinate.Y] = TileContents.Terrain;
 			}
+            else
+            {
+                throw new CritterException("Invalid wall location for point: " + wallLocation);
+            }
 		}
 
 		/// <summary>
@@ -215,8 +219,12 @@ namespace _100492443.Critters
 				cellCoordinate.Y < TerrainMap.GetLength(1))
 			{
 				TerrainMap[cellCoordinate.X, cellCoordinate.Y] |= TileContents.Bomb;
-			}
-		}
+            }
+            else
+            {
+                throw new CritterException("Invalid bomb location for point: " + bombLocation);
+            }
+        }
 		
 		/// <summary>
 		/// Parses a formatted coordinate string into
