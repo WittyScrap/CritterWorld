@@ -59,7 +59,7 @@ namespace UOD100492443.Critters.AI
 		/// <summary>
 		/// The logger obejct to show debugging messages.
 		/// </summary>
-		protected Debug Debugger { get; private set; }
+		protected static Debug Debugger { get; private set; }
 
 		/// <summary>
 		/// The full size of the arena map.
@@ -138,7 +138,11 @@ namespace UOD100492443.Critters.AI
 		public Critter(string critterName)
 		{
 			Name = critterName;
-			Debugger = new Debug(Logger, "100492443:" + critterName);
+
+			if (Debugger == null)
+			{
+				Debugger = new Debug(Logger, "100492443:" + critterName, Filepath);
+			}
 		}
 
 		/// <summary>
@@ -208,7 +212,7 @@ namespace UOD100492443.Critters.AI
 		/// Event handler receiver for the GET_ARENA_SIZE responder.
 		/// </summary>
 		/// <param name="arenaSizeFormat"></param>
-		private void ArenaSizeReceived(object sender, string message)
+		private void UpdateArenaSize(string message)
 		{
 			string[] messageComponents = message.Split(':');
 			if (messageComponents.Length < 2)
@@ -233,7 +237,7 @@ namespace UOD100492443.Critters.AI
 		private void InitializeCritter()
 		{
 			var arenaSizeRequester = CreateRequest<ArenaSizeRequest>();
-			arenaSizeRequester.OnResolved += ArenaSizeReceived;
+			arenaSizeRequester.OnResolved += (sender, message) => UpdateArenaSize(message);
 			arenaSizeRequester.Submit(Responder);
 
 			IsInitialized = true;

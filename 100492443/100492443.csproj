@@ -47,7 +47,9 @@
     <Compile Include="ArenaSizeRequest.cs" />
     <Compile Include="Critter.cs" />
     <Compile Include="CritterException.cs" />
+    <Compile Include="CritterFactory.cs" />
     <Compile Include="Debug.cs" />
+    <Compile Include="DebugCritter.cs" />
     <Compile Include="EnergyRequest.cs" />
     <Compile Include="HealthRequest.cs" />
     <Compile Include="IRequest.cs" />
