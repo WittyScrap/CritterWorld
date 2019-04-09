@@ -8,7 +8,7 @@ using CritterController;
 /// <summary>
 /// Project bounds namespace.
 /// </summary>
-namespace _100492443.Critters.AI
+namespace UOD100492443.Critters.AI
 {
 	/// <summary>
 	/// Implements basic functionality for
@@ -279,6 +279,16 @@ namespace _100492443.Critters.AI
 		}
 
 		/// <summary>
+		/// Updates the velocity of this critter to
+		/// the result of a GET_VELOCITY request.
+		/// </summary>
+		/// <param name="message">The message containig the results of the GET_VELOCITY request.</param>
+		private void UpdateVelocity(string message)
+		{
+
+		}
+
+		/// <summary>
 		/// Short-range scan that is called automatically
 		/// by the CritterWorld environmnent continuously.
 		/// </summary>
@@ -307,8 +317,10 @@ namespace _100492443.Critters.AI
 		protected void CheckSpeed()
 		{
 			var speedRequester = CreateRequest<SpeedRequest>();
-			speedRequester.OnResolved += (sender, message) => { };
+			speedRequester.OnResolved += (sender, message) => { UpdateVelocity(message); };
 		}
+
+
 
 		#endregion
 	}

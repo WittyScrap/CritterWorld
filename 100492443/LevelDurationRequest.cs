@@ -7,12 +7,13 @@ using System.Threading.Tasks;
 namespace UOD100492443.Critters.AI
 {
 	/// <summary>
-	/// Represents a request to obtain the current critter's speed.
+	/// Requests the amount of time elapsed since the
+	/// beginning of the level.
 	/// </summary>
-	class SpeedRequest : TrackableRequest
+	class LevelDurationRequest : TrackableRequest
 	{
-		public SpeedRequest()
-			: base("GET_SPEED")
+		public LevelDurationRequest()
+			: base("GET_LEVEL_DURATION")
 		{ }
 	}
 }

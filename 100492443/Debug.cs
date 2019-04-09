@@ -4,7 +4,7 @@ using CritterController;
 /// <summary>
 /// Project bounds namespace.
 /// </summary>
-namespace _100492443.Critters.AI
+namespace UOD100492443.Critters.AI
 {
 	/// <summary>
 	/// Handles logging messages.

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace _100492443.Critters
+namespace UOD100492443.Critters
 {
 	struct Vector
 	{

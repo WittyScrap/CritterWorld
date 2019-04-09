@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CritterController;
 
-namespace _100492443.Critters.AI
+namespace UOD100492443.Critters.AI
 {
 	/// <summary>
 	/// Represents the base request interface.

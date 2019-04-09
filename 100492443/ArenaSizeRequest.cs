@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace _100492443.Critters.AI
+namespace UOD100492443.Critters.AI
 {
 	/// <summary>
 	/// Requests the size of the current playing area.
