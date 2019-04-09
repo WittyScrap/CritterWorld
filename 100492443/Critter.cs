@@ -67,6 +67,11 @@ namespace _100492443.Critters.AI
 		protected Point EscapeHatch { get; private set; }
 
 		/// <summary>
+		/// The full size of the arena map.
+		/// </summary>
+		protected static Arena Map { get; private set; }
+
+		/// <summary>
 		/// Handles an incoming message from the CritterWorld
 		/// environment.
 		/// </summary>
@@ -136,7 +141,7 @@ namespace _100492443.Critters.AI
 			if (messageData != "Nothing")
 			{
 				string[] sightElements = messageData.Split('\t');
-
+				
 				OnSee(sightElements);
 			}
 		}
@@ -144,8 +149,9 @@ namespace _100492443.Critters.AI
 		/// <summary>
 		/// Decodes the SCAN request into different sections
 		/// and feeds the results to <seealso cref="OnScan(ICollection{string})"/>.
+		/// It also updates the local <seealso cref="Map"/>.
 		/// </summary>
-		/// <param name="messageBody"></param>
+		/// <param name="messageBody">The body of the scanned message.</param>
 		private void MessageScan(string messageBody)
 		{
 			string[] components = messageBody.Split('\n');
@@ -154,76 +160,13 @@ namespace _100492443.Critters.AI
 			{
 				string[] sightElements = components[1].Split('\t');
 
+				Map.Update(components[1]);
 				OnScan(sightElements, requestID);
 			}
 			else
 			{
 				Debugger.LogWarning("A new SCAN message was received, but the requestID could be parsed: " + components[0]);
 			}
-		}
-
-		/// <summary>
-		/// Parses a formatted coordinate string into
-		/// a <see cref="Point"/>.
-		/// </summary>
-		/// <param name="coordinateFormat">The formatted point string.</param>
-		/// <returns>A point parsed from the string, <seealso cref="Point.Empty"/> if the parsing is unsuccessful.</returns>
-		/// <example>
-		/// <code>
-		/// Point parsedCoordinate = ParseCoordinate("{X=24,Y=765}");
-		/// </code>
-		/// </example>
-		protected Point ParseCoordinate(string coordinateFormat)
-		{
-			coordinateFormat = coordinateFormat.Replace('{', ' ').Replace('}', ' ');
-			string[] components = coordinateFormat.Split(',');
-
-			if (components.Length != 2)
-			{
-				Debugger.LogError("Coordinate string was formatted incorrectly, number of components detected was not exactly 2: " + coordinateFormat);
-				return Point.Empty;
-			}
-
-			string xFormat = components[0].Split('=')[1];
-			string yFormat = components[1].Split('=')[1];
-			
-			if (int.TryParse(xFormat, out int x) && int.TryParse(yFormat, out int y))
-			{
-				return new Point(x, y);
-			}
-			else
-			{
-				Debugger.LogError("Coordinate string was formatted incorrectly and could not be parsed: " + coordinateFormat);
-				return Point.Empty;
-			}
-		}
-
-		/// <summary>
-		/// Parses a detected element into an instace of a
-		/// <see cref="ReadonlyObject"/> and saves it into the
-		/// list of known elements.
-		/// </summary>
-		/// <param name="element">The element to parse.</param>
-		private void ParseDetectedObject(string element)
-		{
-			string[] elementProperties = element.Split(':');
-			if (elementProperties.Length <= 1)
-			{
-				Debugger.LogError("Invalid element string, coordinate block could not be detected: " + element);
-				return;
-			}
-			string objectName = elementProperties[0];
-			Point coordinate = ParseCoordinate(elementProperties[1]);
-			string[] objectData = elementProperties.Skip(2).ToArray();
-		}
-
-		/// <summary>
-		/// Updates map surroundings after a SCAN or SEE call.
-		/// </summary>
-		/// <param name="scannedElements">List of scanned elements.</param>
-		private void UpdateSurroundings(ICollection<string> scannedElements)
-		{
-			Parallel.ForEach(scannedElements, ParseDetectedObject);
 		}
 
 		/// <summary>

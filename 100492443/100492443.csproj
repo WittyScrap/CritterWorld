@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Arena.cs" />
     <Compile Include="Critter.cs" />
+    <Compile Include="CritterException.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
