@@ -10,7 +10,7 @@ namespace _100492443.Critters
 	/// <summary>
 	/// Represents a simple 2-dimensional map of the terrain.
 	/// </summary>
-	class Arena
+	public sealed class Arena
 	{
 		/// <summary>
 		/// Enumerator to represent what type
@@ -27,21 +27,16 @@ namespace _100492443.Critters
 			Bomb		= 1 << 3,
 			EscapeHatch = 1 << 4
 		}
-		
-		/// <summary>
-		/// Defines the type of scan to update
-		/// the 
-		/// </summary>
-		public enum ScanType
-		{
-			See,
-			Scan
-		}
 
 		/// <summary>
 		/// Defines weights for the desirability factors of each tile entity.
 		/// </summary>
 		private Dictionary<TileContents, float> DesirabilityWeights { get; set; } = new Dictionary<TileContents, float>();
+
+		/// <summary>
+		/// The location of the escape hatch, if it was detected.
+		/// </summary>
+		public Point EscapeHatch { get; private set; }
 
 		/// <summary>
 		/// Thread lock for handling changes with the terrain.
@@ -155,6 +150,11 @@ namespace _100492443.Critters
 				{
 					TerrainMap[entityCell.X, entityCell.Y] |= tileContents;
                     DesirabilityMap[entityCell.X, entityCell.Y] = CalculateDesirability(TerrainMap[entityCell.X, entityCell.Y]);
+
+					if (tileContents == TileContents.EscapeHatch)
+					{
+						EscapeHatch = entityLocation;
+					}
 				}
 			}
 		}
@@ -180,12 +180,10 @@ namespace _100492443.Critters
 		/// This method clears cell data for those cells for 
 		/// which a new element was detected exclusively.
 		/// </remarks>
-		public void Update(string detectedEntities)
+		public void Update(string[] detectedEntities)
 		{
-			string[] entitiesCollection = detectedEntities.Split('\t');
-
             Parallel.For(0, TerrainMap.Length, ClearCell);
-			Parallel.ForEach(entitiesCollection, ParseEntity);
+			Parallel.ForEach(detectedEntities, ParseEntity);
 		}
 
 		/// <summary>

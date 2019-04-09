@@ -62,14 +62,30 @@ namespace _100492443.Critters.AI
 		protected Debug Debugger { get; private set; }
 
 		/// <summary>
-		/// The location of the escape hatch, if it was detected.
-		/// </summary>
-		protected Point EscapeHatch { get; private set; }
-
-		/// <summary>
 		/// The full size of the arena map.
 		/// </summary>
 		protected static Arena Map { get; private set; }
+
+		/// <summary>
+		/// Provides the size of a single cell in pixels.
+		/// </summary>
+		private int CellPixelSize {
+			get
+			{
+				throw new NotImplementedException();
+			}
+		}
+
+		/// <summary>
+		/// If this is false, no messages can be sent to the CritterWorld
+		/// enviroment.
+		/// </summary>
+		private bool IsInitialized { get; set; }
+
+		/// <summary>
+		/// Request tracker that uses the request ID to track requests.
+		/// </summary>
+		private Dictionary<int, TrackableRequest> TrackedRequests { get; } = new Dictionary<int, TrackableRequest>();
 
 		/// <summary>
 		/// Handles an incoming message from the CritterWorld
@@ -105,7 +121,96 @@ namespace _100492443.Critters.AI
 			Debugger = new Debug(Logger, "100492443:" + critterName);
 		}
 
+		/// <summary>
+		/// Creates a request message to the CritterWorld environment.
+		/// </summary>
+		/// <typeparam name="T">The type of the request.</typeparam>
+		/// <returns>The generated request object.</returns>
+		protected T CreateRequest<T>() where T : TrackableRequest, new()
+		{
+			T generatedRequest = new T();
+			generatedRequest.Resolved += (sender, args) => { TrackedRequests.Remove(generatedRequest.RequestID); };
+			TrackedRequests[generatedRequest.RequestID] = generatedRequest;
+
+			return generatedRequest;
+		}
+
+		/// <summary>
+		/// Attempts to resolve a message if it is currently being tracked.
+		/// </summary>
+		/// <param name="messageID">The ID of the message to resolve.</param>
+		/// <returns>True if the message was resolved, false otherwise.</returns>
+		/// <remarks>
+		/// This method does not check to ensure that the response expects
+		/// a request ID, and should therefore only be called in those circumstances.
+		/// </remarks>
+		private bool TryResolve(string receivedMessage)
+		{
+			string[] components = receivedMessage.Split(':');
+			string receivedID = components[0];
+			if (int.TryParse(receivedID, out int messageID) && TrackedRequests.ContainsKey(messageID))
+			{
+				string messageContents = string.Join(":", components.Skip(1).ToArray());
+				TrackedRequests[messageID].Resolve(receivedMessage);
+				return true;
+			}
+			else
+			{
+				Debugger.LogError("Attempted to resove an invalid message type!");
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Allocates the arena map object with the obtained
+		/// size information.
+		/// </summary>
+		/// <param name="arenaSize">The size of the arena.</param>
+		/// <param name="pixelSize">The size of a tile.</param>
+		private static void AllocateMap(Size arenaSize, int pixelSize)
+		{
+			if (Map == null)
+			{
+				Map = new Arena(arenaSize.Width, arenaSize.Height, pixelSize);
+			}
+		}
+
 		#region Event driven methods
+
+		/// <summary>
+		/// Event handler receiver for the GET_ARENA_SIZE responder.
+		/// </summary>
+		/// <param name="arenaSizeFormat"></param>
+		private void ArenaSizeReceived(object sender, string message)
+		{
+			string[] messageComponents = message.Split(':');
+			if (messageComponents.Length < 2)
+			{
+				Debugger.LogError("Invalid ARENA_SIZE request received, less than 2 blocks separated by a ':'.");
+			}
+			if (int.TryParse(messageComponents[0], out int width) &&
+				int.TryParse(messageComponents[1], out int height))
+			{
+				AllocateMap(new Size(width, height), 100);
+			}
+			else
+			{
+				Debugger.LogError("Invalid ARENA_SIZE request received, values could not be parsed to integers.");
+			}
+		}
+
+		/// <summary>
+		/// Initializes this critter and sends out the first fundamental
+		/// requests.
+		/// </summary>
+		private void InitializeCritter()
+		{
+			var arenaSizeRequester = CreateRequest<ArenaSizeRequest>();
+			arenaSizeRequester.Resolved += ArenaSizeReceived;
+			arenaSizeRequester.Submit(Responder);
+
+			IsInitialized = true;
+		}
 
 		/// <summary>
 		/// Decodes an incoming message and calls the appropriate events.
@@ -122,8 +227,18 @@ namespace _100492443.Critters.AI
 			case "SEE":
 				MessageSee(body);
 				break;
+			case "LAUNCH":
+				InitializeCritter();
+				break;
 			case "SCAN":
-				MessageScan(body);
+			case "ARENA_SIZE":
+			case "LEVEL_DURATION":
+			case "LEVEL_TIME_REMAINING":
+			case "HEALTH":
+			case "ENERGY":
+			case "LOCATION":
+			case "SPEED":
+				TryResolve(body);
 				break;
 			}
 		}
@@ -160,8 +275,7 @@ namespace _100492443.Critters.AI
 			{
 				string[] sightElements = components[1].Split('\t');
 
-				Map.Update(components[1]);
-				OnScan(sightElements, requestID);
+				Map?.Update(sightElements);
 			}
 			else
 			{
@@ -173,18 +287,23 @@ namespace _100492443.Critters.AI
 		/// Short-range scan that is called automatically
 		/// by the CritterWorld environmnent continuously.
 		/// </summary>
-		protected virtual void OnSee(ICollection<string> sightElements)
+		protected virtual void OnSee(string[] sightElements)
 		{
 
 		}
 
-		/// <summary>
-		/// Long-range scan that is called as a response
-		/// from a SCAN request that as to be sent in advance.
-		/// </summary>
-		protected virtual void OnScan(ICollection<string> sightElements, int requestID)
-		{
+		#endregion
 
+		#region Message senders
+
+		/// <summary>
+		/// Runs a SCAN operation.
+		/// </summary>
+		protected void Scan()
+		{
+			var scanRequester = CreateRequest<ScanRequest>();
+			scanRequester.Resolved += (sender, message) => { MessageScan(message); };
+			scanRequester.Submit(Responder);
 		}
 
 		#endregion
