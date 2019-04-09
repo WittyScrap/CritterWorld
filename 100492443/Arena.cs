@@ -153,11 +153,22 @@ namespace _100492443.Critters
 
 				lock (TerrainHandlerLock)
 				{
-					TerrainMap[entityCell.X, entityCell.Y] = tileContents;
-                    DesirabilityMap[entityCell.X, entityCell.Y] = CalculateDesirability(tileContents);
+					TerrainMap[entityCell.X, entityCell.Y] |= tileContents;
+                    DesirabilityMap[entityCell.X, entityCell.Y] = CalculateDesirability(TerrainMap[entityCell.X, entityCell.Y]);
 				}
 			}
 		}
+
+        /// <summary>
+        /// Clears a cell's contents (won't clear walls and exits).
+        /// </summary>
+        /// <param name="cellIndex">The index of the cell.</param>
+        private void ClearCell(int cellIndex)
+        {
+            int mapWidth = TerrainMap.GetLength(0);
+            TerrainMap[cellIndex % mapWidth, cellIndex / mapWidth] &= TileContents.Terrain | TileContents.EscapeHatch;
+            DesirabilityMap[cellIndex % mapWidth, cellIndex / mapWidth] = CalculateDesirability(TerrainMap[cellIndex % mapWidth, cellIndex / mapWidth]);
+        }
 
 		/// <summary>
 		/// Updates the local map through a series of detected
@@ -172,6 +183,8 @@ namespace _100492443.Critters
 		public void Update(string detectedEntities)
 		{
 			string[] entitiesCollection = detectedEntities.Split('\t');
+
+            Parallel.For(0, TerrainMap.Length, ClearCell);
 			Parallel.ForEach(entitiesCollection, ParseEntity);
 		}
 
