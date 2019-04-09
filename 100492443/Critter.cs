@@ -67,14 +67,9 @@ namespace _100492443.Critters.AI
 		protected static Arena Map { get; private set; }
 
 		/// <summary>
-		/// Provides the size of a single cell in pixels.
+		/// The current velocity of the critter.
 		/// </summary>
-		private int CellPixelSize {
-			get
-			{
-				throw new NotImplementedException();
-			}
-		}
+		protected Vector Velocity { get; private set; } = Vector.Zero;
 
 		/// <summary>
 		/// If this is false, no messages can be sent to the CritterWorld
@@ -129,7 +124,7 @@ namespace _100492443.Critters.AI
 		protected T CreateRequest<T>() where T : TrackableRequest, new()
 		{
 			T generatedRequest = new T();
-			generatedRequest.Resolved += (sender, args) => { TrackedRequests.Remove(generatedRequest.RequestID); };
+			generatedRequest.OnResolved += (sender, args) => { TrackedRequests.Remove(generatedRequest.RequestID); };
 			TrackedRequests[generatedRequest.RequestID] = generatedRequest;
 
 			return generatedRequest;
@@ -206,7 +201,7 @@ namespace _100492443.Critters.AI
 		private void InitializeCritter()
 		{
 			var arenaSizeRequester = CreateRequest<ArenaSizeRequest>();
-			arenaSizeRequester.Resolved += ArenaSizeReceived;
+			arenaSizeRequester.OnResolved += ArenaSizeReceived;
 			arenaSizeRequester.Submit(Responder);
 
 			IsInitialized = true;
@@ -302,8 +297,17 @@ namespace _100492443.Critters.AI
 		protected void Scan()
 		{
 			var scanRequester = CreateRequest<ScanRequest>();
-			scanRequester.Resolved += (sender, message) => { MessageScan(message); };
+			scanRequester.OnResolved += (sender, message) => { MessageScan(message); };
 			scanRequester.Submit(Responder);
+		}
+
+		/// <summary>
+		/// Updates the stored speed value to the current critter's speed.
+		/// </summary>
+		protected void CheckSpeed()
+		{
+			var speedRequester = CreateRequest<SpeedRequest>();
+			speedRequester.OnResolved += (sender, message) => { };
 		}
 
 		#endregion

@@ -16,7 +16,7 @@ namespace _100492443.Critters.AI
 		/// <summary>
 		/// Event called when this request has been resolved.
 		/// </summary>
-		public event EventHandler<string> Resolved;
+		public event EventHandler<string> OnResolved;
 
 		/// <summary>
 		/// Pools of request IDs to pull new unique values from.
@@ -59,7 +59,7 @@ namespace _100492443.Critters.AI
 		/// </summary>
 		public virtual void Resolve(string responseMessage)
 		{
-			Resolved?.Invoke(this, responseMessage);
+			OnResolved?.Invoke(this, responseMessage);
 		}
 	}
 }
