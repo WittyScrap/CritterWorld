@@ -54,7 +54,7 @@ namespace UOD100492443.Critters.AI
 			}
 		}
 		#endregion
-
+		
 		/// <summary>
 		/// The logger obejct to show debugging messages.
 		/// </summary>
@@ -65,6 +65,7 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected static Arena Map { get; private set; }
 
+		#region Critter properties
 		/// <summary>
 		/// The current velocity of the critter.
 		/// </summary>
@@ -99,12 +100,8 @@ namespace UOD100492443.Critters.AI
 		/// If this is false, no messages can be sent to the CritterWorld
 		/// enviroment.
 		/// </summary>
-		protected bool IsInitialized { get; private set; }
-
-		/// <summary>
-		/// Request tracker that uses the request ID to track requests.
-		/// </summary>
-		private Dictionary<int, TrackableRequest> TrackedRequests => new Dictionary<int, TrackableRequest>();
+		private bool IsInitialized { get; set; }
+		#endregion
 
 		/// <summary>
 		/// Handles an incoming message from the CritterWorld
@@ -141,46 +138,6 @@ namespace UOD100492443.Critters.AI
 		}
 		
 		/// <summary>
-		/// Creates a request message to the CritterWorld environment.
-		/// </summary>
-		/// <typeparam name="T">The type of the request.</typeparam>
-		/// <returns>The generated request object.</returns>
-		protected T CreateRequest<T>() where T : TrackableRequest, new()
-		{
-			T generatedRequest = new T();
-			generatedRequest.OnResolved += (sender, args) => { TrackedRequests.Remove(generatedRequest.RequestID); };
-			TrackedRequests[generatedRequest.RequestID] = generatedRequest;
-
-			return generatedRequest;
-		}
-
-		/// <summary>
-		/// Attempts to resolve a message if it is currently being tracked.
-		/// </summary>
-		/// <param name="messageID">The ID of the message to resolve.</param>
-		/// <returns>True if the message was resolved, false otherwise.</returns>
-		/// <remarks>
-		/// This method does not check to ensure that the response expects
-		/// a request ID, and should therefore only be called in those circumstances.
-		/// </remarks>
-		private bool TryResolve(string receivedMessage)
-		{
-			string[] components = receivedMessage.Split(':');
-			string receivedID = components[0];
-			if (int.TryParse(receivedID, out int messageID) && TrackedRequests.ContainsKey(messageID))
-			{
-				string messageContents = string.Join(":", components.Skip(1).ToArray());
-				TrackedRequests[messageID].Resolve(receivedMessage);
-				return true;
-			}
-			else
-			{
-				Debugger.LogError("Attempted to resove an invalid message type!");
-				return false;
-			}
-		}
-
-		/// <summary>
 		/// Allocates the arena map object with the obtained
 		/// size information.
 		/// </summary>
@@ -202,39 +159,13 @@ namespace UOD100492443.Critters.AI
 		}
 
 		#region Event driven methods
-
-		/// <summary>
-		/// Event handler receiver for the GET_ARENA_SIZE responder.
-		/// </summary>
-		/// <param name="arenaSizeFormat"></param>
-		private void UpdateArenaSize(string message)
-		{
-			string[] messageComponents = message.Split(':');
-			if (messageComponents.Length < 2)
-			{
-				Debugger.LogError("Invalid ARENA_SIZE request received, less than 2 blocks separated by a ':'.");
-			}
-			if (int.TryParse(messageComponents[0], out int width) &&
-				int.TryParse(messageComponents[1], out int height))
-			{
-				AllocateMap(new Size(width, height), 100);
-			}
-			else
-			{
-				Debugger.LogError("Invalid ARENA_SIZE request received, values could not be parsed to integers.");
-			}
-		}
-
+		
 		/// <summary>
 		/// Initializes this critter and sends out the first fundamental
 		/// requests.
 		/// </summary>
 		private void InitializeCritter()
 		{
-			var arenaSizeRequester = CreateRequest<ArenaSizeRequest>();
-			arenaSizeRequester.OnResolved += (sender, message) => UpdateArenaSize(message);
-			arenaSizeRequester.Submit(Responder);
-
 			IsInitialized = true;
 		}
 
@@ -264,7 +195,6 @@ namespace UOD100492443.Critters.AI
 			case "ENERGY":
 			case "LOCATION":
 			case "SPEED":
-				TryResolve(body);
 				break;
 			}
 		}
@@ -310,186 +240,6 @@ namespace UOD100492443.Critters.AI
 		}
 
 		/// <summary>
-		/// Parses a generic message into any
-		/// type of parsable output.
-		/// </summary>
-		/// <typeparam name="TParam1">Type of the first parameter.</typeparam>
-		/// <typeparam name="TParam2">Type of the second parameter.</typeparam>
-		/// <typeparam name="TParam3">Type of the third parameter.</typeparam>
-		/// <param name="message">The source message.</param>
-		/// <param name="param1">The first output.</param>
-		/// <param name="param2">The second output.</param>
-		/// <param name="param3">The third output.</param>
-		private bool ParseMessage<TParam1, TParam2, TParam3>(string message, out TParam1 param1, out TParam2 param2, out TParam3 param3)
-		{
-			if (ParseMessage(message, out param1, out param2))
-			{
-				try
-				{
-					string[] components = message.Split(':');
-					param3 = (TParam3)Convert.ChangeType(components[2], typeof(TParam3));
-
-					return true;
-				}
-				catch (InvalidCastException)
-				{
-					Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
-					param3 = default(TParam3);
-
-					return false;
-				}
-			}
-			else
-			{
-				param1 = default(TParam1);
-				param2 = default(TParam2);
-				param3 = default(TParam3);
-
-				return false;
-			}
-		}
-
-		/// <summary>
-		/// Generic parsing system to convert a message body into
-		/// two output types.
-		/// </summary>
-		/// <typeparam name="TParam1">The first output type.</typeparam>
-		/// <typeparam name="TParam2">The second output type.</typeparam>
-		/// <param name="message">The message to parse.</param>
-		/// <param name="param1">The first output object.</param>
-		/// <param name="param2">The second output object.</param>
-		private bool ParseMessage<TParam1, TParam2>(string message, out TParam1 param1, out TParam2 param2)
-		{
-			if (ParseMessage(message, out param1))
-			{
-				try
-				{
-					string[] components = message.Split(':');
-					param2 = (TParam2)Convert.ChangeType(components[1], typeof(TParam2));
-
-					return true;
-				}
-				catch (InvalidCastException)
-				{
-					Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
-					param2 = default(TParam2);
-
-					return false;
-				}
-			}
-			else
-			{
-				param1 = default(TParam1);
-				param2 = default(TParam2);
-
-				return false;
-			}
-		}
-
-		/// <summary>
-		/// Generic parsing system to convert a message body into
-		/// one output type.
-		/// </summary>
-		/// <typeparam name="TParam">The output type.</typeparam>
-		/// <param name="message">The message body.</param>
-		/// <param name="param">The output object.</param>
-		private bool ParseMessage<TParam>(string message, out TParam param)
-		{
-			try
-			{
-				string[] components = message.Split(':');
-				param = (TParam)Convert.ChangeType(components[0], typeof(TParam));
-
-				return true;
-			}
-			catch (InvalidCastException)
-			{
-				Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
-				param = default(TParam);
-
-				return false;
-			}
-		}
-
-		/// <summary>
-		/// Updates the location of this critter to
-		/// the result of a GET_LOCATION request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_LOCATION request.</param>
-		private void UpdateTimeRemaining(string message)
-		{
-			if (ParseMessage(message, out float timeRemaining))
-			{
-				RemainingTime = timeRemaining;
-			}
-		}
-
-		/// <summary>
-		/// Updates the elapsed time since the beginning of the level to
-		/// the result of a GET_LEVEL_DURATION request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_LEVEL_DURATION request.</param>
-		private void UpdateTimeElapsed(string message)
-		{
-			if (ParseMessage(message, out float timeElapsed))
-			{
-				ElapsedTime = timeElapsed;
-			}
-		}
-
-		/// <summary>
-		/// Updates the remainig time before the end of the level to
-		/// the result of a GET_LEVEL_TIME_REMAINING request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_LEVEL_TIME_REMAINING request.</param>
-		private void UpdateHealth(string message)
-		{
-			if (ParseMessage(message, out int healthPercentage))
-			{
-				Health = healthPercentage / 100.0f;
-			}
-		}
-
-		/// <summary>
-		/// Updates the amount of energy left for this critter to
-		/// the result of a GET_ENERGY request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_ENERGY request.</param>
-		private void UpdateEnergy(string message)
-		{
-			if (ParseMessage(message, out int energyPercentage))
-			{
-				Energy = energyPercentage / 100.0f;
-			}
-		}
-
-		/// <summary>
-		/// Updates the velocity of this critter to
-		/// the result of a GET_VELOCITY request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_VELOCITY request.</param>
-		private void UpdateVelocity(string message)
-		{
-			if (ParseMessage(message, out double xVelocity, out double yVelocity, out double magnitude))
-			{
-				Velocity = new Vector(xVelocity, yVelocity);
-			}
-		}
-
-		/// <summary>
-		/// Updates the location of this critter to
-		/// the result of a GET_LOCATION request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_LOCATION request.</param>
-		private void UpdateLocation(string message)
-		{
-			if (ParseMessage(message, out string coordinate))
-			{
-				Location = Arena.ParseCoordinate(coordinate);
-			}
-		}
-
-		/// <summary>
 		/// Short-range scan that is called automatically
 		/// by the CritterWorld environmnent continuously.
 		/// </summary>
@@ -515,69 +265,7 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected void Scan()
 		{
-			var scanRequester = CreateRequest<ScanRequest>();
-			scanRequester.OnResolved += (sender, message) => MessageScan(message);
-			scanRequester.Submit(Responder);
-		}
 
-		/// <summary>
-		/// Updates the stored speed value to the current critter's speed.
-		/// </summary>
-		protected void CheckSpeed()
-		{
-			var speedRequester = CreateRequest<SpeedRequest>();
-			speedRequester.OnResolved += (sender, message) => UpdateVelocity(message);
-			speedRequester.Submit(Responder);
-		}
-
-		/// <summary>
-		/// Updates the stored location to the current critter's position.
-		/// </summary>
-		protected void CheckLocation()
-		{
-			var locationRequester = CreateRequest<LocationRequest>();
-			locationRequester.OnResolved += (sender, message) => UpdateLocation(message);
-			locationRequester.Submit(Responder);
-		}
-
-		/// <summary>
-		/// Updates the stored elapsed time to the current level's timer.
-		/// </summary>
-		protected void CheckElapsedTime()
-		{
-			var elapsedTimeRequester = CreateRequest<LevelDurationRequest>();
-			elapsedTimeRequester.OnResolved += (sender, message) => UpdateTimeElapsed(message);
-			elapsedTimeRequester.Submit(Responder);
-		}
-
-		/// <summary>
-		/// Updates the remaining time to the current level's timer.
-		/// </summary>
-		protected void CheckRemainingTime()
-		{
-			var remainingTimeRequester = CreateRequest<TimeRemainingRequest>();
-			remainingTimeRequester.OnResolved += (sender, message) => UpdateTimeRemaining(message);
-			remainingTimeRequester.Submit(Responder);
-		}
-
-		/// <summary>
-		/// Updates the current local health to the critter's health value.
-		/// </summary>
-		protected void CheckHealth()
-		{
-			var healthChecker = CreateRequest<HealthRequest>();
-			healthChecker.OnResolved += (sender, message) => UpdateHealth(message);
-			healthChecker.Submit(Responder);
-		}
-
-		/// <summary>
-		/// Updates the current local energy to the critter's energy value.
-		/// </summary>
-		protected void CheckEnergy()
-		{
-			var energyChecker = CreateRequest<EnergyRequest>();
-			energyChecker.OnResolved += (sender, message) => UpdateEnergy(message);
-			energyChecker.Submit(Responder);
 		}
 
 		#endregion

@@ -11,7 +11,7 @@ namespace UOD100492443.Critters.AI
 	/// Represents a request that can be tracked by
 	/// a numeric ID.
 	/// </summary>
-	abstract class TrackableRequest
+	abstract class TrackableMessage
 	{
 		/// <summary>
 		/// Event called when this request has been resolved.
@@ -32,34 +32,16 @@ namespace UOD100492443.Critters.AI
 		/// The request message.
 		/// </summary>
 		public string Message { get; }
-
+		
 		/// <summary>
-		/// Submits the message as-is through the provided
-		/// sender.
-		/// </summary>
-		/// <param name="sender">The sender delegate object.</param>
-		public void Submit(Send sender)
-		{
-			sender(Message + ":" + RequestID.ToString());
-		}
-
-		/// <summary>
-		/// Creates a <see cref="TrackableRequest"/> with
+		/// Creates a <see cref="TrackableMessage"/> with
 		/// a specific message.
 		/// </summary>
 		/// <param name="message">The message.</param>
-		public TrackableRequest(string message)
+		public TrackableMessage(string message)
 		{
 			RequestID = IDPool++;
 			Message = message;
-		}
-		
-		/// <summary>
-		/// Resolves the current trackable request.
-		/// </summary>
-		public virtual void Resolve(string responseMessage)
-		{
-			OnResolved?.Invoke(this, responseMessage);
 		}
 	}
 }

@@ -10,7 +10,7 @@ namespace UOD100492443.Critters.AI
 	/// <summary>
 	/// Represents a sent message request.
 	/// </summary>
-	abstract class SimpleRequest : IRequest
+	abstract class SimpleMessage : IMessage
 	{
 		/// <summary>
 		/// The string based message to bundle with the message.
@@ -31,7 +31,7 @@ namespace UOD100492443.Critters.AI
 		/// Generate a simple request with a specific message.
 		/// </summary>
 		/// <param name="message">The request message.</param>
-		public SimpleRequest(string message)
+		public SimpleMessage(string message)
 		{
 			Message = message;
 		}

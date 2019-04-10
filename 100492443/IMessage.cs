@@ -10,18 +10,11 @@ namespace UOD100492443.Critters.AI
 	/// <summary>
 	/// Represents the base request interface.
 	/// </summary>
-	interface IRequest
+	interface IMessage
 	{
 		/// <summary>
 		/// The message to be sent.
 		/// </summary>
 		string Message { get; }
-
-		/// <summary>
-		/// Submits the message through the provided
-		/// sender object.
-		/// </summary>
-		/// <param name="sender">The sender delegate object.</param>
-		void Submit(Send sender);
 	}
 }
