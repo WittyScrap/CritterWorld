@@ -16,5 +16,15 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		public DebugCritter() : base("~ The bug whomv'st debugs ~")
 		{ }
+
+		/// <summary>
+		/// This method will call when the- ugh forget it it's 2am
+		/// and this is just a testing thing it won't go anywhere.
+		/// </summary>
+		protected override void OnSee(string[] stuff)
+		{
+			Debugger.LogMessage("Initialized!");
+			Responder("RANDOM_DESTINATION");
+		}
 	}
 }

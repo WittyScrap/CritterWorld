@@ -41,7 +41,7 @@ namespace UOD100492443.Critters
 		/// <summary>
 		/// Thread lock for handling changes with the terrain.
 		/// </summary>
-		private object TerrainHandlerLock { get; }
+		private object TerrainHandlerLock => new object();
 
 		/// <summary>
 		/// Accesses the internal terrain map.

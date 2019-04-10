@@ -53,13 +53,12 @@ namespace UOD100492443.Critters.AI
 				Debugger.UpdateLogger(value);
 			}
 		}
-
 		#endregion
 
 		/// <summary>
 		/// The logger obejct to show debugging messages.
 		/// </summary>
-		protected static Debug Debugger { get; private set; }
+		protected Debug Debugger { get; private set; }
 
 		/// <summary>
 		/// The full size of the arena map.
@@ -100,12 +99,12 @@ namespace UOD100492443.Critters.AI
 		/// If this is false, no messages can be sent to the CritterWorld
 		/// enviroment.
 		/// </summary>
-		private bool IsInitialized { get; set; }
+		protected bool IsInitialized { get; private set; }
 
 		/// <summary>
 		/// Request tracker that uses the request ID to track requests.
 		/// </summary>
-		private Dictionary<int, TrackableRequest> TrackedRequests { get; } = new Dictionary<int, TrackableRequest>();
+		private Dictionary<int, TrackableRequest> TrackedRequests => new Dictionary<int, TrackableRequest>();
 
 		/// <summary>
 		/// Handles an incoming message from the CritterWorld
@@ -138,13 +137,9 @@ namespace UOD100492443.Critters.AI
 		public Critter(string critterName)
 		{
 			Name = critterName;
-
-			if (Debugger == null)
-			{
-				Debugger = new Debug(Logger, "100492443:" + critterName, Filepath);
-			}
+			Debugger = new Debug(Logger, "100492443:" + critterName);
 		}
-
+		
 		/// <summary>
 		/// Creates a request message to the CritterWorld environment.
 		/// </summary>
@@ -499,6 +494,14 @@ namespace UOD100492443.Critters.AI
 		/// by the CritterWorld environmnent continuously.
 		/// </summary>
 		protected virtual void OnSee(string[] sightElements)
+		{
+
+		}
+
+		/// <summary>
+		/// This method will be called once the critter has finished initializing.
+		/// </summary>
+		protected virtual void OnInitialized()
 		{
 
 		}

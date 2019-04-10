@@ -14,15 +14,6 @@ namespace UOD100492443.Critters.AI
 	{
 		private Send m_loggerObject;
 		private readonly string m_critterID;
-		private readonly string m_logPath;
-		private const string LOGGER_FILENAME = "critters.log";
-
-		private string LoggerFullPath {
-			get
-			{
-				return m_logPath + Path.DirectorySeparatorChar + LOGGER_FILENAME;
-			}
-		}
 
 		/// <summary>
 		/// Logs raw text to either the logger
@@ -39,10 +30,6 @@ namespace UOD100492443.Critters.AI
 			{
 				Console.WriteLine(rawMessage);
 			}
-
-			StreamWriter fileLogger = new StreamWriter(LoggerFullPath);
-			fileLogger.WriteLine(rawMessage);
-			fileLogger.Close();
 		}
 
 		/// <summary>
@@ -79,13 +66,10 @@ namespace UOD100492443.Critters.AI
 		/// Creates a new debugger object.
 		/// </summary>
 		/// <param name="loggerObject">The delegate used to log messages.</param>
-		public Debug(Send loggerObject, string critterID, string filePath)
+		public Debug(Send loggerObject, string critterID)
 		{
 			m_loggerObject = loggerObject;
 			m_critterID = critterID;
-			m_logPath = filePath;
-
-			File.WriteAllText(LoggerFullPath, string.Empty);
 		}
 
 		/// <summary>
