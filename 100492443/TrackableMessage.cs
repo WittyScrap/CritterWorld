@@ -11,13 +11,8 @@ namespace UOD100492443.Critters.AI
 	/// Represents a request that can be tracked by
 	/// a numeric ID.
 	/// </summary>
-	abstract class TrackableMessage
+	abstract class TrackableMessage : ITrackableMessage
 	{
-		/// <summary>
-		/// Event called when this request has been resolved.
-		/// </summary>
-		public event EventHandler<string> OnResolved;
-
 		/// <summary>
 		/// Pools of request IDs to pull new unique values from.
 		/// </summary>

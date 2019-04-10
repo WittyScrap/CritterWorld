@@ -50,9 +50,14 @@
     <Compile Include="Debug.cs" />
     <Compile Include="DebugCritter.cs" />
     <Compile Include="IMessage.cs" />
+    <Compile Include="IMessageReceiver.cs" />
+    <Compile Include="IMessageSender.cs" />
+    <Compile Include="ITrackableMessage.cs" />
+    <Compile Include="MessageSystem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleMessage.cs" />
     <Compile Include="TrackableMessage.cs" />
+    <Compile Include="TrackedMessageSystem.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
   <ItemGroup>

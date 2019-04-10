@@ -65,6 +65,18 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected static Arena Map { get; private set; }
 
+		/// <summary>
+		/// Handles simple messages, that is messages without
+		/// a request ID.
+		/// </summary>
+		protected MessageSystem MessageHandler => new MessageSystem();
+
+		/// <summary>
+		/// Handles trackable messages, that is messages containing
+		/// a request ID.
+		/// </summary>
+		protected TrackedMessageSystem TrackedMessageHandler => new TrackedMessageSystem();
+
 		#region Critter properties
 		/// <summary>
 		/// The current velocity of the critter.
@@ -112,9 +124,8 @@ namespace UOD100492443.Critters.AI
 		{
 			string[] splitMessage = message.Split(':');
 			string header = splitMessage[0];
-			string messageBody = string.Join(":", splitMessage.Skip(1).ToArray());
 
-			MessageDecoder(header, messageBody);
+			MessageDecoder(header, message);
 		}
 
 		/// <summary>
@@ -173,19 +184,25 @@ namespace UOD100492443.Critters.AI
 		/// Decodes an incoming message and calls the appropriate events.
 		/// </summary>
 		/// <param name="header">The message header.</param>
-		/// <param name="body">The message sub-sections.</param>
-		private void MessageDecoder(string header, string body)
+		/// <param name="message">The message sub-sections.</param>
+		private void MessageDecoder(string header, string message)
 		{
 			switch (header)
 			{
-			case "ERROR":
-				Debugger.LogError(body);
-				break;
 			case "SEE":
-				MessageSee(body);
-				break;
 			case "LAUNCH":
-				InitializeCritter();
+			case "ESCAPE":
+			case "SCORED":
+			case "ATE":
+			case "FIGHT":
+			case "BUMP":
+			case "FATALITY":
+			case "STARVED":
+			case "BOMBED":
+			case "CRASHED":
+			case "REACHED_DESTINATION":
+			case "SHUTDOWN":
+				MessageHandler.HandleMessage(message);
 				break;
 			case "SCAN":
 			case "ARENA_SIZE":
@@ -195,6 +212,9 @@ namespace UOD100492443.Critters.AI
 			case "ENERGY":
 			case "LOCATION":
 			case "SPEED":
+				break;
+			default:
+				Debugger.LogError("Environment error: " + message);
 				break;
 			}
 		}
@@ -245,7 +265,8 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected virtual void OnSee(string[] sightElements)
 		{
-
+			// Note: this is here to prevent the base form of this method from being called.
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -253,7 +274,8 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected virtual void OnInitialized()
 		{
-
+			// Note: this is here to prevent the base form of this method from being called.
+			throw new NotImplementedException();
 		}
 
 		#endregion
@@ -265,7 +287,7 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected void Scan()
 		{
-
+			throw new NotImplementedException();
 		}
 
 		#endregion
