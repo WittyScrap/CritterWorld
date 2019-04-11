@@ -18,6 +18,6 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		/// <param name="message">The string based message that was received from the environment.</param>
 		/// <returns>The parsed message from the string.</returns>
-		void HandleMessage(string message);
+		TMessage ParseMessage(string message);
 	}
 }

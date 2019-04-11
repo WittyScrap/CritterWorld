@@ -65,18 +65,6 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected static Arena Map { get; private set; }
 
-		/// <summary>
-		/// Handles simple messages, that is messages without
-		/// a request ID.
-		/// </summary>
-		protected MessageSystem MessageHandler => new MessageSystem();
-
-		/// <summary>
-		/// Handles trackable messages, that is messages containing
-		/// a request ID.
-		/// </summary>
-		protected TrackedMessageSystem TrackedMessageHandler => new TrackedMessageSystem();
-
 		#region Critter properties
 		/// <summary>
 		/// The current velocity of the critter.
@@ -187,6 +175,8 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message sub-sections.</param>
 		private void MessageDecoder(string header, string message)
 		{
+
+
 			switch (header)
 			{
 			case "SEE":
@@ -202,8 +192,9 @@ namespace UOD100492443.Critters.AI
 			case "CRASHED":
 			case "REACHED_DESTINATION":
 			case "SHUTDOWN":
-				MessageHandler.HandleMessage(message);
-				break;
+			// ^^^ Simple messages ^^^
+			// -----------------------
+			// vvv Tracked messages vvv
 			case "SCAN":
 			case "ARENA_SIZE":
 			case "LEVEL_DURATION":
@@ -212,13 +203,12 @@ namespace UOD100492443.Critters.AI
 			case "ENERGY":
 			case "LOCATION":
 			case "SPEED":
-				break;
 			default:
 				Debugger.LogError("Environment error: " + message);
 				break;
 			}
 		}
-
+		
 		/// <summary>
 		/// Decodes the SEE request into different sections
 		/// and feeds the results to <seealso cref="OnSee(ICollection{string}, int)"/>.

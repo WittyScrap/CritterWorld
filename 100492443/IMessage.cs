@@ -15,6 +15,19 @@ namespace UOD100492443.Critters.AI
 		/// <summary>
 		/// The message to be sent.
 		/// </summary>
-		string Message { get; }
+		string Header { get; }
+
+		/// <summary>
+		/// Creates a string equivalent of this message
+		/// to be sent to the environment.
+		/// </summary>
+		/// <returns>A string equivalent of this message.</returns>
+		string Compose();
+
+		/// <summary>
+		/// Offers the same behaviour as <see cref="Compose"/>.
+		/// </summary>
+		/// <returns>A string equivalent of this message.</returns>
+		string ToString();
 	}
 }
