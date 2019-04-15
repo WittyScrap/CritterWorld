@@ -102,6 +102,12 @@ namespace UOD100492443.Critters.AI
 		protected float Energy { get; private set; } = 1f;
 
 		/// <summary>
+		/// If this is set to true, the critter has exhausted its
+		/// movements queue.
+		/// </summary>
+		protected bool ReachedDestination { get; private set; } = true;
+
+		/// <summary>
 		/// If this is false, no messages can be sent to the CritterWorld
 		/// enviroment.
 		/// </summary>
@@ -141,11 +147,35 @@ namespace UOD100492443.Critters.AI
 			Name = critterName;
 			Debugger = new Debug(Logger, "100492443:" + critterName);
 
-			// Bind messages to methods...
+			MessageSystem.MethodBindings["SEE"] = message => OnSee(message as SeeMessage);
+			MessageSystem.MethodBindings["LAUNCH"] = InitializeCritter;
+			MessageSystem.MethodBindings["REACHED_DESTINATION"] = message => ReachedDestination = true;
+			MessageSystem.MethodBindings.DefaultAction += StopCritter;
 		}
 
+		#region Critter messages
+		/// <summary>
+		/// Initialization event.
+		/// This is usually the entry point for any critter logic.
+		/// </summary>
+		protected virtual void OnInitialize() { }
+
+		/// <summary>
+		/// End event.
+		/// This signifies that the critter can no longer be controlled.
+		/// </summary>
+		/// <param name="stopMessage">The reason for the end.</param>
+		protected virtual void OnStop(ISimpleMessage stopMessage) { }
+
+		/// <summary>
+		/// Reports what the current critter can see around it.
+		/// </summary>
+		/// <param name="message">The contents of the SEE message.</param>
+		protected virtual void OnSee(SeeMessage message) { }
+		#endregion
+
 		#region Event driven methods
-		
+
 		/// <summary>
 		/// Initializes this critter and sends out the first fundamental
 		/// requests.
@@ -153,6 +183,18 @@ namespace UOD100492443.Critters.AI
 		private void InitializeCritter(ISimpleMessage launchEvent)
 		{
 			IsInitialized = true;
+			OnInitialize();
+		}
+
+		/// <summary>
+		/// Uninitializes the critter, making it impossible for it to
+		/// send and process any messages.
+		/// </summary>
+		/// <param name="endEvent"></param>
+		private void StopCritter(ISimpleMessage endEvent)
+		{
+			IsInitialized = false;
+			OnStop(endEvent);
 		}
 
 		/// <summary>
@@ -202,6 +244,51 @@ namespace UOD100492443.Critters.AI
 		/// Runs a SCAN operation.
 		/// </summary>
 		protected void Scan()
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Queries the environmnent for the current
+		/// level duration.
+		/// </summary>
+		protected void GetLevelDuration()
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Queries the environment for the amount
+		/// of time remaining.
+		/// </summary>
+		protected void GetTimeRemaining()
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Queries the environment about this critter's
+		/// health.
+		/// </summary>
+		protected void GetHealth()
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Queries the environment about this critter's
+		/// energy.
+		/// </summary>
+		protected void GetEnergy()
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Queries the environment about this critter's
+		/// speed.
+		/// </summary>
+		protected void GetSpeed()
 		{
 			throw new NotImplementedException();
 		}

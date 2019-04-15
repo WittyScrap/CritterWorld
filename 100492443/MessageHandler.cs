@@ -62,7 +62,7 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message to be sent to the environment.</param>
 		public void SendMessage(ITrackableMessage message)
 		{
-			TrackableCallbacks[message.RequestID] = new EventWrapper<ITrackableMessage>(message.Callback);
+			TrackableCallbacks[message.RequestID] = message.Callback;
 			string composedMessage = message.Compose();
 			Communicator(composedMessage);
 		}
@@ -84,7 +84,10 @@ namespace UOD100492443.Critters.AI
 			else if (parsedMessage is ITrackableMessage)
 			{
 				ITrackableMessage trackableMessage = parsedMessage as ITrackableMessage;
-				TrackableCallbacks[trackableMessage.RequestID].Invoke(trackableMessage);
+				if (TrackableCallbacks.TryRemove(trackableMessage.RequestID, out Action<ITrackableMessage> action))
+				{
+					action.Invoke(trackableMessage);
+				}
 			}
 			else
 			{

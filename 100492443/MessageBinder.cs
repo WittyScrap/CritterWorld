@@ -10,7 +10,7 @@ namespace UOD100492443.Critters.AI
 	/// <summary>
 	/// Binds a string header to a series of tracked messages.
 	/// </summary>
-	class MessageBinder<TMessage> : ConcurrentDictionary<int, EventWrapper<TMessage>> where TMessage : ITrackableMessage
+	class MessageBinder<TMessage> : ConcurrentDictionary<int, Action<TMessage>> where TMessage : ITrackableMessage
 	{
 	}
 }
