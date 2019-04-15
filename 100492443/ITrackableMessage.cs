@@ -15,5 +15,10 @@ namespace UOD100492443.Critters.AI
 		/// Unique request ID for messages.
 		/// </summary>
 		int RequestID { get; }
+
+		/// <summary>
+		/// The callback for when a response to this message is sent.
+		/// </summary>
+		MessageEvent<ITrackableMessage> Callback { get; set; }
 	}
 }

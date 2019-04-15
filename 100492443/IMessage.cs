@@ -29,5 +29,12 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		/// <returns>A string equivalent of this message.</returns>
 		string ToString();
+
+		/// <summary>
+		/// Parses a string into an instance of this message object.
+		/// </summary>
+		/// <param name="source">The formatted parsable string.</param>
+		/// <returns>Message equivalent of the string.</returns>
+		void FromString(string source);
 	}
 }

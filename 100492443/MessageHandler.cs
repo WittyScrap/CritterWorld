@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,8 +11,34 @@ namespace UOD100492443.Critters.AI
 	/// <summary>
 	/// Message handler for simple and tracked messages.
 	/// </summary>
-	class MessageHandler : IMessageSystem<ISimpleMessage>, IMessageSystem<ITrackableMessage>
+	class MessageHandler : IMessageSender<ISimpleMessage>, IMessageSender<ITrackableMessage>
 	{
+		/// <summary>
+		/// Defines the type of request that
+		/// needs to be resolved.
+		/// </summary>
+		public enum RequestType
+		{
+			ScanRequest,
+			NormalRequest
+		}
+
+		/// <summary>
+		/// Trackable callbacks monitor.
+		/// </summary>
+		private MessageBinder<ITrackableMessage> TrackableCallbacks => new MessageBinder<ITrackableMessage>();
+
+		/// <summary>
+		/// Relates a message header to a callback for simple
+		/// parsed messages.
+		/// </summary>
+		public ActionBinder<ISimpleMessage> MethodBindings => new ActionBinder<ISimpleMessage>();
+
+		/// <summary>
+		/// Binds a header string to a type for parsing.
+		/// </summary>
+		public TypeBinder<IMessage> TypeBindings => new TypeBinder<IMessage>();
+
 		/// <summary>
 		/// Communicator used as a medium to send messages to the environment.
 		/// </summary>
@@ -24,7 +51,8 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message to be sent to the enviromnent.</param>
 		public void SendMessage(ISimpleMessage message)
 		{
-			Communicator(message.Compose());
+			string composedMessage = message.Compose();
+			Communicator(composedMessage);
 		}
 
 		/// <summary>
@@ -34,27 +62,46 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message to be sent to the environment.</param>
 		public void SendMessage(ITrackableMessage message)
 		{
-			Communicator(message.Compose());
+			TrackableCallbacks[message.RequestID] = new EventWrapper<ITrackableMessage>(message.Callback);
+			string composedMessage = message.Compose();
+			Communicator(composedMessage);
 		}
 
 		/// <summary>
-		/// Parses a message string into a message object.
+		/// Resolves an incoming simple message and
+		/// invokes the correct methods.
 		/// </summary>
-		/// <param name="message">The message string.</param>
-		/// <returns>A message object derived from the string.</returns>
-		ITrackableMessage IMessageReceiver<ITrackableMessage>.ParseMessage(string message)
+		/// <param name="message">The string containing the incoming message.</param>
+		public void ResolveMessage(string message)
 		{
-			throw new NotImplementedException();
+			string messageHeader = ExtractHeader(message);
+			var parsedMessage = TypeBindings[messageHeader].ParseMessage(message);
+			if (parsedMessage is ISimpleMessage)
+			{
+				ISimpleMessage simpleMessage = parsedMessage as ISimpleMessage;
+				MethodBindings[messageHeader].Invoke(simpleMessage);
+			}
+			else if (parsedMessage is ITrackableMessage)
+			{
+				ITrackableMessage trackableMessage = parsedMessage as ITrackableMessage;
+				TrackableCallbacks[trackableMessage.RequestID].Invoke(trackableMessage);
+			}
+			else
+			{
+				throw new CritterException("Invalid message type: " + parsedMessage.GetType() + ", " + message);
+			}
 		}
 
 		/// <summary>
-		/// Parses a message string into a message object.
+		/// Attempts to extract the header from a
+		/// message.
 		/// </summary>
-		/// <param name="message">The message string.</param>
-		/// <returns>A message object derived from the string.</returns>
-		ISimpleMessage IMessageReceiver<ISimpleMessage>.ParseMessage(string message)
+		/// <param name="message">The full message containing the header.</param>
+		/// <returns>The header from the message.</returns>
+		private string ExtractHeader(string message)
 		{
-			throw new NotImplementedException();
+			string[] split = message.Split('\n', ':');
+			return split[0];
 		}
 	}
 }

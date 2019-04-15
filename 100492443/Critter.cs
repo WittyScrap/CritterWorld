@@ -65,6 +65,11 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected static Arena Map { get; private set; }
 
+		/// <summary>
+		/// Message system for sending and receiving messages.
+		/// </summary>
+		protected MessageHandler MessageSystem => new MessageHandler();
+
 		#region Critter properties
 		/// <summary>
 		/// The current velocity of the critter.
@@ -113,7 +118,8 @@ namespace UOD100492443.Critters.AI
 			string[] splitMessage = message.Split(':');
 			string header = splitMessage[0];
 
-			MessageDecoder(header, message);
+//			MessageDecoder(header, message);
+			MessageSystem.ResolveMessage(message);
 		}
 
 		/// <summary>
@@ -134,27 +140,8 @@ namespace UOD100492443.Critters.AI
 		{
 			Name = critterName;
 			Debugger = new Debug(Logger, "100492443:" + critterName);
-		}
-		
-		/// <summary>
-		/// Allocates the arena map object with the obtained
-		/// size information.
-		/// </summary>
-		/// <param name="arenaSize">The size of the arena.</param>
-		/// <param name="pixelSize">The size of a tile.</param>
-		private static void AllocateMap(Size arenaSize, int pixelSize)
-		{
-			if (Map == null)
-			{
-				Map = new Arena(arenaSize.Width, arenaSize.Height, pixelSize);
 
-				Map.Desirability[Arena.TileContents.Bomb]		 = -1.0f;
-				Map.Desirability[Arena.TileContents.Empty]		 = 0.0f;
-				Map.Desirability[Arena.TileContents.EscapeHatch] = 0.5f;
-				Map.Desirability[Arena.TileContents.Food]		 = 1.0f;
-				Map.Desirability[Arena.TileContents.Gift]		 = 1.0f;
-				Map.Desirability[Arena.TileContents.Terrain]	 = -1.0f;
-			}
+			// Bind messages to methods...
 		}
 
 		#region Event driven methods
@@ -163,7 +150,7 @@ namespace UOD100492443.Critters.AI
 		/// Initializes this critter and sends out the first fundamental
 		/// requests.
 		/// </summary>
-		private void InitializeCritter()
+		private void InitializeCritter(ISimpleMessage launchEvent)
 		{
 			IsInitialized = true;
 		}
@@ -173,10 +160,8 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		/// <param name="header">The message header.</param>
 		/// <param name="message">The message sub-sections.</param>
-		private void MessageDecoder(string header, string message)
+/*		private void MessageDecoder(string header, string message)
 		{
-
-
 			switch (header)
 			{
 			case "SEE":
@@ -207,66 +192,7 @@ namespace UOD100492443.Critters.AI
 				Debugger.LogError("Environment error: " + message);
 				break;
 			}
-		}
-		
-		/// <summary>
-		/// Decodes the SEE request into different sections
-		/// and feeds the results to <seealso cref="OnSee(ICollection{string}, int)"/>.
-		/// </summary>
-		/// <param name="messageBody">The body of the message.</param>
-		private void MessageSee(string messageBody)
-		{
-			string[] components = messageBody.Split('\n');
-			string messageData = components[1];
-
-			if (messageData != "Nothing")
-			{
-				string[] sightElements = messageData.Split('\t');
-				
-				OnSee(sightElements);
-			}
-		}
-
-		/// <summary>
-		/// Decodes the SCAN request into different sections
-		/// and feeds the results to <seealso cref="OnScan(ICollection{string})"/>.
-		/// It also updates the local <seealso cref="Map"/>.
-		/// </summary>
-		/// <param name="messageBody">The body of the scanned message.</param>
-		private void MessageScan(string messageBody)
-		{
-			string[] components = messageBody.Split('\n');
-
-			if (int.TryParse(components[0], out int requestID))
-			{
-				string[] sightElements = components[1].Split('\t');
-
-				Map?.Update(sightElements);
-			}
-			else
-			{
-				Debugger.LogWarning("A new SCAN message was received, but the requestID could be parsed: " + components[0]);
-			}
-		}
-
-		/// <summary>
-		/// Short-range scan that is called automatically
-		/// by the CritterWorld environmnent continuously.
-		/// </summary>
-		protected virtual void OnSee(string[] sightElements)
-		{
-			// Note: this is here to prevent the base form of this method from being called.
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// This method will be called once the critter has finished initializing.
-		/// </summary>
-		protected virtual void OnInitialized()
-		{
-			// Note: this is here to prevent the base form of this method from being called.
-			throw new NotImplementedException();
-		}
+		}*/
 
 		#endregion
 
