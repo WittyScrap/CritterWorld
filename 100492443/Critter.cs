@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using CritterController;
+using UOD100492443.Critters.Messages;
 
 /// <summary>
 /// Project bounds namespace.
@@ -69,6 +70,12 @@ namespace UOD100492443.Critters.AI
 		/// Message system for sending and receiving messages.
 		/// </summary>
 		protected MessageHandler MessageSystem => new MessageHandler();
+
+		/// <summary>
+		/// When this flag is set, <see cref="BindTypes"/> should not be called, as it
+		/// will not do anything.
+		/// </summary>
+		private static bool FinishedBindingTypes { get; set; } = false;
 
 		#region Critter properties
 		/// <summary>
@@ -147,10 +154,38 @@ namespace UOD100492443.Critters.AI
 			Name = critterName;
 			Debugger = new Debug(Logger, "100492443:" + critterName);
 
+			BindMethods();
+			BindTypes();
+		}
+
+		/// <summary>
+		/// Binds the methods in this critter object to the respective
+		/// headers in the MessageHandler.
+		/// </summary>
+		private void BindMethods()
+		{
+			MessageSystem.MethodBindings["ERROR"] = errorMessage => Debugger.LogError(((ErrorMessage)errorMessage).Contents);
 			MessageSystem.MethodBindings["SEE"] = message => OnSee(message as SeeMessage);
 			MessageSystem.MethodBindings["LAUNCH"] = InitializeCritter;
 			MessageSystem.MethodBindings["REACHED_DESTINATION"] = message => ReachedDestination = true;
 			MessageSystem.MethodBindings.DefaultAction += StopCritter;
+		}
+
+		/// <summary>
+		/// Binds the message types to the respective headers in the
+		/// MessageHandler.
+		/// </summary>
+		private static void BindTypes()
+		{
+			if (FinishedBindingTypes)
+			{
+				return;
+			}
+			FinishedBindingTypes = true;
+
+			MessageHandler.TypeBindings["ERROR"] = typeof(ErrorMessage);
+			MessageHandler.TypeBindings["SEE"] = typeof(SeeMessage);
+			
 		}
 
 		#region Critter messages
@@ -196,45 +231,6 @@ namespace UOD100492443.Critters.AI
 			IsInitialized = false;
 			OnStop(endEvent);
 		}
-
-		/// <summary>
-		/// Decodes an incoming message and calls the appropriate events.
-		/// </summary>
-		/// <param name="header">The message header.</param>
-		/// <param name="message">The message sub-sections.</param>
-/*		private void MessageDecoder(string header, string message)
-		{
-			switch (header)
-			{
-			case "SEE":
-			case "LAUNCH":
-			case "ESCAPE":
-			case "SCORED":
-			case "ATE":
-			case "FIGHT":
-			case "BUMP":
-			case "FATALITY":
-			case "STARVED":
-			case "BOMBED":
-			case "CRASHED":
-			case "REACHED_DESTINATION":
-			case "SHUTDOWN":
-			// ^^^ Simple messages ^^^
-			// -----------------------
-			// vvv Tracked messages vvv
-			case "SCAN":
-			case "ARENA_SIZE":
-			case "LEVEL_DURATION":
-			case "LEVEL_TIME_REMAINING":
-			case "HEALTH":
-			case "ENERGY":
-			case "LOCATION":
-			case "SPEED":
-			default:
-				Debugger.LogError("Environment error: " + message);
-				break;
-			}
-		}*/
 
 		#endregion
 

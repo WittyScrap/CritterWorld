@@ -59,9 +59,11 @@
     <Compile Include="Interfaces\ITrackableMessage.cs" />
     <Compile Include="MessageBinder.cs" />
     <Compile Include="MessageHandler.cs" />
-    <Compile Include="MessageResolver.cs" />
+    <Compile Include="Messages\DefaultMessage.cs" />
+    <Compile Include="Messages\ErrorMessage.cs" />
+    <Compile Include="Messages\ScanMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SeeMessage.cs" />
+    <Compile Include="Messages\SeeMessage.cs" />
     <Compile Include="TypeBinder.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>

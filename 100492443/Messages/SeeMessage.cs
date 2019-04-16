@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UOD100492443.Critters.AI;
 
-namespace UOD100492443.Critters.AI
+namespace UOD100492443.Critters.Messages
 {
 	/// <summary>
 	/// Represents a simple message without reference IDs.

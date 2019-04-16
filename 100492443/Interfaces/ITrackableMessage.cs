@@ -19,6 +19,6 @@ namespace UOD100492443.Critters.AI
 		/// <summary>
 		/// The callback for when a response to this message is sent.
 		/// </summary>
-		MessageEvent<ITrackableMessage> Callback { get; set; }
+		Action<ITrackableMessage> Callback { get; set; }
 	}
 }

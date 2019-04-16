@@ -37,7 +37,7 @@ namespace UOD100492443.Critters.AI
 		/// <summary>
 		/// Binds a header string to a type for parsing.
 		/// </summary>
-		public TypeBinder<IMessage> TypeBindings => new TypeBinder<IMessage>();
+		public static TypeBinder TypeBindings => new TypeBinder();
 
 		/// <summary>
 		/// Communicator used as a medium to send messages to the environment.
@@ -74,12 +74,11 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The string containing the incoming message.</param>
 		public void ResolveMessage(string message)
 		{
-			string messageHeader = ExtractHeader(message);
-			var parsedMessage = TypeBindings[messageHeader].ParseMessage(message);
+			var parsedMessage = TypeBindings.ParseMessage(message);
 			if (parsedMessage is ISimpleMessage)
 			{
 				ISimpleMessage simpleMessage = parsedMessage as ISimpleMessage;
-				MethodBindings[messageHeader].Invoke(simpleMessage);
+				MethodBindings[TypeBinder.ExtractHeader(message)].Invoke(simpleMessage);
 			}
 			else if (parsedMessage is ITrackableMessage)
 			{
@@ -88,23 +87,15 @@ namespace UOD100492443.Critters.AI
 				{
 					action.Invoke(trackableMessage);
 				}
+				else
+				{
+					throw new CritterException("Unable to resolve message with ID: " + trackableMessage.RequestID);
+				}
 			}
 			else
 			{
 				throw new CritterException("Invalid message type: " + parsedMessage.GetType() + ", " + message);
 			}
-		}
-
-		/// <summary>
-		/// Attempts to extract the header from a
-		/// message.
-		/// </summary>
-		/// <param name="message">The full message containing the header.</param>
-		/// <returns>The header from the message.</returns>
-		private string ExtractHeader(string message)
-		{
-			string[] split = message.Split('\n', ':');
-			return split[0];
 		}
 	}
 }
