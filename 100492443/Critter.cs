@@ -8,7 +8,7 @@ using CritterController;
 /// <summary>
 /// Project bounds namespace.
 /// </summary>
-namespace UOD100492443.Critters.AI
+namespace CritterRobots.Critters.AI
 {
 	/// <summary>
 	/// Implements basic functionality for
@@ -64,12 +64,6 @@ namespace UOD100492443.Critters.AI
 		/// The full size of the arena map.
 		/// </summary>
 		protected static Arena Map { get; private set; }
-
-		/// <summary>
-		/// When this flag is set, <see cref="BindTypes"/> should not be called, as it
-		/// will not do anything.
-		/// </summary>
-		private static bool FinishedBindingTypes { get; set; } = false;
 
 		#region Critter properties
 		/// <summary>

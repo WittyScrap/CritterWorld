@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UOD100492443.Critters.AI
+namespace CritterRobots.Critters.AI
 {
 	/// <summary>
 	/// This critter is for use exclusively for debugging purposes.

@@ -5,7 +5,7 @@ using System.Text;
 using System.Drawing;
 using System.Threading.Tasks;
 
-namespace UOD100492443.Critters
+namespace CritterRobots.Critters
 {
 	/// <summary>
 	/// Represents a simple 2-dimensional map of the terrain.
