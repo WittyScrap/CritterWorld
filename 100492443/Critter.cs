@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using CritterController;
-using UOD100492443.Critters.Messages;
 
 /// <summary>
 /// Project bounds namespace.
@@ -67,11 +66,6 @@ namespace UOD100492443.Critters.AI
 		protected static Arena Map { get; private set; }
 
 		/// <summary>
-		/// Message system for sending and receiving messages.
-		/// </summary>
-		protected MessageHandler MessageSystem => new MessageHandler();
-
-		/// <summary>
 		/// When this flag is set, <see cref="BindTypes"/> should not be called, as it
 		/// will not do anything.
 		/// </summary>
@@ -132,7 +126,6 @@ namespace UOD100492443.Critters.AI
 			string header = splitMessage[0];
 
 //			MessageDecoder(header, message);
-			MessageSystem.ResolveMessage(message);
 		}
 
 		/// <summary>
@@ -153,42 +146,10 @@ namespace UOD100492443.Critters.AI
 		{
 			Name = critterName;
 			Debugger = new Debug(Logger, "100492443:" + critterName);
-
-			BindMethods();
-			BindTypes();
-		}
-
-		/// <summary>
-		/// Binds the methods in this critter object to the respective
-		/// headers in the MessageHandler.
-		/// </summary>
-		private void BindMethods()
-		{
-			MessageSystem.MethodBindings["ERROR"] = errorMessage => Debugger.LogError(((ErrorMessage)errorMessage).Contents);
-			MessageSystem.MethodBindings["SEE"] = message => OnSee(message as SeeMessage);
-			MessageSystem.MethodBindings["LAUNCH"] = InitializeCritter;
-			MessageSystem.MethodBindings["REACHED_DESTINATION"] = message => ReachedDestination = true;
-			MessageSystem.MethodBindings.DefaultAction += StopCritter;
-		}
-
-		/// <summary>
-		/// Binds the message types to the respective headers in the
-		/// MessageHandler.
-		/// </summary>
-		private static void BindTypes()
-		{
-			if (FinishedBindingTypes)
-			{
-				return;
-			}
-			FinishedBindingTypes = true;
-
-			MessageHandler.TypeBindings["ERROR"] = typeof(ErrorMessage);
-			MessageHandler.TypeBindings["SEE"] = typeof(SeeMessage);
-			
 		}
 
 		#region Critter messages
+
 		/// <summary>
 		/// Initialization event.
 		/// This is usually the entry point for any critter logic.
@@ -200,13 +161,14 @@ namespace UOD100492443.Critters.AI
 		/// This signifies that the critter can no longer be controlled.
 		/// </summary>
 		/// <param name="stopMessage">The reason for the end.</param>
-		protected virtual void OnStop(ISimpleMessage stopMessage) { }
+		protected virtual void OnStop() { }
 
 		/// <summary>
 		/// Reports what the current critter can see around it.
 		/// </summary>
 		/// <param name="message">The contents of the SEE message.</param>
-		protected virtual void OnSee(SeeMessage message) { }
+		protected virtual void OnSee() { }
+
 		#endregion
 
 		#region Event driven methods
@@ -215,7 +177,7 @@ namespace UOD100492443.Critters.AI
 		/// Initializes this critter and sends out the first fundamental
 		/// requests.
 		/// </summary>
-		private void InitializeCritter(ISimpleMessage launchEvent)
+		private void InitializeCritter()
 		{
 			IsInitialized = true;
 			OnInitialize();
@@ -226,10 +188,10 @@ namespace UOD100492443.Critters.AI
 		/// send and process any messages.
 		/// </summary>
 		/// <param name="endEvent"></param>
-		private void StopCritter(ISimpleMessage endEvent)
+		private void StopCritter()
 		{
 			IsInitialized = false;
-			OnStop(endEvent);
+			OnStop();
 		}
 
 		#endregion

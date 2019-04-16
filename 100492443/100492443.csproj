@@ -44,27 +44,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActionBinder.cs" />
     <Compile Include="Arena.cs" />
     <Compile Include="Critter.cs" />
-    <Compile Include="CritterException.cs" />
     <Compile Include="CritterFactory.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="DebugCritter.cs" />
-    <Compile Include="Interfaces\IMessage.cs" />
-    <Compile Include="Interfaces\IMessageReceiver.cs" />
-    <Compile Include="Interfaces\IMessageSender.cs" />
-    <Compile Include="Interfaces\IMessageSystem.cs" />
-    <Compile Include="Interfaces\ISimpleMessage.cs" />
-    <Compile Include="Interfaces\ITrackableMessage.cs" />
-    <Compile Include="MessageBinder.cs" />
-    <Compile Include="MessageHandler.cs" />
-    <Compile Include="Messages\DefaultMessage.cs" />
-    <Compile Include="Messages\ErrorMessage.cs" />
-    <Compile Include="Messages\ScanMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Messages\SeeMessage.cs" />
-    <Compile Include="TypeBinder.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
   <ItemGroup>
