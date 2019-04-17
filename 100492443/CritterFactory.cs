@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CritterController;
-using CritterRobots.Critters.AI;
+using CritterRobots.Critters.Controllers;
 
 namespace CritterRobots.Critters
 {

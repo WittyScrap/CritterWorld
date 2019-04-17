@@ -8,7 +8,7 @@ using CritterController;
 /// <summary>
 /// Project bounds namespace.
 /// </summary>
-namespace CritterRobots.Critters.AI
+namespace CritterRobots.Critters.Controllers
 {
 	/// <summary>
 	/// Implements basic functionality for
@@ -116,10 +116,7 @@ namespace CritterRobots.Critters.AI
 		/// <param name="message">The message that was received.</param>
 		public void Receive(string message)
 		{
-			string[] splitMessage = message.Split(':');
-			string header = splitMessage[0];
 
-//			MessageDecoder(header, message);
 		}
 
 		/// <summary>

@@ -5,7 +5,7 @@ using System.IO;
 /// <summary>
 /// Project bounds namespace.
 /// </summary>
-namespace CritterRobots.Critters.AI
+namespace CritterRobots.Critters.Controllers
 {
 	/// <summary>
 	/// Handles logging messages.

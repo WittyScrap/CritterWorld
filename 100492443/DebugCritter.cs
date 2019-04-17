@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CritterRobots.Critters.AI
+namespace CritterRobots.Critters.Controllers
 {
 	/// <summary>
 	/// This critter is for use exclusively for debugging purposes.
@@ -14,17 +14,7 @@ namespace CritterRobots.Critters.AI
 		/// <summary>
 		/// Creates a new testing critter.
 		/// </summary>
-		public DebugCritter() : base("~ The bug whomv'st debugs ~")
+		public DebugCritter() : base("~ The bug whoms't de-bugs ~")
 		{ }
-
-		/// <summary>
-		/// This method will call when the- ugh forget it it's 2am
-		/// and this is just a testing thing it won't go anywhere.
-		/// </summary>
-		protected override void OnSee(string[] stuff)
-		{
-			Debugger.LogMessage("Initialized!");
-			Responder("RANDOM_DESTINATION");
-		}
 	}
 }
