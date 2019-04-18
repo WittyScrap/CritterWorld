@@ -4,11 +4,12 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using CritterController;
+using CritterRobots.Messages;
 
 /// <summary>
 /// Project bounds namespace.
 /// </summary>
-namespace UOD100492443.Critters.AI
+namespace CritterRobots.Critters.Controllers
 {
 	/// <summary>
 	/// Implements basic functionality for
@@ -54,7 +55,7 @@ namespace UOD100492443.Critters.AI
 			}
 		}
 		#endregion
-
+		
 		/// <summary>
 		/// The logger obejct to show debugging messages.
 		/// </summary>
@@ -65,6 +66,7 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected static Arena Map { get; private set; }
 
+		#region Critter properties
 		/// <summary>
 		/// The current velocity of the critter.
 		/// </summary>
@@ -99,12 +101,8 @@ namespace UOD100492443.Critters.AI
 		/// If this is false, no messages can be sent to the CritterWorld
 		/// enviroment.
 		/// </summary>
-		protected bool IsInitialized { get; private set; }
-
-		/// <summary>
-		/// Request tracker that uses the request ID to track requests.
-		/// </summary>
-		private Dictionary<int, TrackableRequest> TrackedRequests => new Dictionary<int, TrackableRequest>();
+		private bool IsInitialized { get; set; }
+		#endregion
 
 		/// <summary>
 		/// Handles an incoming message from the CritterWorld
@@ -113,11 +111,141 @@ namespace UOD100492443.Critters.AI
 		/// <param name="message">The message that was received.</param>
 		public void Receive(string message)
 		{
-			string[] splitMessage = message.Split(':');
-			string header = splitMessage[0];
-			string messageBody = string.Join(":", splitMessage.Skip(1).ToArray());
+			IMessage parsedMessage = ConvertMessage(message);
+			if (parsedMessage == null)
+			{
+				return;
+			}
+			if (parsedMessage is SeeMessage seeMessage)
+			{
+				OnSee(seeMessage);
+			}
+			else if (parsedMessage is ScanMessage scanMessage)
+			{
+				OnScan(scanMessage);
+			}
+			else
+			{
+				HandleMessage(parsedMessage);
+			}
+		}
 
-			MessageDecoder(header, messageBody);
+		/// <summary>
+		/// Handles switching a simple message through to the
+		/// correct internal methods.
+		/// </summary>
+		/// <param name="message">The message to be switched.</param>
+		private void HandleMessage(IMessage message)
+		{
+			int requestID;
+			OnMessageReceived(message);
+			switch (message.Header)
+			{
+			case "LAUNCH":
+				InitializeCritter();
+				break;
+			case "FATALITY":
+			case "STARVED":
+			case "BOMBED":
+			case "CRASHED":
+			case "ESCAPE":
+			case "SHUTDOWN":
+				StopCritter(message.Header);
+				break;
+			case "LEVEL_DURATION":
+				ElapsedTime = message.GetInteger(1);
+				break;
+			case "LEVEL_TIME_REMAINING":
+				RemainingTime = message.GetInteger(1);
+				break;
+			case "HEALTH":
+				requestID = message.GetInteger(0);
+				Health = message.GetInteger(1) / 100.0f;
+				OnHealthUpdate(requestID, Health);
+				break;
+			case "ENERGY":
+				requestID = message.GetInteger(0);
+				Energy = message.GetInteger(1) / 100.0f;
+				OnEnergyUpdate(requestID, Energy);
+				break;
+			case "LOCATION":
+				requestID = message.GetInteger(0);
+				Location = message.GetPoint(1);
+				OnLocationUpdate(requestID, Location);
+				break;
+			case "SPEED":
+				requestID = message.GetInteger(0);
+				Velocity = new Vector(message.GetDouble(1), message.GetDouble(2));
+				OnVelocityUpdate(requestID, Velocity);
+				break;
+			case "ARENA_SIZE":
+				CreateArena(message.GetInteger(1), message.GetInteger(2), 100);
+				break;
+			case "SCORED":
+				OnScored(message.GetPoint(0));
+				break;
+			case "ATE":
+				OnAte(message.GetPoint(0));
+				break;
+			case "FIGHT":
+				OnFight(message.GetPoint(0), message.GetInteger(1), message.GetString(2));
+				break;
+			case "BUMP":
+				OnBump(message.GetPoint(0));
+				break;
+			case "REACHED_DESTINATION":
+				OnDestinationReached(message.GetPoint(0));
+				break;
+			}
+		}
+
+		/// <summary>
+		/// Creates the arena mapper object.
+		/// </summary>
+		/// <param name="arenaWidth">The width of the arena.</param>
+		/// <param name="arenaHeight">The height of the arena.</param>
+		/// <param name="pixelsPerCell">The number of pixels that compose a single cell.</param>
+		private static void CreateArena(int arenaWidth, int arenaHeight, int pixelsPerCell)
+		{
+			Map = new Arena(arenaWidth, arenaHeight, pixelsPerCell);
+			Map.Desirability[Arena.TileContents.Bomb] = -1;
+			Map.Desirability[Arena.TileContents.Empty] = 0;
+			Map.Desirability[Arena.TileContents.EscapeHatch] = .5f;
+			Map.Desirability[Arena.TileContents.Food] = 1.0f;
+			Map.Desirability[Arena.TileContents.Gift] = .75f;
+			Map.Desirability[Arena.TileContents.Terrain] = -1;
+		}
+
+		/// <summary>
+		/// Sends a message to the CritterWorld environment.
+		/// </summary>
+		/// <param name="message">The message to be sent.</param>
+		protected void SendMessage(IMessage message)
+		{
+			Responder(message.Format());
+		}
+
+		/// <summary>
+		/// Converts a source message into an
+		/// <see cref="IMessage"/> object.
+		/// </summary>
+		/// <param name="message">The source message.</param>
+		/// <returns>An <see cref="IMessage"/> equivalent of the <paramref name="message"/>.</returns>
+		private IMessage ConvertMessage(string message)
+		{
+			SimpleMessage.GetHeaderBody(message, out string messageHeader, out string messageBody);
+			switch (messageHeader)
+			{
+			case "ERROR":
+				Debugger.LogError(messageBody);
+				return null;
+			case "SEE":
+				return new SeeMessage(message);
+			case "SCAN":
+				return new ScanMessage(message);
+			default:
+				return new SimpleMessage(message);
+			}
 		}
 
 		/// <summary>
@@ -139,91 +267,108 @@ namespace UOD100492443.Critters.AI
 			Name = critterName;
 			Debugger = new Debug(Logger, "100492443:" + critterName);
 		}
-		
-		/// <summary>
-		/// Creates a request message to the CritterWorld environment.
-		/// </summary>
-		/// <typeparam name="T">The type of the request.</typeparam>
-		/// <returns>The generated request object.</returns>
-		protected T CreateRequest<T>() where T : TrackableRequest, new()
-		{
-			T generatedRequest = new T();
-			generatedRequest.OnResolved += (sender, args) => { TrackedRequests.Remove(generatedRequest.RequestID); };
-			TrackedRequests[generatedRequest.RequestID] = generatedRequest;
 
-			return generatedRequest;
-		}
+		#region Critter messages
 
 		/// <summary>
-		/// Attempts to resolve a message if it is currently being tracked.
+		/// Allows for the creation of custom behaviour
+		/// when a message of any type is received.
 		/// </summary>
-		/// <param name="messageID">The ID of the message to resolve.</param>
-		/// <returns>True if the message was resolved, false otherwise.</returns>
-		/// <remarks>
-		/// This method does not check to ensure that the response expects
-		/// a request ID, and should therefore only be called in those circumstances.
-		/// </remarks>
-		private bool TryResolve(string receivedMessage)
-		{
-			string[] components = receivedMessage.Split(':');
-			string receivedID = components[0];
-			if (int.TryParse(receivedID, out int messageID) && TrackedRequests.ContainsKey(messageID))
-			{
-				string messageContents = string.Join(":", components.Skip(1).ToArray());
-				TrackedRequests[messageID].Resolve(receivedMessage);
-				return true;
-			}
-			else
-			{
-				Debugger.LogError("Attempted to resove an invalid message type!");
-				return false;
-			}
-		}
+		/// <param name="message">The message that was received.</param>
+		protected virtual void OnMessageReceived(IMessage message) { }
 
 		/// <summary>
-		/// Allocates the arena map object with the obtained
-		/// size information.
+		/// Initialization event.
+		/// This is usually the entry point for any critter logic.
 		/// </summary>
-		/// <param name="arenaSize">The size of the arena.</param>
-		/// <param name="pixelSize">The size of a tile.</param>
-		private static void AllocateMap(Size arenaSize, int pixelSize)
-		{
-			if (Map == null)
-			{
-				Map = new Arena(arenaSize.Width, arenaSize.Height, pixelSize);
+		protected virtual void OnInitialize() { }
 
-				Map.Desirability[Arena.TileContents.Bomb]		 = -1.0f;
-				Map.Desirability[Arena.TileContents.Empty]		 = 0.0f;
-				Map.Desirability[Arena.TileContents.EscapeHatch] = 0.5f;
-				Map.Desirability[Arena.TileContents.Food]		 = 1.0f;
-				Map.Desirability[Arena.TileContents.Gift]		 = 1.0f;
-				Map.Desirability[Arena.TileContents.Terrain]	 = -1.0f;
-			}
-		}
+		/// <summary>
+		/// End event.
+		/// This signifies that the critter can no longer be controlled.
+		/// </summary>
+		protected virtual void OnStop(string stopReason) { }
+
+		/// <summary>
+		/// Reports what the current critter can see around it.
+		/// </summary>
+		/// <param name="message">The contents of the SEE message.</param>
+		protected virtual void OnSee(SeeMessage message) { }
+
+		/// <summary>
+		/// Reports everything the current critter can see, with
+		/// some limitations.
+		/// </summary>
+		/// <param name="message">The contents of the SCAN message.</param>
+		protected virtual void OnScan(ScanMessage message) { }
+
+		/// <summary>
+		/// Health update events are called when a HEALTH message is
+		/// received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="remainingHealth">The amount of remaining health.</param>
+		protected virtual void OnHealthUpdate(int requestID, float remainingHealth) { }
+
+		/// <summary>
+		/// Energy update events are called when an ENERGY message is
+		/// received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="remainingEnergy">The amount of remaining energy.</param>
+		protected virtual void OnEnergyUpdate(int requestID, float remainingEnergy) { }
+
+		/// <summary>
+		/// Velocuty update events are called when a SPEED message
+		/// is received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="velocity">The current velocity.</param>
+		protected virtual void OnVelocityUpdate(int requestID, Vector velocity) { }
+
+		/// <summary>
+		/// Location update events are called when a LOCATION message
+		/// is received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="location">The current location</param>
+		protected virtual void OnLocationUpdate(int requestID, Point location) { }
+
+		/// <summary>
+		/// Called when this critter collects a gift anywhere in the
+		/// arena.
+		/// </summary>
+		/// <param name="location">The location in which the gift was collected.</param>
+		protected virtual void OnScored(Point location) { }
+
+		/// <summary>
+		/// Called when this critter eats food anywhere in the arena.
+		/// </summary>
+		/// <param name="location">The location in which the food was eaten.</param>
+		protected virtual void OnAte(Point location) { }
+
+		/// <summary>
+		/// Called when this critter bumps into any other critter in the arena.
+		/// </summary>
+		/// <param name="location">Where the bump occurred.</param>
+		protected virtual void OnFight(Point location, int critterNumber, string critterInfo) { }
+
+		/// <summary>
+		/// Called when this critter bumps into any terrain in the arena.
+		/// </summary>
+		/// <param name="location">Where the bump occurred.</param>
+		protected virtual void OnBump(Point location) { }
+
+		/// <summary>
+		/// Called when this reaches a previously set destination.
+		/// </summary>
+		/// <param name="location">The current critter location.</param>
+		protected virtual void OnDestinationReached(Point location) { }
+
+
+		#endregion
 
 		#region Event driven methods
-
-		/// <summary>
-		/// Event handler receiver for the GET_ARENA_SIZE responder.
-		/// </summary>
-		/// <param name="arenaSizeFormat"></param>
-		private void UpdateArenaSize(string message)
-		{
-			string[] messageComponents = message.Split(':');
-			if (messageComponents.Length < 2)
-			{
-				Debugger.LogError("Invalid ARENA_SIZE request received, less than 2 blocks separated by a ':'.");
-			}
-			if (int.TryParse(messageComponents[0], out int width) &&
-				int.TryParse(messageComponents[1], out int height))
-			{
-				AllocateMap(new Size(width, height), 100);
-			}
-			else
-			{
-				Debugger.LogError("Invalid ARENA_SIZE request received, values could not be parsed to integers.");
-			}
-		}
 
 		/// <summary>
 		/// Initializes this critter and sends out the first fundamental
@@ -231,279 +376,19 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		private void InitializeCritter()
 		{
-			var arenaSizeRequester = CreateRequest<ArenaSizeRequest>();
-			arenaSizeRequester.OnResolved += (sender, message) => UpdateArenaSize(message);
-			arenaSizeRequester.Submit(Responder);
-
 			IsInitialized = true;
+			OnInitialize();
 		}
 
 		/// <summary>
-		/// Decodes an incoming message and calls the appropriate events.
+		/// Uninitializes the critter, making it impossible for it to
+		/// send and process any messages.
 		/// </summary>
-		/// <param name="header">The message header.</param>
-		/// <param name="body">The message sub-sections.</param>
-		private void MessageDecoder(string header, string body)
+		/// <param name="endEvent"></param>
+		private void StopCritter(string reason)
 		{
-			switch (header)
-			{
-			case "ERROR":
-				Debugger.LogError(body);
-				break;
-			case "SEE":
-				MessageSee(body);
-				break;
-			case "LAUNCH":
-				InitializeCritter();
-				break;
-			case "SCAN":
-			case "ARENA_SIZE":
-			case "LEVEL_DURATION":
-			case "LEVEL_TIME_REMAINING":
-			case "HEALTH":
-			case "ENERGY":
-			case "LOCATION":
-			case "SPEED":
-				TryResolve(body);
-				break;
-			}
-		}
-
-		/// <summary>
-		/// Decodes the SEE request into different sections
-		/// and feeds the results to <seealso cref="OnSee(ICollection{string}, int)"/>.
-		/// </summary>
-		/// <param name="messageBody">The body of the message.</param>
-		private void MessageSee(string messageBody)
-		{
-			string[] components = messageBody.Split('\n');
-			string messageData = components[1];
-
-			if (messageData != "Nothing")
-			{
-				string[] sightElements = messageData.Split('\t');
-				
-				OnSee(sightElements);
-			}
-		}
-
-		/// <summary>
-		/// Decodes the SCAN request into different sections
-		/// and feeds the results to <seealso cref="OnScan(ICollection{string})"/>.
-		/// It also updates the local <seealso cref="Map"/>.
-		/// </summary>
-		/// <param name="messageBody">The body of the scanned message.</param>
-		private void MessageScan(string messageBody)
-		{
-			string[] components = messageBody.Split('\n');
-
-			if (int.TryParse(components[0], out int requestID))
-			{
-				string[] sightElements = components[1].Split('\t');
-
-				Map?.Update(sightElements);
-			}
-			else
-			{
-				Debugger.LogWarning("A new SCAN message was received, but the requestID could be parsed: " + components[0]);
-			}
-		}
-
-		/// <summary>
-		/// Parses a generic message into any
-		/// type of parsable output.
-		/// </summary>
-		/// <typeparam name="TParam1">Type of the first parameter.</typeparam>
-		/// <typeparam name="TParam2">Type of the second parameter.</typeparam>
-		/// <typeparam name="TParam3">Type of the third parameter.</typeparam>
-		/// <param name="message">The source message.</param>
-		/// <param name="param1">The first output.</param>
-		/// <param name="param2">The second output.</param>
-		/// <param name="param3">The third output.</param>
-		private bool ParseMessage<TParam1, TParam2, TParam3>(string message, out TParam1 param1, out TParam2 param2, out TParam3 param3)
-		{
-			if (ParseMessage(message, out param1, out param2))
-			{
-				try
-				{
-					string[] components = message.Split(':');
-					param3 = (TParam3)Convert.ChangeType(components[2], typeof(TParam3));
-
-					return true;
-				}
-				catch (InvalidCastException)
-				{
-					Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
-					param3 = default(TParam3);
-
-					return false;
-				}
-			}
-			else
-			{
-				param1 = default(TParam1);
-				param2 = default(TParam2);
-				param3 = default(TParam3);
-
-				return false;
-			}
-		}
-
-		/// <summary>
-		/// Generic parsing system to convert a message body into
-		/// two output types.
-		/// </summary>
-		/// <typeparam name="TParam1">The first output type.</typeparam>
-		/// <typeparam name="TParam2">The second output type.</typeparam>
-		/// <param name="message">The message to parse.</param>
-		/// <param name="param1">The first output object.</param>
-		/// <param name="param2">The second output object.</param>
-		private bool ParseMessage<TParam1, TParam2>(string message, out TParam1 param1, out TParam2 param2)
-		{
-			if (ParseMessage(message, out param1))
-			{
-				try
-				{
-					string[] components = message.Split(':');
-					param2 = (TParam2)Convert.ChangeType(components[1], typeof(TParam2));
-
-					return true;
-				}
-				catch (InvalidCastException)
-				{
-					Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
-					param2 = default(TParam2);
-
-					return false;
-				}
-			}
-			else
-			{
-				param1 = default(TParam1);
-				param2 = default(TParam2);
-
-				return false;
-			}
-		}
-
-		/// <summary>
-		/// Generic parsing system to convert a message body into
-		/// one output type.
-		/// </summary>
-		/// <typeparam name="TParam">The output type.</typeparam>
-		/// <param name="message">The message body.</param>
-		/// <param name="param">The output object.</param>
-		private bool ParseMessage<TParam>(string message, out TParam param)
-		{
-			try
-			{
-				string[] components = message.Split(':');
-				param = (TParam)Convert.ChangeType(components[0], typeof(TParam));
-
-				return true;
-			}
-			catch (InvalidCastException)
-			{
-				Debugger.LogError("Message parsing failed for: " + message + ", with 3 output parameters.");
-				param = default(TParam);
-
-				return false;
-			}
-		}
-
-		/// <summary>
-		/// Updates the location of this critter to
-		/// the result of a GET_LOCATION request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_LOCATION request.</param>
-		private void UpdateTimeRemaining(string message)
-		{
-			if (ParseMessage(message, out float timeRemaining))
-			{
-				RemainingTime = timeRemaining;
-			}
-		}
-
-		/// <summary>
-		/// Updates the elapsed time since the beginning of the level to
-		/// the result of a GET_LEVEL_DURATION request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_LEVEL_DURATION request.</param>
-		private void UpdateTimeElapsed(string message)
-		{
-			if (ParseMessage(message, out float timeElapsed))
-			{
-				ElapsedTime = timeElapsed;
-			}
-		}
-
-		/// <summary>
-		/// Updates the remainig time before the end of the level to
-		/// the result of a GET_LEVEL_TIME_REMAINING request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_LEVEL_TIME_REMAINING request.</param>
-		private void UpdateHealth(string message)
-		{
-			if (ParseMessage(message, out int healthPercentage))
-			{
-				Health = healthPercentage / 100.0f;
-			}
-		}
-
-		/// <summary>
-		/// Updates the amount of energy left for this critter to
-		/// the result of a GET_ENERGY request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_ENERGY request.</param>
-		private void UpdateEnergy(string message)
-		{
-			if (ParseMessage(message, out int energyPercentage))
-			{
-				Energy = energyPercentage / 100.0f;
-			}
-		}
-
-		/// <summary>
-		/// Updates the velocity of this critter to
-		/// the result of a GET_VELOCITY request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_VELOCITY request.</param>
-		private void UpdateVelocity(string message)
-		{
-			if (ParseMessage(message, out double xVelocity, out double yVelocity, out double magnitude))
-			{
-				Velocity = new Vector(xVelocity, yVelocity);
-			}
-		}
-
-		/// <summary>
-		/// Updates the location of this critter to
-		/// the result of a GET_LOCATION request.
-		/// </summary>
-		/// <param name="message">The message containig the results of the GET_LOCATION request.</param>
-		private void UpdateLocation(string message)
-		{
-			if (ParseMessage(message, out string coordinate))
-			{
-				Location = Arena.ParseCoordinate(coordinate);
-			}
-		}
-
-		/// <summary>
-		/// Short-range scan that is called automatically
-		/// by the CritterWorld environmnent continuously.
-		/// </summary>
-		protected virtual void OnSee(string[] sightElements)
-		{
-
-		}
-
-		/// <summary>
-		/// This method will be called once the critter has finished initializing.
-		/// </summary>
-		protected virtual void OnInitialized()
-		{
-
+			IsInitialized = false;
+			OnStop(reason);
 		}
 
 		#endregion
@@ -515,69 +400,52 @@ namespace UOD100492443.Critters.AI
 		/// </summary>
 		protected void Scan()
 		{
-			var scanRequester = CreateRequest<ScanRequest>();
-			scanRequester.OnResolved += (sender, message) => MessageScan(message);
-			scanRequester.Submit(Responder);
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Updates the stored speed value to the current critter's speed.
+		/// Queries the environmnent for the current
+		/// level duration.
 		/// </summary>
-		protected void CheckSpeed()
+		protected void GetLevelDuration()
 		{
-			var speedRequester = CreateRequest<SpeedRequest>();
-			speedRequester.OnResolved += (sender, message) => UpdateVelocity(message);
-			speedRequester.Submit(Responder);
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Updates the stored location to the current critter's position.
+		/// Queries the environment for the amount
+		/// of time remaining.
 		/// </summary>
-		protected void CheckLocation()
+		protected void GetTimeRemaining()
 		{
-			var locationRequester = CreateRequest<LocationRequest>();
-			locationRequester.OnResolved += (sender, message) => UpdateLocation(message);
-			locationRequester.Submit(Responder);
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Updates the stored elapsed time to the current level's timer.
+		/// Queries the environment about this critter's
+		/// health.
 		/// </summary>
-		protected void CheckElapsedTime()
+		protected void GetHealth()
 		{
-			var elapsedTimeRequester = CreateRequest<LevelDurationRequest>();
-			elapsedTimeRequester.OnResolved += (sender, message) => UpdateTimeElapsed(message);
-			elapsedTimeRequester.Submit(Responder);
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Updates the remaining time to the current level's timer.
+		/// Queries the environment about this critter's
+		/// energy.
 		/// </summary>
-		protected void CheckRemainingTime()
+		protected void GetEnergy()
 		{
-			var remainingTimeRequester = CreateRequest<TimeRemainingRequest>();
-			remainingTimeRequester.OnResolved += (sender, message) => UpdateTimeRemaining(message);
-			remainingTimeRequester.Submit(Responder);
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Updates the current local health to the critter's health value.
+		/// Queries the environment about this critter's
+		/// speed.
 		/// </summary>
-		protected void CheckHealth()
+		protected void GetSpeed()
 		{
-			var healthChecker = CreateRequest<HealthRequest>();
-			healthChecker.OnResolved += (sender, message) => UpdateHealth(message);
-			healthChecker.Submit(Responder);
-		}
-
-		/// <summary>
-		/// Updates the current local energy to the critter's energy value.
-		/// </summary>
-		protected void CheckEnergy()
-		{
-			var energyChecker = CreateRequest<EnergyRequest>();
-			energyChecker.OnResolved += (sender, message) => UpdateEnergy(message);
-			energyChecker.Submit(Responder);
+			throw new NotImplementedException();
 		}
 
 		#endregion

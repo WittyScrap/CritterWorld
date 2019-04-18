@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CritterController;
-using UOD100492443.Critters.AI;
+using CritterRobots.Critters.Controllers;
 
-namespace UOD100492443.Critters
+namespace CritterRobots.Critters
 {
 	/// <summary>
 	/// Creates a series of critters of the necessary types.
