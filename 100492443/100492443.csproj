@@ -54,7 +54,6 @@
     <Compile Include="Messages\SeeMessage.cs" />
     <Compile Include="Messages\SimpleMessage.cs" />
     <Compile Include="Messages\ITrackedMessage.cs" />
-    <Compile Include="Messages\TrackedMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>

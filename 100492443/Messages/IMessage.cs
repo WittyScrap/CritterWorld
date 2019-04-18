@@ -49,5 +49,11 @@ namespace CritterRobots.Messages
 		/// <param name="offset">Which element should be extracted.</param>
 		/// <returns>The extracted integer.</returns>
 		double GetDouble(int offset);
+
+		/// <summary>
+		/// Converts this message into a CritterWorld compatible string.
+		/// </summary>
+		/// <returns>A CritterWorld compatible formatted string.</returns>
+		string Format();
 	}
 }

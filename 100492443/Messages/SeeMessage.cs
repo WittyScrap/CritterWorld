@@ -16,7 +16,7 @@ namespace CritterRobots.Messages
 		/// Constructs 
 		/// </summary>
 		/// <param name="sourceMessage"></param>
-		public SeeMessage(string sourceMessage) : base(sourceMessage, "\n\t", ":")
+		public SeeMessage(string sourceMessage) : base(sourceMessage, "\n\t")
 		{ }
 	}
 }

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using CritterController;
+using CritterRobots.Messages;
 
 /// <summary>
 /// Project bounds namespace.
@@ -116,7 +117,30 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="message">The message that was received.</param>
 		public void Receive(string message)
 		{
+		}
 
+		/// <summary>
+		/// Sends a message to the CritterWorld environment.
+		/// </summary>
+		/// <param name="message">The message to be sent.</param>
+		protected void SendMessage(IMessage message)
+		{
+			Responder(message.Format());
+		}
+
+		/// <summary>
+		/// Converts a source message into an
+		/// <see cref="IMessage"/> object.
+		/// </summary>
+		/// <param name="message">The source message.</param>
+		/// <returns>An <see cref="IMessage"/> equivalent of the <paramref name="message"/>.</returns>
+		private IMessage ConvertMessage(string message)
+		{
+			string messageHeader = SimpleMessage.GetHeader(message);
+			switch (messageHeader)
+			{
+				
+			}
 		}
 
 		/// <summary>

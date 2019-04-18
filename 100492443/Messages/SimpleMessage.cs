@@ -38,18 +38,17 @@ namespace CritterRobots.Messages
 		/// Constructs a simple message from a source message.
 		/// </summary>
 		/// <param name="sourceMessage">Formatted source message/</param>
-		public SimpleMessage(string sourceMessage) : this(sourceMessage, ":", ":")
+		public SimpleMessage(string sourceMessage) : this(sourceMessage, ":")
 		{ }
 
 		/// <summary>
 		/// Explicit constructor.
 		/// </summary>
-		protected SimpleMessage(string sourceMessage, string separators, string divisors)
+		protected SimpleMessage(string sourceMessage, string separators)
 		{
-			Separators = separators;
-			string[] headerBodySplit = sourceMessage.Split(divisors.ToCharArray(), 2);
-			Header = headerBodySplit[0];
-			Body = headerBodySplit[1];
+			GetHeaderBody(sourceMessage, out string header, out string body);
+			Header = header;
+			Body = body;
 			SplitBody = Body.Split(Separators.ToCharArray());
 		}
 
@@ -107,6 +106,50 @@ namespace CritterRobots.Messages
 				throw new ArgumentException("Message component " + SplitBody[offset] + " could not be parsed to a double.");
 			}
 			throw new ArgumentOutOfRangeException("offset");
+		}
+
+		/// <summary>
+		/// Converts this message into a CritterWorld compatible string.
+		/// </summary>
+		/// <returns>A CritterWorld compatible formatted string.</returns>
+		public virtual string Format()
+		{
+			return Header + ":" + Body;
+		}
+
+		/// <summary>
+		/// Isolates and extracts the header from the provided
+		/// string.
+		/// </summary>
+		/// <param name="sourceMessage">The source message string.</param>
+		/// <returns>The header from the string.</returns>
+		public static string GetHeader(string sourceMessage)
+		{
+			StringBuilder headerBuilder = new StringBuilder();
+			for (int index = 0; sourceMessage[index] != ':' && index < sourceMessage.Length; ++i)
+			{
+				headerBuilder.Append(sourceMessage[index]);
+			}
+			return headerBuilder.ToString();
+		}
+
+		/// <summary>
+		/// Returns the header and the body of this message
+		/// as two separate strings.
+		/// </summary>
+		/// <param name="sourceMessage">The source message string.</param>
+		/// <param name="header">The extracted header.</param>
+		/// <param name="body">The extracted body.</param>
+		public static void GetHeaderBody(string sourceMessage, out string header, out string body)
+		{
+			StringBuilder headerBuilder = new StringBuilder();
+			int index = 0;
+			for (; sourceMessage[index] != ':' && index < sourceMessage.Length; ++index)
+			{
+				headerBuilder.Append(sourceMessage[index]);
+			}
+			header = headerBuilder.ToString();
+			body = sourceMessage.Remove(index + 1);
 		}
 	}
 }
