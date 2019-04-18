@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,7 +37,6 @@ namespace CritterRobots.Messages
 		/// by selecting the element in the array obtained
 		/// by splitting the <see cref="Body"/>.
 		/// </summary>
-		/// <param name="separators">The separators.</param>
 		/// <param name="offset">Which element should be extracted.</param>
 		/// <returns>The extracted integer.</returns>
 		int GetInteger(int offset);
@@ -49,6 +49,15 @@ namespace CritterRobots.Messages
 		/// <param name="offset">Which element should be extracted.</param>
 		/// <returns>The extracted integer.</returns>
 		double GetDouble(int offset);
+
+		/// <summary>
+		/// Extracts and parses a point from the <see cref="Body"/>,
+		/// by selecting the element in the array obtained
+		/// by splitting the <see cref="Body"/>.
+		/// </summary>
+		/// <param name="offset">Which element should be extracted.</param>
+		/// <returns>The extracted point.</returns>
+		Point GetPoint(int offset);
 
 		/// <summary>
 		/// Converts this message into a CritterWorld compatible string.

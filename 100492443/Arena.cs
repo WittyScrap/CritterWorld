@@ -46,17 +46,17 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// Accesses the internal terrain map.
 		/// </summary>
-		public TileContents[,] TerrainMap { get; private set; }
+		public TileContents[,] TerrainMap { get; }
 
 		/// <summary>
 		/// Accesses the internal desirability map.
 		/// </summary>
-		public float[,] DesirabilityMap { get; private set; }
+		public float[,] DesirabilityMap { get; }
 
 		/// <summary>
 		/// The size of a cell in pixels.
 		/// </summary>
-		private readonly int m_pixelSize;
+		private int PixelSize { get; }
 
 		/// <summary>
 		/// Creates an arena of a specific pixel size.
@@ -72,7 +72,7 @@ namespace CritterRobots.Critters
 				pixelHeight / pixelSize
 			];
 
-			m_pixelSize = pixelSize;
+			PixelSize = pixelSize;
 		}
 
 		/// <summary>
@@ -95,8 +95,8 @@ namespace CritterRobots.Critters
 		{
 			return new Point
 			(
-				pixelCoordinate.X / m_pixelSize,
-				pixelCoordinate.Y / m_pixelSize
+				pixelCoordinate.X / PixelSize,
+				pixelCoordinate.Y / PixelSize
 			);
 		}
 

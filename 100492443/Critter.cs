@@ -98,12 +98,6 @@ namespace CritterRobots.Critters.Controllers
 		protected float Energy { get; private set; } = 1f;
 
 		/// <summary>
-		/// If this is set to true, the critter has exhausted its
-		/// movements queue.
-		/// </summary>
-		protected bool ReachedDestination { get; private set; } = true;
-
-		/// <summary>
 		/// If this is false, no messages can be sent to the CritterWorld
 		/// enviroment.
 		/// </summary>
@@ -144,6 +138,7 @@ namespace CritterRobots.Critters.Controllers
 		private void HandleMessage(IMessage message)
 		{
 			int requestID;
+			OnMessageReceived(message);
 			switch (message.Header)
 			{
 			case "LAUNCH":
@@ -174,14 +169,51 @@ namespace CritterRobots.Critters.Controllers
 				OnEnergyUpdate(requestID, Energy);
 				break;
 			case "LOCATION":
+				requestID = message.GetInteger(0);
+				Location = message.GetPoint(1);
+				OnLocationUpdate(requestID, Location);
+				break;
 			case "SPEED":
+				requestID = message.GetInteger(0);
+				Velocity = new Vector(message.GetDouble(1), message.GetDouble(2));
+				OnVelocityUpdate(requestID, Velocity);
+				break;
 			case "ARENA_SIZE":
+				CreateArena(message.GetInteger(1), message.GetInteger(2), 100);
+				break;
 			case "SCORED":
+				OnScored(message.GetPoint(0));
+				break;
 			case "ATE":
+				OnAte(message.GetPoint(0));
+				break;
 			case "FIGHT":
+				OnFight(message.GetPoint(0), message.GetInteger(1), message.GetString(2));
+				break;
 			case "BUMP":
+				OnBump(message.GetPoint(0));
+				break;
 			case "REACHED_DESTINATION":
+				OnDestinationReached(message.GetPoint(0));
+				break;
 			}
+		}
+
+		/// <summary>
+		/// Creates the arena mapper object.
+		/// </summary>
+		/// <param name="arenaWidth">The width of the arena.</param>
+		/// <param name="arenaHeight">The height of the arena.</param>
+		/// <param name="pixelsPerCell">The number of pixels that compose a single cell.</param>
+		private static void CreateArena(int arenaWidth, int arenaHeight, int pixelsPerCell)
+		{
+			Map = new Arena(arenaWidth, arenaHeight, pixelsPerCell);
+			Map.Desirability[Arena.TileContents.Bomb] = -1;
+			Map.Desirability[Arena.TileContents.Empty] = 0;
+			Map.Desirability[Arena.TileContents.EscapeHatch] = .5f;
+			Map.Desirability[Arena.TileContents.Food] = 1.0f;
+			Map.Desirability[Arena.TileContents.Gift] = .75f;
+			Map.Desirability[Arena.TileContents.Terrain] = -1;
 		}
 
 		/// <summary>
@@ -239,6 +271,13 @@ namespace CritterRobots.Critters.Controllers
 		#region Critter messages
 
 		/// <summary>
+		/// Allows for the creation of custom behaviour
+		/// when a message of any type is received.
+		/// </summary>
+		/// <param name="message">The message that was received.</param>
+		protected virtual void OnMessageReceived(IMessage message) { }
+
+		/// <summary>
 		/// Initialization event.
 		/// This is usually the entry point for any critter logic.
 		/// </summary>
@@ -278,6 +317,54 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="requestID">The request ID for the health request.</param>
 		/// <param name="remainingEnergy">The amount of remaining energy.</param>
 		protected virtual void OnEnergyUpdate(int requestID, float remainingEnergy) { }
+
+		/// <summary>
+		/// Velocuty update events are called when a SPEED message
+		/// is received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="velocity">The current velocity.</param>
+		protected virtual void OnVelocityUpdate(int requestID, Vector velocity) { }
+
+		/// <summary>
+		/// Location update events are called when a LOCATION message
+		/// is received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="location">The current location</param>
+		protected virtual void OnLocationUpdate(int requestID, Point location) { }
+
+		/// <summary>
+		/// Called when this critter collects a gift anywhere in the
+		/// arena.
+		/// </summary>
+		/// <param name="location">The location in which the gift was collected.</param>
+		protected virtual void OnScored(Point location) { }
+
+		/// <summary>
+		/// Called when this critter eats food anywhere in the arena.
+		/// </summary>
+		/// <param name="location">The location in which the food was eaten.</param>
+		protected virtual void OnAte(Point location) { }
+
+		/// <summary>
+		/// Called when this critter bumps into any other critter in the arena.
+		/// </summary>
+		/// <param name="location">Where the bump occurred.</param>
+		protected virtual void OnFight(Point location, int critterNumber, string critterInfo) { }
+
+		/// <summary>
+		/// Called when this critter bumps into any terrain in the arena.
+		/// </summary>
+		/// <param name="location">Where the bump occurred.</param>
+		protected virtual void OnBump(Point location) { }
+
+		/// <summary>
+		/// Called when this reaches a previously set destination.
+		/// </summary>
+		/// <param name="location">The current critter location.</param>
+		protected virtual void OnDestinationReached(Point location) { }
+
 
 		#endregion
 
