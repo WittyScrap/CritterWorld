@@ -117,6 +117,71 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="message">The message that was received.</param>
 		public void Receive(string message)
 		{
+			IMessage parsedMessage = ConvertMessage(message);
+			if (parsedMessage == null)
+			{
+				return;
+			}
+			if (parsedMessage is SeeMessage seeMessage)
+			{
+				OnSee(seeMessage);
+			}
+			else if (parsedMessage is ScanMessage scanMessage)
+			{
+				OnScan(scanMessage);
+			}
+			else
+			{
+				HandleMessage(parsedMessage);
+			}
+		}
+
+		/// <summary>
+		/// Handles switching a simple message through to the
+		/// correct internal methods.
+		/// </summary>
+		/// <param name="message">The message to be switched.</param>
+		private void HandleMessage(IMessage message)
+		{
+			int requestID;
+			switch (message.Header)
+			{
+			case "LAUNCH":
+				InitializeCritter();
+				break;
+			case "FATALITY":
+			case "STARVED":
+			case "BOMBED":
+			case "CRASHED":
+			case "ESCAPE":
+			case "SHUTDOWN":
+				StopCritter(message.Header);
+				break;
+			case "LEVEL_DURATION":
+				ElapsedTime = message.GetInteger(1);
+				break;
+			case "LEVEL_TIME_REMAINING":
+				RemainingTime = message.GetInteger(1);
+				break;
+			case "HEALTH":
+				requestID = message.GetInteger(0);
+				Health = message.GetInteger(1) / 100.0f;
+				OnHealthUpdate(requestID, Health);
+				break;
+			case "ENERGY":
+				requestID = message.GetInteger(0);
+				Energy = message.GetInteger(1) / 100.0f;
+				OnEnergyUpdate(requestID, Energy);
+				break;
+			case "LOCATION":
+			case "SPEED":
+			case "ARENA_SIZE":
+			case "SCORED":
+			case "ATE":
+			case "FIGHT":
+			case "BUMP":
+			case "REACHED_DESTINATION":
+			}
 		}
 
 		/// <summary>
@@ -136,10 +201,18 @@ namespace CritterRobots.Critters.Controllers
 		/// <returns>An <see cref="IMessage"/> equivalent of the <paramref name="message"/>.</returns>
 		private IMessage ConvertMessage(string message)
 		{
-			string messageHeader = SimpleMessage.GetHeader(message);
+			SimpleMessage.GetHeaderBody(message, out string messageHeader, out string messageBody);
 			switch (messageHeader)
 			{
-				
+			case "ERROR":
+				Debugger.LogError(messageBody);
+				return null;
+			case "SEE":
+				return new SeeMessage(message);
+			case "SCAN":
+				return new ScanMessage(message);
+			default:
+				return new SimpleMessage(message);
 			}
 		}
 
@@ -175,14 +248,36 @@ namespace CritterRobots.Critters.Controllers
 		/// End event.
 		/// This signifies that the critter can no longer be controlled.
 		/// </summary>
-		/// <param name="stopMessage">The reason for the end.</param>
-		protected virtual void OnStop() { }
+		protected virtual void OnStop(string stopReason) { }
 
 		/// <summary>
 		/// Reports what the current critter can see around it.
 		/// </summary>
 		/// <param name="message">The contents of the SEE message.</param>
-		protected virtual void OnSee() { }
+		protected virtual void OnSee(SeeMessage message) { }
+
+		/// <summary>
+		/// Reports everything the current critter can see, with
+		/// some limitations.
+		/// </summary>
+		/// <param name="message">The contents of the SCAN message.</param>
+		protected virtual void OnScan(ScanMessage message) { }
+
+		/// <summary>
+		/// Health update events are called when a HEALTH message is
+		/// received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="remainingHealth">The amount of remaining health.</param>
+		protected virtual void OnHealthUpdate(int requestID, float remainingHealth) { }
+
+		/// <summary>
+		/// Energy update events are called when an ENERGY message is
+		/// received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="remainingEnergy">The amount of remaining energy.</param>
+		protected virtual void OnEnergyUpdate(int requestID, float remainingEnergy) { }
 
 		#endregion
 
@@ -203,10 +298,10 @@ namespace CritterRobots.Critters.Controllers
 		/// send and process any messages.
 		/// </summary>
 		/// <param name="endEvent"></param>
-		private void StopCritter()
+		private void StopCritter(string reason)
 		{
 			IsInitialized = false;
-			OnStop();
+			OnStop(reason);
 		}
 
 		#endregion

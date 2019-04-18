@@ -49,7 +49,7 @@ namespace CritterRobots.Messages
 			GetHeaderBody(sourceMessage, out string header, out string body);
 			Header = header;
 			Body = body;
-			SplitBody = Body.Split(Separators.ToCharArray());
+			SplitBody = Body?.Split(Separators.ToCharArray());
 		}
 
 		/// <summary>
@@ -126,7 +126,7 @@ namespace CritterRobots.Messages
 		public static string GetHeader(string sourceMessage)
 		{
 			StringBuilder headerBuilder = new StringBuilder();
-			for (int index = 0; sourceMessage[index] != ':' && index < sourceMessage.Length; ++i)
+			for (int index = 0; sourceMessage[index] != ':' && index < sourceMessage.Length; ++index)
 			{
 				headerBuilder.Append(sourceMessage[index]);
 			}
@@ -149,7 +149,7 @@ namespace CritterRobots.Messages
 				headerBuilder.Append(sourceMessage[index]);
 			}
 			header = headerBuilder.ToString();
-			body = sourceMessage.Remove(index + 1);
+			body = index < sourceMessage.Length ? sourceMessage.Remove(0, index + 1) : null;
 		}
 	}
 }
