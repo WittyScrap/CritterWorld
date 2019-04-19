@@ -1,10 +1,11 @@
 ﻿using System;
 using CritterController;
+using System.IO;
 
 /// <summary>
 /// Project bounds namespace.
 /// </summary>
-namespace _100492443.Critters.AI
+namespace CritterRobots.Critters.Controllers
 {
 	/// <summary>
 	/// Handles logging messages.

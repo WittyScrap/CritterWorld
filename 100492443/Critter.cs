@@ -4,11 +4,12 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using CritterController;
+using CritterRobots.Messages;
 
 /// <summary>
 /// Project bounds namespace.
 /// </summary>
-namespace _100492443.Critters.AI
+namespace CritterRobots.Critters.Controllers
 {
 	/// <summary>
 	/// Implements basic functionality for
@@ -53,52 +54,55 @@ namespace _100492443.Critters.AI
 				Debugger.UpdateLogger(value);
 			}
 		}
-
 		#endregion
-
-		/// <summary>
-		/// List containing every object detected in the scene.
-		/// </summary>
-		private HashSet<ReadonlyObject> AllDetectedObjects { get; set; } = new HashSet<ReadonlyObject>();
-
+		
 		/// <summary>
 		/// The logger obejct to show debugging messages.
 		/// </summary>
 		protected Debug Debugger { get; private set; }
 
 		/// <summary>
-		/// The location of the escape hatch, if it was detected.
+		/// The full size of the arena map.
 		/// </summary>
-		protected Point EscapeHatch { get; private set; }
+		protected static Arena Map { get; private set; }
+
+		#region Critter properties
+		/// <summary>
+		/// The current velocity of the critter.
+		/// </summary>
+		protected Vector Velocity { get; private set; } = Vector.Zero;
 
 		/// <summary>
-		/// Returns all detected objects one by one.
+		/// The current location of the critter.
 		/// </summary>
-		protected IEnumerable<ReadonlyObject> AllObjects {
-			get
-			{
-				foreach (ReadonlyObject readonlyObject in AllDetectedObjects)
-				{
-					yield return readonlyObject;
-				}
-			}
-		}
+		protected Point Location { get; private set; } = Point.Empty;
 
 		/// <summary>
-		/// Returns all detected critters one by one.
+		/// The amount of time elapsed since the start of the level.
 		/// </summary>
-		protected IEnumerable<DetectedCritter> Critters {
-			get
-			{
-				foreach (ReadonlyObject readonlyObject in AllDetectedObjects)
-				{
-					if (readonlyObject is DetectedCritter)
-					{
-						yield return (DetectedCritter)readonlyObject;
-					}
-				}
-			}
-		}
+		protected float ElapsedTime { get; private set; } = 0f;
+
+		/// <summary>
+		/// The amount of time left before the end of the level.
+		/// </summary>
+		protected float RemainingTime { get; private set; } = 0f;
+
+		/// <summary>
+		/// The current health of the critter.
+		/// </summary>
+		protected float Health { get; private set; } = 1f;
+
+		/// <summary>
+		/// The current energy of the critter.
+		/// </summary>
+		protected float Energy { get; private set; } = 1f;
+
+		/// <summary>
+		/// If this is false, no messages can be sent to the CritterWorld
+		/// enviroment.
+		/// </summary>
+		private bool IsInitialized { get; set; }
+		#endregion
 
 		/// <summary>
 		/// Handles an incoming message from the CritterWorld
@@ -107,11 +111,141 @@ namespace _100492443.Critters.AI
 		/// <param name="message">The message that was received.</param>
 		public void Receive(string message)
 		{
-			string[] splitMessage = message.Split(':');
-			string header = splitMessage[0];
-			string messageBody = string.Join(":", splitMessage.Skip(1).ToArray());
+			IMessage parsedMessage = ConvertMessage(message);
+			if (parsedMessage == null)
+			{
+				return;
+			}
+			if (parsedMessage is SeeMessage seeMessage)
+			{
+				OnSee(seeMessage);
+			}
+			else if (parsedMessage is ScanMessage scanMessage)
+			{
+				OnScan(scanMessage);
+			}
+			else
+			{
+				HandleMessage(parsedMessage);
+			}
+		}
 
-			MessageDecoder(header, messageBody);
+		/// <summary>
+		/// Handles switching a simple message through to the
+		/// correct internal methods.
+		/// </summary>
+		/// <param name="message">The message to be switched.</param>
+		private void HandleMessage(IMessage message)
+		{
+			int requestID;
+			OnMessageReceived(message);
+			switch (message.Header)
+			{
+			case "LAUNCH":
+				InitializeCritter(message.GetPoint(0));
+				break;
+			case "FATALITY":
+			case "STARVED":
+			case "BOMBED":
+			case "CRASHED":
+			case "ESCAPE":
+			case "SHUTDOWN":
+				StopCritter(message.Header);
+				break;
+			case "LEVEL_DURATION":
+				ElapsedTime = message.GetInteger(1);
+				break;
+			case "LEVEL_TIME_REMAINING":
+				RemainingTime = message.GetInteger(1);
+				break;
+			case "HEALTH":
+				requestID = message.GetInteger(0);
+				Health = message.GetInteger(1) / 100.0f;
+				OnHealthUpdate(requestID, Health);
+				break;
+			case "ENERGY":
+				requestID = message.GetInteger(0);
+				Energy = message.GetInteger(1) / 100.0f;
+				OnEnergyUpdate(requestID, Energy);
+				break;
+			case "LOCATION":
+				requestID = message.GetInteger(0);
+				Location = message.GetPoint(1);
+				OnLocationUpdate(requestID, Location);
+				break;
+			case "SPEED":
+				requestID = message.GetInteger(0);
+				Velocity = new Vector(message.GetDouble(1), message.GetDouble(2));
+				OnVelocityUpdate(requestID, Velocity);
+				break;
+			case "ARENA_SIZE":
+				CreateArena(message.GetInteger(1), message.GetInteger(2), 100);
+				break;
+			case "SCORED":
+				OnScored(message.GetPoint(0));
+				break;
+			case "ATE":
+				OnAte(message.GetPoint(0));
+				break;
+			case "FIGHT":
+				OnFight(message.GetPoint(0), message.GetInteger(1), message.GetString(2));
+				break;
+			case "BUMP":
+				OnBump(message.GetPoint(0));
+				break;
+			case "REACHED_DESTINATION":
+				OnDestinationReached(message.GetPoint(0));
+				break;
+			}
+		}
+
+		/// <summary>
+		/// Creates the arena mapper object.
+		/// </summary>
+		/// <param name="arenaWidth">The width of the arena.</param>
+		/// <param name="arenaHeight">The height of the arena.</param>
+		/// <param name="pixelsPerCell">The number of pixels that compose a single cell.</param>
+		private static void CreateArena(int arenaWidth, int arenaHeight, int pixelsPerCell)
+		{
+			Map = new Arena(arenaWidth, arenaHeight, pixelsPerCell);
+			Map.Desirability[Arena.TileContents.Bomb] = -1;
+			Map.Desirability[Arena.TileContents.Empty] = 0;
+			Map.Desirability[Arena.TileContents.EscapeHatch] = .5f;
+			Map.Desirability[Arena.TileContents.Food] = 1.0f;
+			Map.Desirability[Arena.TileContents.Gift] = .75f;
+			Map.Desirability[Arena.TileContents.Terrain] = -1;
+		}
+
+		/// <summary>
+		/// Sends a message to the CritterWorld environment.
+		/// </summary>
+		/// <param name="message">The message to be sent.</param>
+		protected void SendMessage(IMessage message)
+		{
+			Responder?.Invoke(message.Format());
+		}
+
+		/// <summary>
+		/// Converts a source message into an
+		/// <see cref="IMessage"/> object.
+		/// </summary>
+		/// <param name="message">The source message.</param>
+		/// <returns>An <see cref="IMessage"/> equivalent of the <paramref name="message"/>.</returns>
+		private IMessage ConvertMessage(string message)
+		{
+			SimpleMessage.GetHeaderBody(message, out string messageHeader, out string messageBody);
+			switch (messageHeader)
+			{
+			case "ERROR":
+				Debugger.LogError(messageBody);
+				return null;
+			case "SEE":
+				return new SeeMessage(message);
+			case "SCAN":
+				return new ScanMessage(message);
+			default:
+				return new SimpleMessage(message);
+			}
 		}
 
 		/// <summary>
@@ -134,178 +268,185 @@ namespace _100492443.Critters.AI
 			Debugger = new Debug(Logger, "100492443:" + critterName);
 		}
 
+		#region Critter messages
+
+		/// <summary>
+		/// Allows for the creation of custom behaviour
+		/// when a message of any type is received.
+		/// </summary>
+		/// <param name="message">The message that was received.</param>
+		protected virtual void OnMessageReceived(IMessage message) { }
+
+		/// <summary>
+		/// Initialization event.
+		/// This is usually the entry point for any critter logic.
+		/// </summary>
+		protected virtual void OnInitialize() { }
+
+		/// <summary>
+		/// End event.
+		/// This signifies that the critter can no longer be controlled.
+		/// </summary>
+		protected virtual void OnStop(string stopReason) { }
+
+		/// <summary>
+		/// Reports what the current critter can see around it.
+		/// </summary>
+		/// <param name="message">The contents of the SEE message.</param>
+		protected virtual void OnSee(SeeMessage message) { }
+
+		/// <summary>
+		/// Reports everything the current critter can see, with
+		/// some limitations.
+		/// </summary>
+		/// <param name="message">The contents of the SCAN message.</param>
+		protected virtual void OnScan(ScanMessage message) { }
+
+		/// <summary>
+		/// Health update events are called when a HEALTH message is
+		/// received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="remainingHealth">The amount of remaining health.</param>
+		protected virtual void OnHealthUpdate(int requestID, float remainingHealth) { }
+
+		/// <summary>
+		/// Energy update events are called when an ENERGY message is
+		/// received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="remainingEnergy">The amount of remaining energy.</param>
+		protected virtual void OnEnergyUpdate(int requestID, float remainingEnergy) { }
+
+		/// <summary>
+		/// Velocuty update events are called when a SPEED message
+		/// is received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="velocity">The current velocity.</param>
+		protected virtual void OnVelocityUpdate(int requestID, Vector velocity) { }
+
+		/// <summary>
+		/// Location update events are called when a LOCATION message
+		/// is received.
+		/// </summary>
+		/// <param name="requestID">The request ID for the health request.</param>
+		/// <param name="location">The current location</param>
+		protected virtual void OnLocationUpdate(int requestID, Point location) { }
+
+		/// <summary>
+		/// Called when this critter collects a gift anywhere in the
+		/// arena.
+		/// </summary>
+		/// <param name="location">The location in which the gift was collected.</param>
+		protected virtual void OnScored(Point location) { }
+
+		/// <summary>
+		/// Called when this critter eats food anywhere in the arena.
+		/// </summary>
+		/// <param name="location">The location in which the food was eaten.</param>
+		protected virtual void OnAte(Point location) { }
+
+		/// <summary>
+		/// Called when this critter bumps into any other critter in the arena.
+		/// </summary>
+		/// <param name="location">Where the bump occurred.</param>
+		protected virtual void OnFight(Point location, int critterNumber, string critterInfo) { }
+
+		/// <summary>
+		/// Called when this critter bumps into any terrain in the arena.
+		/// </summary>
+		/// <param name="location">Where the bump occurred.</param>
+		protected virtual void OnBump(Point location) { }
+
+		/// <summary>
+		/// Called when this reaches a previously set destination.
+		/// </summary>
+		/// <param name="location">The current critter location.</param>
+		protected virtual void OnDestinationReached(Point location) { }
+
+
+		#endregion
+
 		#region Event driven methods
 
 		/// <summary>
-		/// Decodes an incoming message and calls the appropriate events.
+		/// Initializes this critter and sends out the first fundamental
+		/// requests.
 		/// </summary>
-		/// <param name="header">The message header.</param>
-		/// <param name="body">The message sub-sections.</param>
-		private void MessageDecoder(string header, string body)
+		private void InitializeCritter(Point initialLocation)
 		{
-			switch (header)
-			{
-			case "ERROR":
-				Debugger.LogError(body);
-				break;
-			case "SEE":
-				MessageSee(body);
-				break;
-			case "SCAN":
-				MessageScan(body);
-				break;
-			}
+			IsInitialized = true;
+			Location = initialLocation;
+			OnInitialize();
 		}
 
 		/// <summary>
-		/// Decodes the SEE request into different sections
-		/// and feeds the results to <seealso cref="OnSee(ICollection{string}, int)"/>.
+		/// Uninitializes the critter, making it impossible for it to
+		/// send and process any messages.
 		/// </summary>
-		/// <param name="messageBody">The body of the message.</param>
-		private void MessageSee(string messageBody)
+		/// <param name="endEvent"></param>
+		private void StopCritter(string reason)
 		{
-			string[] components = messageBody.Split('\n');
-			string messageData = components[1];
+			IsInitialized = false;
+			OnStop(reason);
+		}
 
-			if (messageData != "Nothing")
-			{
-				string[] sightElements = messageData.Split('\t');
+		#endregion
 
-				OnSee(sightElements);
-			}
+		#region Message senders
+
+		/// <summary>
+		/// Runs a SCAN operation.
+		/// </summary>
+		protected void Scan()
+		{
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Decodes the SCAN request into different sections
-		/// and feeds the results to <seealso cref="OnScan(ICollection{string})"/>.
+		/// Queries the environmnent for the current
+		/// level duration.
 		/// </summary>
-		/// <param name="messageBody"></param>
-		private void MessageScan(string messageBody)
+		protected void GetLevelDuration()
 		{
-			string[] components = messageBody.Split('\n');
-
-			if (int.TryParse(components[0], out int requestID))
-			{
-				string[] sightElements = components[1].Split('\t');
-
-				OnScan(sightElements, requestID);
-			}
-			else
-			{
-				Debugger.LogWarning("A new SCAN message was received, but the requestID could be parsed: " + components[0]);
-			}
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Converts a semi parsed detected object into a
-		/// <see cref="ReadonlyObject"/> instance.
+		/// Queries the environment for the amount
+		/// of time remaining.
 		/// </summary>
-		/// <param name="objectName">The name of the object.</param>
-		/// <param name="coordinate">The location of the object.</param>
-		/// <param name="data">Generic data about the object.</param>
-		/// <returns>An instance of <see cref="ReadonlyObject"/> to match the object specification.</returns>
-		private ReadonlyObject GetDetectedObject(string objectName, Point coordinate, params string[] data)
+		protected void GetTimeRemaining()
 		{
-			ReadonlyObject generatedObject = ReadonlyObject.Create(objectName, coordinate);
-
-			if (generatedObject != null)
-			{
-				generatedObject.ParseObjectData(data);
-				return generatedObject;
-			}
-			else
-			{
-				Debugger.LogError("There was an error parsing a detected object with name: " + objectName);
-				return null;
-			}
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Parses a formatted coordinate string into
-		/// a <see cref="Point"/>.
+		/// Queries the environment about this critter's
+		/// health.
 		/// </summary>
-		/// <param name="coordinateFormat">The formatted point string.</param>
-		/// <returns>A point parsed from the string, <seealso cref="Point.Empty"/> if the parsing is unsuccessful.</returns>
-		/// <example>
-		/// <code>
-		/// Point parsedCoordinate = ParseCoordinate("{X=24,Y=765}");
-		/// </code>
-		/// </example>
-		protected Point ParseCoordinate(string coordinateFormat)
+		protected void GetHealth()
 		{
-			coordinateFormat = coordinateFormat.Replace('{', ' ').Replace('}', ' ');
-			string[] components = coordinateFormat.Split(',');
-
-			if (components.Length != 2)
-			{
-				Debugger.LogError("Coordinate string was formatted incorrectly, number of components detected was not exactly 2: " + coordinateFormat);
-				return Point.Empty;
-			}
-
-			string xFormat = components[0].Split('=')[1];
-			string yFormat = components[1].Split('=')[1];
-			
-			if (int.TryParse(xFormat, out int x) && int.TryParse(yFormat, out int y))
-			{
-				return new Point(x, y);
-			}
-			else
-			{
-				Debugger.LogError("Coordinate string was formatted incorrectly and could not be parsed: " + coordinateFormat);
-				return Point.Empty;
-			}
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Parses a detected element into an instace of a
-		/// <see cref="ReadonlyObject"/> and saves it into the
-		/// list of known elements.
+		/// Queries the environment about this critter's
+		/// energy.
 		/// </summary>
-		/// <param name="element">The element to parse.</param>
-		private void ParseDetectedObject(string element)
+		protected void GetEnergy()
 		{
-			string[] elementProperties = element.Split(':');
-			if (elementProperties.Length <= 1)
-			{
-				Debugger.LogError("Invalid element string, coordinate block could not be detected: " + element);
-				return;
-			}
-			string objectName = elementProperties[0];
-			Point coordinate = ParseCoordinate(elementProperties[1]);
-			string[] objectData = elementProperties.Skip(2).ToArray();
-			ReadonlyObject detectedObject = GetDetectedObject(objectName, coordinate, objectData);
-			if (detectedObject != null)
-			{
-				AllDetectedObjects.Remove(detectedObject);
-				AllDetectedObjects.Add(detectedObject);
-			}
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Updates map surroundings after a SCAN or SEE call.
+		/// Queries the environment about this critter's
+		/// speed.
 		/// </summary>
-		/// <param name="scannedElements">List of scanned elements.</param>
-		private void UpdateSurroundings(ICollection<string> scannedElements)
+		protected void GetSpeed()
 		{
-			Parallel.ForEach(scannedElements, ParseDetectedObject);
-		}
-
-		/// <summary>
-		/// Short-range scan that is called automatically
-		/// by the CritterWorld environmnent continuously.
-		/// </summary>
-		protected virtual void OnSee(ICollection<string> sightElements)
-		{
-
-		}
-
-		/// <summary>
-		/// Long-range scan that is called as a response
-		/// from a SCAN request that as to be sent in advance.
-		/// </summary>
-		protected virtual void OnScan(ICollection<string> sightElements, int requestID)
-		{
-
+			throw new NotImplementedException();
 		}
 
 		#endregion

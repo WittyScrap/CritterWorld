@@ -7,7 +7,7 @@
     <ProjectGuid>{9C79EC90-DDB1-4357-9847-41FC2E7D2E83}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>_100492443</RootNamespace>
+    <RootNamespace>CritterRobots</RootNamespace>
     <AssemblyName>100492443</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -45,20 +46,27 @@
   <ItemGroup>
     <Compile Include="Arena.cs" />
     <Compile Include="Critter.cs" />
+    <Compile Include="CritterFactory.cs" />
     <Compile Include="Debug.cs" />
-    <Compile Include="DetectedCritter.cs" />
-    <Compile Include="ObjectNameAttribute.cs" />
-    <Compile Include="ObjectParser.cs" />
+    <Compile Include="DebugCritter.cs" />
+    <Compile Include="Messages\DefaultMessages.cs" />
+    <Compile Include="Messages\IMessage.cs" />
+    <Compile Include="Messages\ScanMessage.cs" />
+    <Compile Include="Messages\SeeMessage.cs" />
+    <Compile Include="Messages\SimpleMessage.cs" />
+    <Compile Include="Messages\ITrackedMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReadonlyObject.cs" />
-    <Compile Include="Request.cs" />
-    <Compile Include="TimeElapsedRequest.cs" />
+    <Compile Include="Vector.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CritterController\CritterController.csproj">
       <Project>{06dbfcfc-d8cf-474f-9a07-0fd1313ba9ea}</Project>
       <Name>CritterController</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
