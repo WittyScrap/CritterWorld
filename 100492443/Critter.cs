@@ -142,7 +142,7 @@ namespace CritterRobots.Critters.Controllers
 			switch (message.Header)
 			{
 			case "LAUNCH":
-				InitializeCritter();
+				InitializeCritter(message.GetPoint(0));
 				break;
 			case "FATALITY":
 			case "STARVED":
@@ -374,9 +374,10 @@ namespace CritterRobots.Critters.Controllers
 		/// Initializes this critter and sends out the first fundamental
 		/// requests.
 		/// </summary>
-		private void InitializeCritter()
+		private void InitializeCritter(Point initialLocation)
 		{
 			IsInitialized = true;
+			Location = initialLocation;
 			OnInitialize();
 		}
 

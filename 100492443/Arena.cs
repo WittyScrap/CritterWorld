@@ -201,7 +201,7 @@ namespace CritterRobots.Critters
 			}
             else
             {
-                throw new CritterException("Invalid wall location for point: " + wallLocation);
+                throw new ArgumentException("Invalid wall location for point: " + wallLocation);
             }
 		}
 
@@ -220,7 +220,7 @@ namespace CritterRobots.Critters
             }
             else
             {
-                throw new CritterException("Invalid bomb location for point: " + bombLocation);
+                throw new ArgumentException("Invalid bomb location for point: " + bombLocation);
             }
         }
 		
@@ -242,7 +242,7 @@ namespace CritterRobots.Critters
 
 			if (components.Length != 2)
 			{
-				throw new CritterException("Coordinate string was formatted incorrectly, number of components detected was not exactly 2: " + coordinateFormat);
+				throw new ArgumentException("Coordinate string was formatted incorrectly, number of components detected was not exactly 2: " + coordinateFormat);
 			}
 
 			string xFormat = components[0].Split('=')[1];
@@ -254,7 +254,7 @@ namespace CritterRobots.Critters
 			}
 			else
 			{
-				throw new CritterException("Coordinate string was formatted incorrectly and could not be parsed: " + coordinateFormat);
+				throw new ArgumentException("Coordinate string was formatted incorrectly and could not be parsed: " + coordinateFormat);
 			}
 		}
 	}

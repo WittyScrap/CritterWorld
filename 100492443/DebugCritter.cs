@@ -16,5 +16,7 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		public DebugCritter() : base("~ The bug whoms't de-bugs ~")
 		{ }
+
+		
 	}
 }
