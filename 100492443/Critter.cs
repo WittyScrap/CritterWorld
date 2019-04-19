@@ -222,7 +222,7 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="message">The message to be sent.</param>
 		protected void SendMessage(IMessage message)
 		{
-			Responder(message.Format());
+			Responder?.Invoke(message.Format());
 		}
 
 		/// <summary>

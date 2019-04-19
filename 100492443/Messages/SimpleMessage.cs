@@ -130,7 +130,11 @@ namespace CritterRobots.Messages
 		/// <returns>A CritterWorld compatible formatted string.</returns>
 		public virtual string Format()
 		{
-			return Header + ":" + Body;
+			if (Body != null)
+			{
+				return Header + ":" + Body;
+			}
+			return Header;
 		}
 
 		/// <summary>
@@ -160,12 +164,12 @@ namespace CritterRobots.Messages
 		{
 			StringBuilder headerBuilder = new StringBuilder();
 			int index = 0;
-			for (; sourceMessage[index] != ':' && index < sourceMessage.Length; ++index)
+			for (; index < sourceMessage.Length && sourceMessage[index] != ':'; ++index)
 			{
 				headerBuilder.Append(sourceMessage[index]);
 			}
 			header = headerBuilder.ToString();
-			body = sourceMessage.Substring(index + 1);
+			body = index < sourceMessage.Length ? sourceMessage.Substring(index + 1) : null;
 		}
 	}
 }
