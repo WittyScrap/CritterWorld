@@ -175,7 +175,7 @@ namespace CritterRobots.Critters.Controllers
 				break;
 			case "SPEED":
 				requestID = message.GetInteger(0);
-				Velocity = new Vector(message.GetDouble(1), message.GetDouble(2));
+				Velocity = new Vector(message.GetDouble(2), message.GetDouble(3));
 				OnVelocityUpdate(requestID, Velocity);
 				break;
 			case "ARENA_SIZE":

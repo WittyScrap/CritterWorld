@@ -45,10 +45,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Arena.cs" />
-    <Compile Include="Critter.cs" />
-    <Compile Include="CritterFactory.cs" />
+    <Compile Include="Critters\Critter.cs" />
+    <Compile Include="Critters\CritterFactory.cs" />
     <Compile Include="Debug.cs" />
-    <Compile Include="DebugCritter.cs" />
+    <Compile Include="Critters\DebugCritter.cs" />
+    <Compile Include="MachineLearning\ILayer.cs" />
+    <Compile Include="MachineLearning\INeuralNetwork.cs" />
+    <Compile Include="MachineLearning\IReadOnlyLayer.cs" />
     <Compile Include="Messages\DefaultMessages.cs" />
     <Compile Include="Messages\IMessage.cs" />
     <Compile Include="Messages\ScanMessage.cs" />
