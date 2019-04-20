@@ -4,30 +4,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CritterRobots.MachineLearning
+namespace MachineLearning.Interfaces
 {
 	/// <summary>
 	/// Defines an interface for an autonomous
 	/// neural network.
 	/// </summary>
-	interface INeuralNetwork<TInput, TOutput>
-		where TInput : ILayer
-		where TOutput : IReadOnlyLayer
+	public interface INeuralNetwork<TInput, TOutput> 
+		where TInput : ILayer<INeuron>
+		where TOutput : ILayer<INeuron>
 	{
 		/// <summary>
-		/// The network inputs.
+		/// Represents the network input.
 		/// </summary>
 		TInput NetworkInput { get; }
 
 		/// <summary>
-		/// The network output.
+		/// Represents the network output.
 		/// </summary>
 		TOutput NetworkOutput { get; }
-
-		/// <summary>
-		/// Runs the current input values through
-		/// the networks and updates the network output.
-		/// </summary>
-		void Feedforward();
 	}
 }
