@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MachineLearning;
+using CritterRobots.Forms;
 
 namespace CritterRobots.Critters.Controllers
 {
@@ -17,6 +18,11 @@ namespace CritterRobots.Critters.Controllers
 		/// The neural network used for 
 		/// </summary>
 		private NeuralNetwork InternalNeuralNetwork { get; }
+
+		/// <summary>
+		/// The network debug window.
+		/// </summary>
+		private NetworkTrainerDebugWindow DebugWindow { get; } = new NetworkTrainerDebugWindow();
 
 		/// <summary>
 		/// Constructs a new critter.
@@ -33,7 +39,8 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		public override void LaunchUI()
 		{
-			throw new NotImplementedException();
+			DebugWindow.Show();
+			DebugWindow.Focus();
 		}
 	}
 }
