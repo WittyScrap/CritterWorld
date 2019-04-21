@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Runtime.Serialization;
 using MachineLearning.Interfaces;
-using System.Xml;
 using System.IO;
 using MachineLearning.Layers;
 using MachineLearning.Neurons;

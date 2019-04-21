@@ -16,7 +16,7 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// The neural network used for 
 		/// </summary>
-		private TrainableNetwork InternalNeuralNetwork { get; }
+		private NeuralNetwork InternalNeuralNetwork { get; }
 
 		/// <summary>
 		/// Constructs a new critter.
