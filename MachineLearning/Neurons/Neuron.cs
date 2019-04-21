@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.Serialization;
 using MachineLearning.Interfaces;
 
 namespace MachineLearning
@@ -10,6 +8,7 @@ namespace MachineLearning
 	/// <summary>
 	/// Represents a simple working perceptron.
 	/// </summary>
+	[DataContract]
 	public class Neuron<TActivationFunction> : IWorkingNeuron where TActivationFunction : IActivationFunction, new()
 	{
 		/// <summary>
@@ -45,7 +44,7 @@ namespace MachineLearning
 		/// <summary>
 		/// List of connections.
 		/// </summary>
-		private LinkedList<Connection> Connections { get; } = new LinkedList<Connection>();
+		private List<Connection> Connections { get; } = new List<Connection>();
 
 		/// <summary>
 		/// Calculates the weighed sum of all incoming connections
@@ -64,7 +63,7 @@ namespace MachineLearning
 		/// <param name="weight">The weight of the new connection.</param>
 		public void AddConnection(INeuron source, float weight)
 		{
-			Connections.AddLast(new Connection(source, weight));
+			Connections.Add(new Connection(source, weight));
 		}
 
 		/// <summary>

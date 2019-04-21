@@ -179,7 +179,7 @@ namespace CritterRobots.Critters.Controllers
 				OnVelocityUpdate(requestID, Velocity);
 				break;
 			case "ARENA_SIZE":
-				CreateArena(message.GetInteger(1), message.GetInteger(2), 100);
+				CreateArena(new Size(message.GetInteger(1), message.GetInteger(2)), new Size(10, 10));
 				break;
 			case "SCORED":
 				OnScored(message.GetPoint(0));
@@ -205,9 +205,9 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="arenaWidth">The width of the arena.</param>
 		/// <param name="arenaHeight">The height of the arena.</param>
 		/// <param name="pixelsPerCell">The number of pixels that compose a single cell.</param>
-		private static void CreateArena(int arenaWidth, int arenaHeight, int pixelsPerCell)
+		private static void CreateArena(Size arenaSize, Size gridSize)
 		{
-			Map = new Arena(arenaWidth, arenaHeight, pixelsPerCell);
+			Map = new Arena(gridSize, arenaSize);
 			Map.Desirability[Arena.TileContents.Bomb] = -1;
 			Map.Desirability[Arena.TileContents.Empty] = 0;
 			Map.Desirability[Arena.TileContents.EscapeHatch] = .5f;
@@ -252,11 +252,7 @@ namespace CritterRobots.Critters.Controllers
 		/// Control to open a Window Form to configure
 		/// various aspects of the critter.
 		/// </summary>
-		public void LaunchUI()
-		{
-			/// TODO: Actually implement the method!!!
-			throw new NotImplementedException();
-		}
+		public abstract void LaunchUI();
 
 		/// <summary>
 		/// Creates a new critter and sets its name.

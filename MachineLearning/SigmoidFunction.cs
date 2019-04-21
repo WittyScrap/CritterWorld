@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MachineLearning.Interfaces;
 
-namespace MachineLearning.Interfaces
+namespace MachineLearning
 {
 	/// <summary>
 	/// Activation function: sigmoid;

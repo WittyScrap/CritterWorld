@@ -14,7 +14,7 @@ namespace CritterRobots.Critters.Controllers
 	class NetworkTrainer : Critter
 	{
 		/// <summary>
-		/// The internal neural network.
+		/// The neural network used for 
 		/// </summary>
 		private TrainableNetwork InternalNeuralNetwork { get; }
 
@@ -24,6 +24,16 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="critterID">A unique representative ID for the critter.</param>
 		public NetworkTrainer(int critterID) : base("Mortal slave #" + critterID)
 		{
+			
+		}
+
+		/// <summary>
+		/// Launches a UI that displays the neural network's status
+		/// and allows to make changes.
+		/// </summary>
+		public override void LaunchUI()
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

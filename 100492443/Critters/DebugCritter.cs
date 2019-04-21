@@ -18,22 +18,13 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		public DebugCritter() : base("~ The bug whoms't de-bugs ~")
 		{ }
-
+		
 		/// <summary>
-		/// This method is called once the critter has been initialized.
+		/// This is just a debug critter don't expect much.
 		/// </summary>
-		protected override void OnInitialize()
+		public override void LaunchUI()
 		{
-			SendMessage(DefaultMessages.RandomDestination);
-		}
-
-		/// <summary>
-		/// This method is called when the destination has been reached.
-		/// </summary>
-		/// <param name="location">The current critter's location.</param>
-		protected override void OnDestinationReached(Point location)
-		{
-			SendMessage(DefaultMessages.RandomDestination);
+			throw new NotImplementedException();
 		}
 	}
 }

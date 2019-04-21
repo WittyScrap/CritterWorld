@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using MachineLearning.Interfaces;
@@ -10,7 +11,8 @@ namespace MachineLearning
 	/// <summary>
 	/// Collection of neurons
 	/// </summary>
-	class Layer<TNeuron> : HashSet<TNeuron>, ILayer<TNeuron> where TNeuron : INeuron, new()
+	[CollectionDataContract]
+	public class Layer<TNeuron> : List<TNeuron>, ILayer<TNeuron> where TNeuron : INeuron, new()
 	{
 		/// <summary>
 		/// Neuron count randomizer.

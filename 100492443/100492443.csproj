@@ -50,7 +50,6 @@
     <Compile Include="Critters\NetworkTrainer.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="Critters\DebugCritter.cs" />
-    <Compile Include="Messages\DefaultMessages.cs" />
     <Compile Include="Messages\IMessage.cs" />
     <Compile Include="Messages\ScanMessage.cs" />
     <Compile Include="Messages\SeeMessage.cs" />

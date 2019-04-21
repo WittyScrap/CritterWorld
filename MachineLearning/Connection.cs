@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using MachineLearning.Interfaces;
@@ -10,7 +11,8 @@ namespace MachineLearning
 	/// <summary>
 	/// Represents a connection between two neurons.
 	/// </summary>
-	struct Connection
+	[DataContract]
+	public struct Connection
 	{
 		/// <summary>
 		/// The "left side" neuron.

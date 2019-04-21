@@ -12,7 +12,7 @@ namespace MachineLearning.Interfaces
 	/// </summary>
 	public interface INeuralNetwork<TInput, TOutput> 
 		where TInput : ILayer<INeuron>
-		where TOutput : ILayer<INeuron>
+		where TOutput : ILayer<IWorkingNeuron>
 	{
 		/// <summary>
 		/// Represents the network input.
