@@ -41,7 +41,7 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// Thread lock for handling changes with the terrain.
 		/// </summary>
-		private object TerrainHandlerLock => new object();
+		private object TerrainHandlerLock { get; } = new object();
 
 		/// <summary>
 		/// Accesses the internal terrain map.
@@ -56,23 +56,38 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// The size of a cell in pixels.
 		/// </summary>
-		private int PixelSize { get; }
+		private Size CellSize {
+			get
+			{
+				return new Size(
+					ArenaSize.Width / GridSize.Width,
+					ArenaSize.Height / GridSize.Height
+				);
+			}
+		}
 
 		/// <summary>
-		/// Creates an arena of a specific pixel size.
+		/// The size of the entire arena in pixels.
 		/// </summary>
-		/// <param name="pixelWidth">The width of the arena in pixels.</param>
-		/// <param name="pixelHeight">The height of the arena in pixels.</param>
-		/// <param name="pixelSize">How many pixels compose one tile.</param>
-		public Arena(int pixelWidth, int pixelHeight, int pixelSize)
+		private Size ArenaSize { get; }
+
+		/// <summary>
+		/// The size of the grid.
+		/// </summary>
+		private Size GridSize { get; }
+
+		/// <summary>
+		/// Creates an arena mapper.
+		/// </summary>
+		public Arena(Size gridSize, Size arenaSize)
 		{
+			ArenaSize = arenaSize;
+			GridSize = gridSize;
 			TerrainMap = new TileContents
 			[
-				pixelWidth / pixelSize,
-				pixelHeight / pixelSize
+				gridSize.Width,
+				gridSize.Height
 			];
-
-			PixelSize = pixelSize;
 		}
 
 		/// <summary>
@@ -95,8 +110,8 @@ namespace CritterRobots.Critters
 		{
 			return new Point
 			(
-				pixelCoordinate.X / PixelSize,
-				pixelCoordinate.Y / PixelSize
+				pixelCoordinate.X / CellSize.Width,
+				pixelCoordinate.Y / CellSize.Height
 			);
 		}
 
@@ -201,7 +216,7 @@ namespace CritterRobots.Critters
 			}
             else
             {
-                throw new CritterException("Invalid wall location for point: " + wallLocation);
+                throw new ArgumentException("Invalid wall location for point: " + wallLocation);
             }
 		}
 
@@ -220,7 +235,7 @@ namespace CritterRobots.Critters
             }
             else
             {
-                throw new CritterException("Invalid bomb location for point: " + bombLocation);
+                throw new ArgumentException("Invalid bomb location for point: " + bombLocation);
             }
         }
 		
@@ -242,7 +257,7 @@ namespace CritterRobots.Critters
 
 			if (components.Length != 2)
 			{
-				throw new CritterException("Coordinate string was formatted incorrectly, number of components detected was not exactly 2: " + coordinateFormat);
+				throw new ArgumentException("Coordinate string was formatted incorrectly, number of components detected was not exactly 2: " + coordinateFormat);
 			}
 
 			string xFormat = components[0].Split('=')[1];
@@ -254,7 +269,7 @@ namespace CritterRobots.Critters
 			}
 			else
 			{
-				throw new CritterException("Coordinate string was formatted incorrectly and could not be parsed: " + coordinateFormat);
+				throw new ArgumentException("Coordinate string was formatted incorrectly and could not be parsed: " + coordinateFormat);
 			}
 		}
 	}

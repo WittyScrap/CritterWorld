@@ -33,7 +33,7 @@ namespace CritterRobots.Critters
 		{
 			List<ICritterController> critters = new List<ICritterController>();
 			int critterVariants = 1;
-			int maxCritters = 50;
+			int maxCritters = 1;
 			for (int i = 0; i < maxCritters / critterVariants; ++i)
 			{
 				critters.Add(new DebugCritter());

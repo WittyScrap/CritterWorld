@@ -49,6 +49,7 @@ namespace CritterRobots.Messages
 		protected SimpleMessage(string sourceMessage, string separators)
 		{
 			GetHeaderBody(sourceMessage, out string header, out string body);
+			Separators = separators;
 			Header = header;
 			Body = body;
 			SplitBody = Body?.Split(Separators.ToCharArray());
@@ -62,7 +63,7 @@ namespace CritterRobots.Messages
 		/// <returns>The extracted string.</returns>
 		public virtual string GetString(int offset)
 		{
-			if (offset < SplitBody.Length && offset > 0)
+			if (offset < SplitBody.Length && offset >= 0)
 			{
 				return SplitBody[offset];
 			}
@@ -79,7 +80,7 @@ namespace CritterRobots.Messages
 		/// <returns>The extracted integer.</returns>
 		public virtual int GetInteger(int offset)
 		{
-			if (offset < SplitBody.Length && offset > 0)
+			if (offset < SplitBody.Length && offset >= 0)
 			{
 				if (int.TryParse(SplitBody[offset], out int parsedValue))
 				{
@@ -99,7 +100,7 @@ namespace CritterRobots.Messages
 		/// <returns>The extracted integer.</returns>
 		public virtual double GetDouble(int offset)
 		{
-			if (offset < SplitBody.Length && offset > 0)
+			if (offset < SplitBody.Length && offset >= 0)
 			{
 				if (double.TryParse(SplitBody[offset], out double parsedValue))
 				{
@@ -129,7 +130,11 @@ namespace CritterRobots.Messages
 		/// <returns>A CritterWorld compatible formatted string.</returns>
 		public virtual string Format()
 		{
-			return Header + ":" + Body;
+			if (Body != null)
+			{
+				return Header + ":" + Body;
+			}
+			return Header;
 		}
 
 		/// <summary>
@@ -159,12 +164,12 @@ namespace CritterRobots.Messages
 		{
 			StringBuilder headerBuilder = new StringBuilder();
 			int index = 0;
-			for (; sourceMessage[index] != ':' && index < sourceMessage.Length; ++index)
+			for (; index < sourceMessage.Length && sourceMessage[index] != ':'; ++index)
 			{
 				headerBuilder.Append(sourceMessage[index]);
 			}
 			header = headerBuilder.ToString();
-			body = index < sourceMessage.Length ? sourceMessage.Remove(0, index + 1) : null;
+			body = index < sourceMessage.Length ? sourceMessage.Substring(index + 1) : null;
 		}
 	}
 }
