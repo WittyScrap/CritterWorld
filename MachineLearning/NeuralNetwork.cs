@@ -6,154 +6,166 @@ using System.Runtime.Serialization;
 using MachineLearning.Interfaces;
 using System.Xml;
 using System.IO;
+using MachineLearning.Layers;
+using MachineLearning.Neurons;
+using MachineLearning.ActivationFunctions;
+using ISerializable = MachineLearning.Interfaces.ISerializable;
 
 namespace MachineLearning
 {
 	/// <summary>
 	/// Generic neural network model.
 	/// </summary>
-	public abstract class NeuralNetwork<TInput, TOutput> : INeuralNetwork<TInput, TOutput>
-		where TInput : ILayer<INeuron>, new()
-		where TOutput : ILayer<IWorkingNeuron>, new()
+	[DataContract, KnownType(typeof(Layer<Neuron<SigmoidFunction>>)), KnownType(typeof(Neuron<SigmoidFunction>)), KnownType(typeof(SigmoidFunction))]
+	public class NeuralNetwork : INeuralNetwork, ISerializable
 	{
 		/// <summary>
-		/// The network's own randomizer.
+		/// The input layer of this neural network.
 		/// </summary>
-		private static Random Randomizer { get; } = new Random();
+		[DataMember]
+		public Layer<Neuron<SigmoidFunction>> InputNeurons { get; private set; } = new Layer<Neuron<SigmoidFunction>>();
 
 		/// <summary>
-		/// Internal hidden neurons.
+		/// The various hidden layers of the neural network.
 		/// </summary>
-		private List<Layer<Neuron<SigmoidFunction>>> HiddenLayers { get; } = new List<Layer<Neuron<SigmoidFunction>>>();
+		[DataMember]
+		public List<Layer<Neuron<SigmoidFunction>>> HiddenNeurons { get; private set; } = new List<Layer<Neuron<SigmoidFunction>>>();
 
 		/// <summary>
-		/// The input layer for this network.
+		/// The output layer of this neural network.
 		/// </summary>
-		public TInput NetworkInput { get; } = new TInput();
-
-		/// <summary>
-		/// Represents the output layer for this network.
-		/// </summary>
-		public TOutput NetworkOutput { get; } = new TOutput();
-
-		/// <summary>
-		/// Sequencially returns every layer in this network in reverse order,
-		/// starting from the last layer in the hidden layers, going through all the
-		/// hidden layers and ending on the input layer.
-		/// </summary>
-		private IEnumerable<ILayer<INeuron>> GetWorkingLayers()
-		{
-			for (int index = HiddenLayers.Count - 1; index >= 0; --index)
+		public Layer<Neuron<SigmoidFunction>> OutputNeurons {
+			get
 			{
-				yield return HiddenLayers[index];
+				return HiddenNeurons.Last();
 			}
-			yield return NetworkInput;
 		}
 
 		/// <summary>
-		/// Walks through every layer in the network, starting from the
-		/// Input layer and ending on the Output layer.
+		/// Creates a new neural network with a specified configuration.
+		/// The configuration defines how many layers and how many neurons
+		/// per each layer will exist in this network, for instance using
+		/// the format: 3, 5, 5, 4, 7, 1 will create a network with 3 input
+		/// neurons, 1 output neuron, and 4 hidden layers containing 5, 5, 4 and
+		/// 7 neurons respectively.
 		/// </summary>
-		private IEnumerable<ILayer<INeuron>> GetAllLayers()
+		/// <param name="networkConfiguration">The network configuration.</param>
+		public NeuralNetwork(params int[] networkConfiguration)
 		{
-			yield return NetworkInput;
-			foreach (var layer in HiddenLayers)
+			// Create input neurons
+			for (int i = 0; i < networkConfiguration[0]; ++i)
 			{
-				yield return layer;
+				InputNeurons.AddNeuron(new Neuron<SigmoidFunction>());
 			}
-			yield return NetworkOutput;
-		}
-
-		/// <summary>
-		/// Randomly fills and strictly connects this network
-		/// based on given parameters.
-		/// </summary>
-		/// <param name="minLayers">The minimum number of hidden layers. Note that the input and output layers will be left untouched.</param>
-		/// <param name="maxLayers">The maximum number of hidden layers. Note that the input and output layers will be left untouched.</param>
-		/// <param name="minNeuronsPerLayer">The minimum amount of neurons per layer. This is NOT the minimum number of neurons for each layer, it's the minimum number of neurons each layer can have.</param>
-		/// <param name="maxNeuronsPerLayer">The maximum amount of neurons per layer. This is NOT the maximum number of neurons for each layer, it's the maximum number of neurons each layer can have.</param>
-		public void Randomize(int minLayers, int maxLayers, int minNeuronsPerLayer, int maxNeuronsPerLayer)
-		{
-			int hiddenLayerCount = Randomizer.Next(minLayers, maxLayers + 1);
-			for (int layerID = 0; layerID < hiddenLayerCount; ++layerID)
+			// Create hidden and output neurons
+			for (int i = 1; i < networkConfiguration.Length; ++i)
 			{
 				var lastLayer = new Layer<Neuron<SigmoidFunction>>();
-				HiddenLayers.Add(lastLayer);
-				lastLayer.FillRandom(minNeuronsPerLayer, maxNeuronsPerLayer);
+				HiddenNeurons.Add(lastLayer);
+				for (int j = 0; j < networkConfiguration[i]; ++j)
+				{
+					lastLayer.AddNeuron(new Neuron<SigmoidFunction>());
+				}
 			}
-			Connect();
+			FullyConnect();
 		}
 
 		/// <summary>
-		/// Connects the entire network together.
+		/// Fully connects every layer of this neural network.
 		/// </summary>
-		public void Connect()
+		private void FullyConnect()
 		{
-			ILayer<IWorkingNeuron> nextLayer = NetworkOutput;
-			foreach (var networkLayer in GetWorkingLayers())
+			if (HiddenNeurons.Count == 0)
 			{
-				networkLayer.Connect(nextLayer);
-				if (networkLayer is ILayer<IWorkingNeuron> workingLayer)
+				InputNeurons.Connect(OutputNeurons);
+			}
+			else
+			{
+				InputNeurons.Connect(HiddenNeurons[0]);
+				for (int i = 0; i < HiddenNeurons.Count - 1; ++i)
 				{
-					nextLayer = workingLayer;
+					HiddenNeurons[i].Connect(HiddenNeurons[i + 1]);
+				}
+				HiddenNeurons.Last().Connect(OutputNeurons);
+			}
+		}
+
+		/// <summary>
+		/// Feeds the input values into the input layer
+		/// and forwards them through the rest of the network.
+		/// </summary>
+		/// <param name="inputValues">The input values to feed through the network.</param>
+		public void Feedforward(params decimal[] inputValues)
+		{
+			if (inputValues.Length != InputNeurons.Count)
+			{
+				throw new ArgumentOutOfRangeException("inputValues");
+			}
+
+			for (int neuron = 0; neuron < InputNeurons.Count; ++neuron)
+			{
+				InputNeurons[neuron].Output = inputValues[neuron];
+			}
+
+			if (HiddenNeurons.Count != 0)
+			{
+				foreach (var layer in HiddenNeurons)
+				{
+					layer.Feedforward();
+				}
+			}
+			OutputNeurons.Feedforward();
+		}
+
+		/// <summary>
+		/// Returns the output of this network from its output
+		/// layer.
+		/// </summary>
+		/// <returns>The output of this network from its output
+		/// layer.</returns>
+		public decimal[] GetNetworkOutput()
+		{
+			decimal[] networkOutput = new decimal[OutputNeurons.Count];
+			for (int neuron = 0; neuron < OutputNeurons.Count; ++neuron)
+			{
+				networkOutput[neuron] = OutputNeurons[neuron].Output;
+			}
+			return networkOutput;
+		}
+
+		/// <summary>
+		/// Serializes this neural network to a string.
+		/// </summary>
+		/// <returns>A serialized version of this neural network.</returns>
+		public string Serialize()
+		{
+			using (MemoryStream memoryStream = new MemoryStream())
+			{
+				DataContractSerializer serializer = new DataContractSerializer(GetType(), null, 0x7FFF, false, true, null);
+				serializer.WriteObject(memoryStream, this);
+				memoryStream.Seek(0, SeekOrigin.Begin);
+
+				using (StreamReader streamReader = new StreamReader(memoryStream))
+				{
+					return streamReader.ReadToEnd();
 				}
 			}
 		}
 
 		/// <summary>
-		/// Walks through the network layers and returns a string based
-		/// map of the network.
+		/// Deserializes a raw formatted neural network into an object.
 		/// </summary>
-		/// <returns>A string based map of the network.</returns>
-		public string Walk()
+		/// <param name="raw">The XML serialized neural network.</param>
+		/// <returns>A deserialized neural network.</returns>
+		public static NeuralNetwork Deserialize(string raw)
 		{
-			StringBuilder mapBuilder = new StringBuilder();
-			foreach (var layer in GetAllLayers().Reverse())
-			{
-				foreach (var neuron in layer.GetNeurons())
-				{
-					mapBuilder.Append(" {" + neuron.Output + "} ");
-				}
-				mapBuilder.AppendLine();
-			}
-			return mapBuilder.ToString();
-		}
-
-		/// <summary>
-		/// Serializes this class and returns a string
-		/// equivalent of it.
-		/// </summary>
-		/// <returns>The serialized version of this class.</returns>
-		public virtual string Serialize()
-		{
-			using (MemoryStream stream = new MemoryStream())
-			{
-				var serializer = new DataContractSerializer(GetType(), null, 0x7FFF, false, true, null);
-				serializer.WriteObject(stream, this);
-				stream.Seek(0, SeekOrigin.Begin);
-
-				using (StreamReader reader = new StreamReader(stream))
-				{
-					return reader.ReadToEnd();
-				}
-			}
-		}
-
-		/// <summary>
-		/// Loads the contents of this class from
-		/// a serialized string.
-		/// </summary>
-		/// <param name="raw">The source serialized string.</param>
-		/// <returns>A deserialized version of the <paramref name="raw"/> source.</returns>
-		public static NeuralNetwork<TInput, TOutput> Deserialize(string raw)
-		{
-			using (MemoryStream stream = new MemoryStream())
+			using (MemoryStream memoryStream = new MemoryStream())
 			{
 				byte[] data = Encoding.UTF8.GetBytes(raw);
-				stream.Write(data, 0, data.Length);
-				stream.Position = 0;
-				DataContractSerializer deserializer = new DataContractSerializer(typeof(NeuralNetwork<TInput, TOutput>));
-				return (NeuralNetwork<TInput, TOutput>)deserializer.ReadObject(stream);
+				memoryStream.Write(data, 0, data.Length);
+				memoryStream.Position = 0;
+				DataContractSerializer deserializer = new DataContractSerializer(typeof(NeuralNetwork));
+				return (NeuralNetwork)deserializer.ReadObject(memoryStream);
 			}
 		}
 	}

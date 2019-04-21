@@ -6,17 +6,13 @@ using System.Threading.Tasks;
 
 namespace MachineLearning.Interfaces
 {
-	/// <summary>
-	/// Represents a perceptron that has to exist within either a
-	/// hidden or output layer.
-	/// </summary>
-	public interface IWorkingNeuron : INeuron
+	public interface IConnectionTarget<in TConnectionTarget>
 	{
 		/// <summary>
 		/// Creates a connection with the <paramref name="source"/> neuron.
 		/// </summary>
 		/// <param name="source">The neuron to connect from.</param>
 		/// <param name="weight">The weight of the new connection.</param>
-		void AddConnection(INeuron source, float weight);
+		void AddConnection(TConnectionTarget source, decimal weight);
 	}
 }

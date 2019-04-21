@@ -42,20 +42,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Connection.cs" />
-    <Compile Include="Neurons\InputNeuron.cs" />
+    <Compile Include="ActivationFunctions\ConstantFunction.cs" />
+    <Compile Include="ActivationFunctions\StepFunction.cs" />
+    <Compile Include="Interfaces\IConnectable.cs" />
     <Compile Include="Interfaces\IActivationFunction.cs" />
+    <Compile Include="Interfaces\IConnectionTarget.cs" />
     <Compile Include="Interfaces\ILayer.cs" />
     <Compile Include="Interfaces\INeuralNetwork.cs" />
     <Compile Include="Interfaces\INeuron.cs" />
-    <Compile Include="Interfaces\IWorkingNeuron.cs" />
+    <Compile Include="Interfaces\ISerializable.cs" />
+    <Compile Include="Layers\Layer.cs" />
     <Compile Include="NeuralNetwork.cs" />
-    <Compile Include="SigmoidFunction.cs" />
-    <Compile Include="Layer.cs" />
-    <Compile Include="NamedLayer.cs" />
     <Compile Include="Neurons\Neuron.cs" />
+    <Compile Include="Randomizer.cs" />
+    <Compile Include="ActivationFunctions\SigmoidFunction.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TrainableNetwork.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

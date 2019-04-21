@@ -1,95 +1,105 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
 using MachineLearning.Interfaces;
 
-namespace MachineLearning
+namespace MachineLearning.Neurons
 {
 	/// <summary>
-	/// Represents a simple working perceptron.
+	/// Abstract representation of a single
+	/// perceptron.
 	/// </summary>
 	[DataContract]
-	public class Neuron<TActivationFunction> : IWorkingNeuron where TActivationFunction : IActivationFunction, new()
+	public class Neuron<TActivationFunction> : INeuron where TActivationFunction : IActivationFunction, new()
 	{
 		/// <summary>
-		/// Weight randomizer.
+		/// A dictionary containing all the connection weights to this neuron.
 		/// </summary>
-		private static Random Randomizer { get; } = new Random();
+		[DataMember]
+		private ConcurrentDictionary<INeuron, decimal> InternalConnections { get; set; } = new ConcurrentDictionary<INeuron, decimal>();
 
 		/// <summary>
-		/// The neuron's output.
+		/// The connections to this neurons from any neuron in the previous layer and
+		/// their respective weights.
 		/// </summary>
-		public float Output { get => CalculateNeuronOutput(); }
-
-		/// <summary>
-		/// The weighed sum of all incoming connections.
-		/// </summary>
-		private float WeighedSum {
+		public IReadOnlyDictionary<INeuron, decimal> Connections {
 			get
 			{
-				float sum = 0.0f;
-				foreach (Connection connection in Connections)
-				{
-					sum += connection.Source.Output * connection.Weight;
-				}
-				return sum;
+				return InternalConnections;
 			}
 		}
 
 		/// <summary>
-		/// This neuron's activation function.
+		/// The output value of this neuron.
 		/// </summary>
-		private TActivationFunction ActivationFunction { get; } = new TActivationFunction();
+		[DataMember]
+		public decimal Output { get; set; } = 0.0m;
 
 		/// <summary>
-		/// List of connections.
+		/// Calculates the output value for this neuron.
 		/// </summary>
-		private List<Connection> Connections { get; } = new List<Connection>();
-
-		/// <summary>
-		/// Calculates the weighed sum of all incoming connections
-		/// and passes it through the activation function.
-		/// </summary>
-		/// <returns></returns>
-		private float CalculateNeuronOutput()
+		public void Calculate()
 		{
-			return ActivationFunction.Calculate(WeighedSum);
+			TActivationFunction activationFunction = new TActivationFunction();
+			decimal weighedSum = GetWeighedSum();
+
+			Output = activationFunction.Calculate(weighedSum);
 		}
 
 		/// <summary>
-		/// Creates a connection with the <paramref name="source"/> neuron.
+		/// Calculates a weighed sum of all incoming connections.
 		/// </summary>
-		/// <param name="source">The neuron to connect from.</param>
-		/// <param name="weight">The weight of the new connection.</param>
-		public void AddConnection(INeuron source, float weight)
+		/// <returns>The sum of all incoming connections.</returns>
+		private decimal GetWeighedSum()
 		{
-			Connections.Add(new Connection(source, weight));
+			decimal weighedSum = 0.0m;
+			foreach (var connection in InternalConnections)
+			{
+				INeuron connectionNeuron = connection.Key;
+				decimal connectionWeight = connection.Value;
+
+				weighedSum += connectionNeuron.Output * connectionWeight;
+			}
+			return weighedSum;
 		}
 
 		/// <summary>
-		/// Creates a connection between this neuron and
-		/// the <paramref name="target"/> neuron. The weight
-		/// will be calculated randomly.
+		/// Adds an incoming connection from a different
+		/// neuron with a specific weight.
 		/// </summary>
-		/// <param name="target">The neuron to be connected to.</param>
-		public void Connect(IWorkingNeuron target)
+		/// <param name="source">The source neuron.</param>
+		/// <param name="weight">The connection weight.</param>
+		public void AddConnection(INeuron source, decimal weight)
 		{
-			// NextDouble() yields a result in the range of 0 / 1, multiplying
-			// by 2 and subtracting 1 changes the range to a more weight appropriate
-			// -1 / 1
-			Connect(target, (float)(Randomizer.NextDouble() * 2 - 1));
+			InternalConnections[source] = weight;
 		}
 
 		/// <summary>
-		/// Creates a connection between this neuron and
-		/// the <paramref name="target"/> neuron, with a
-		/// specified connection weight.
+		/// Connects this neuron to a different neuron using
+		/// a specific weight.
 		/// </summary>
 		/// <param name="target">The target neuron.</param>
 		/// <param name="weight">The connection weight.</param>
-		public void Connect(IWorkingNeuron target, float weight)
+		public void Connect(INeuron target, decimal weight)
 		{
 			target.AddConnection(this, weight);
+		}
+
+		/// <summary>
+		/// Connects this neuron to every neuron in the target layer.
+		/// </summary>
+		/// <param name="target">The target layer.</param>
+		/// <param name="weight">The weight to use for every connection.</param>
+		public void Connect(ILayer<INeuron> target, decimal weight)
+		{
+			foreach (INeuron neuron in target)
+			{
+				Connect(neuron, weight);
+			}
 		}
 	}
 }

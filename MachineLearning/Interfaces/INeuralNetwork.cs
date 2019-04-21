@@ -7,21 +7,23 @@ using System.Threading.Tasks;
 namespace MachineLearning.Interfaces
 {
 	/// <summary>
-	/// Defines an interface for an autonomous
-	/// neural network.
+	/// Represents a network of perceptrons.
 	/// </summary>
-	public interface INeuralNetwork<TInput, TOutput> 
-		where TInput : ILayer<INeuron>
-		where TOutput : ILayer<IWorkingNeuron>
+	interface INeuralNetwork
 	{
 		/// <summary>
-		/// Represents the network input.
+		/// Feeds the input values into the input layer
+		/// and forwards them through the rest of the network.
 		/// </summary>
-		TInput NetworkInput { get; }
-
+		/// <param name="inputValues">The input values to feed through the network.</param>
+		void Feedforward(params decimal[] inputValues);
+		
 		/// <summary>
-		/// Represents the network output.
+		/// Returns the output of this network from its output
+		/// layer.
 		/// </summary>
-		TOutput NetworkOutput { get; }
+		/// <returns>The output of this network from its output
+		/// layer.</returns>
+		decimal[] GetNetworkOutput();
 	}
 }

@@ -17,6 +17,6 @@ namespace MachineLearning.Interfaces
 		/// </summary>
 		/// <param name="weighedSum">The weighed sum of all previous connections.</param>
 		/// <returns>The result passed through the activation function.</returns>
-		float Calculate(float weighedSum);
+		decimal Calculate(decimal weighedSum);
 	}
 }

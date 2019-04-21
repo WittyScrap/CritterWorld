@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MachineLearning.Interfaces;
 
-namespace MachineLearning
+namespace MachineLearning.ActivationFunctions
 {
 	/// <summary>
 	/// Activation function: sigmoid;
@@ -23,9 +23,9 @@ namespace MachineLearning
 		/// </summary>
 		/// <param name="weighedSum">The weighed sum input.</param>
 		/// <returns>The function's result.</returns>
-		public float Calculate(float weighedSum)
+		public decimal Calculate(decimal weighedSum)
 		{
-			return 1 / (1 + (float)Math.Pow(Math.E, -weighedSum));
+			return 1 / (1 + (decimal)Math.Pow(Math.E, (double)-weighedSum));
 		}
 	}
 }
