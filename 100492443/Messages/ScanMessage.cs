@@ -10,7 +10,7 @@ namespace CritterRobots.Messages
 	/// Represents the SCAN message in an object
 	/// oriented form.
 	/// </summary>
-	class ScanMessage : SeeMessage, ITrackedMessage
+	public class ScanMessage : SeeMessage, ITrackedMessage
 	{
 		/// <summary>
 		/// This message's request ID.

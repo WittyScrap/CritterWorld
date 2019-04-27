@@ -12,7 +12,7 @@ namespace CritterRobots.Messages
 	/// Provides a simple messaging system
 	/// implementation.
 	/// </summary>
-	class SimpleMessage : IMessage
+	public class SimpleMessage : IMessage
 	{
 		/// <summary>
 		/// The header for this message.

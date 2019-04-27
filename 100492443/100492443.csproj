@@ -54,6 +54,7 @@
     </Compile>
     <Compile Include="Critters\Critter.cs" />
     <Compile Include="Critters\CritterFactory.cs" />
+    <Compile Include="Critters\INetworkHolder.cs" />
     <Compile Include="Critters\NetworkTrainer.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="Critters\DebugCritter.cs" />
@@ -85,6 +86,9 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Components\NetworkDrawer.resx">
+      <DependentUpon>NetworkDrawer.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\NetworkTrainerDebugWindow.resx">
       <DependentUpon>NetworkTrainerDebugWindow.cs</DependentUpon>
     </EmbeddedResource>

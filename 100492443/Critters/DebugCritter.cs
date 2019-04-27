@@ -16,7 +16,7 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// Creates a new testing critter.
 		/// </summary>
-		public DebugCritter() : base("~ The bug whoms't de-bugs ~")
+		public DebugCritter() : base("~ The bug who de-bugs ~")
 		{ }
 		
 		/// <summary>

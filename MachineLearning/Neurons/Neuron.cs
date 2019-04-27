@@ -21,7 +21,7 @@ namespace MachineLearning.Neurons
 		/// </summary>
 		[DataMember]
 		private ConcurrentDictionary<INeuron, decimal> InternalConnections { get; set; } = new ConcurrentDictionary<INeuron, decimal>();
-
+		
 		/// <summary>
 		/// The connections to this neurons from any neuron in the previous layer and
 		/// their respective weights.

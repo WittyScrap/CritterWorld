@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CritterRobots.Critters
 {
-	struct Vector
+	public struct Vector
 	{
 		/// <summary>
 		/// A zero sized vector.

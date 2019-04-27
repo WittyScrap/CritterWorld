@@ -15,7 +15,7 @@ namespace CritterRobots.Critters.Controllers
 	/// Implements basic functionality for
 	/// all types of Critter AI.
 	/// </summary>
-	abstract class Critter : ICritterController
+	public abstract class Critter : ICritterController
 	{
 		#region ICritterController interface components
 		/// <summary>

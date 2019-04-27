@@ -167,5 +167,24 @@ namespace MachineLearning
 				return (NeuralNetwork)deserializer.ReadObject(memoryStream);
 			}
 		}
+
+		/// <summary>
+		/// Creates a random neural network with a fixed
+		/// number of input and output neurons.
+		/// </summary>
+		/// <returns>A random neural network.</returns>
+		public static NeuralNetwork RandomNetwork(int inputNeurons, int outputNeurons, int minLayers = 0, int maxLayers = 10, int minNeurons = 1, int maxNeurons = 50)
+		{
+			int networkSize = Randomizer.NextInteger(minLayers, maxLayers);
+			List<int> randomNetwork = new List<int>(networkSize);
+			for (int i = 0; i < networkSize; ++i)
+			{
+				randomNetwork.Add(Randomizer.NextInteger(minNeurons, maxNeurons));
+			}
+			randomNetwork.Insert(0, inputNeurons);
+			randomNetwork.Add(outputNeurons);
+
+			return new NeuralNetwork(randomNetwork.ToArray());
+		}
 	}
 }

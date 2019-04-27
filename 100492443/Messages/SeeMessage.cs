@@ -10,7 +10,7 @@ namespace CritterRobots.Messages
 	/// Represents the SEE message in an object
 	/// oriented form.
 	/// </summary>
-	class SeeMessage : SimpleMessage
+	public class SeeMessage : SimpleMessage
 	{
 		/// <summary>
 		/// Constructs 

@@ -28,10 +28,36 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			components = new System.ComponentModel.Container();
+			this.debugLabel = new System.Windows.Forms.Label();
+			this.SuspendLayout();
+			// 
+			// debugLabel
+			// 
+			this.debugLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.debugLabel.AutoSize = true;
+			this.debugLabel.Location = new System.Drawing.Point(4, 134);
+			this.debugLabel.Name = "debugLabel";
+			this.debugLabel.Size = new System.Drawing.Size(47, 13);
+			this.debugLabel.TabIndex = 0;
+			this.debugLabel.Text = "Ready...";
+			// 
+			// NetworkDrawer
+			// 
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.debugLabel);
+			this.Name = "NetworkDrawer";
+			this.Paint += new System.Windows.Forms.PaintEventHandler(this.NetworkDrawer_Paint);
+			this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.NetworkDrawer_MouseDown);
+			this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.NetworkDrawer_MouseMove);
+			this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.NetworkDrawer_MouseUp);
+			this.ResumeLayout(false);
+			this.PerformLayout();
+
 		}
 
 		#endregion
+
+		private System.Windows.Forms.Label debugLabel;
 	}
 }

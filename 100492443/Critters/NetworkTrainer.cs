@@ -12,17 +12,18 @@ namespace CritterRobots.Critters.Controllers
 	/// This critter will handle training the
 	/// internal Neural Network.
 	/// </summary>
-	class NetworkTrainer : Critter
+	public class NetworkTrainer : Critter, INetworkHolder
 	{
 		/// <summary>
-		/// The neural network used for 
+		/// The neural network used for handling the critter's
+		/// behaviour.
 		/// </summary>
-		private NeuralNetwork InternalNeuralNetwork { get; }
+		public NeuralNetwork CritterBrain { get; set; }
 
 		/// <summary>
 		/// The network debug window.
 		/// </summary>
-		private NetworkTrainerDebugWindow DebugWindow { get; } = new NetworkTrainerDebugWindow();
+		private NetworkTrainerDebugWindow DebugWindow { get; set; }
 
 		/// <summary>
 		/// Constructs a new critter.
@@ -30,7 +31,7 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="critterID">A unique representative ID for the critter.</param>
 		public NetworkTrainer(int critterID) : base("Mortal slave #" + critterID)
 		{
-			
+			CritterBrain = NeuralNetwork.RandomNetwork(5, 2);
 		}
 
 		/// <summary>
@@ -39,6 +40,7 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		public override void LaunchUI()
 		{
+			DebugWindow = new NetworkTrainerDebugWindow(this);
 			DebugWindow.Show();
 			DebugWindow.Focus();
 		}
