@@ -45,12 +45,16 @@
 			this.nothingFoundToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.networkDrawer = new CritterRobots.Components.NetworkDrawer();
+			this.fieToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.mutateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.restoreToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.mainMenu.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// mainMenu
 			// 
 			this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fieToolStripMenuItem,
             this.viewToolStripMenuItem,
             this.networkToolStripMenuItem,
             this.helpToolStripMenuItem});
@@ -208,6 +212,28 @@
 			this.networkDrawer.TabIndex = 1;
 			this.networkDrawer.Load += new System.EventHandler(this.NetworkDrawer_Load);
 			// 
+			// fieToolStripMenuItem
+			// 
+			this.fieToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mutateToolStripMenuItem,
+            this.restoreToolStripMenuItem});
+			this.fieToolStripMenuItem.Name = "fieToolStripMenuItem";
+			this.fieToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+			this.fieToolStripMenuItem.Text = "File";
+			// 
+			// mutateToolStripMenuItem
+			// 
+			this.mutateToolStripMenuItem.Name = "mutateToolStripMenuItem";
+			this.mutateToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.mutateToolStripMenuItem.Text = "Mutate...";
+			this.mutateToolStripMenuItem.Click += new System.EventHandler(this.mutateToolStripMenuItem_Click);
+			// 
+			// restoreToolStripMenuItem
+			// 
+			this.restoreToolStripMenuItem.Name = "restoreToolStripMenuItem";
+			this.restoreToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.restoreToolStripMenuItem.Text = "Restore";
+			// 
 			// NetworkTrainerDebugWindow
 			// 
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -244,5 +270,8 @@
 		private System.Windows.Forms.ToolStripMenuItem seekSalvationToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem nothingFoundToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem fieToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem mutateToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem restoreToolStripMenuItem;
 	}
 }

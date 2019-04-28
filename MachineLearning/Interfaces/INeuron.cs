@@ -9,7 +9,7 @@ namespace MachineLearning.Interfaces
 	/// <summary>
 	/// Represents a single perceptron.
 	/// </summary>
-	public interface INeuron : IConnectable<INeuron>, IConnectable<ILayer<INeuron>>, IConnectionTarget<INeuron>
+	public interface INeuron : IConnectable<INeuron>, IConnectable<ILayer<INeuron>>, IDisconnectable, IConnectionTarget<INeuron>
 	{
 		/// <summary>
 		/// The output value of this neuron.

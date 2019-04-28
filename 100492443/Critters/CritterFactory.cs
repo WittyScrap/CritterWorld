@@ -37,7 +37,7 @@ namespace CritterRobots.Critters
 			for (int i = 0; i < maxCritters / critterVariants; ++i)
 			{
 				critters.Add(new DebugCritter());
-				critters.Add(new NetworkTrainer(i));
+				critters.Add(new CritterStudent(i));
 			}
 			return critters.ToArray();
 		}

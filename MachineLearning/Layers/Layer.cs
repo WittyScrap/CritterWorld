@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using MachineLearning.ActivationFunctions;
 using MachineLearning.Interfaces;
 using MachineLearning.Neurons;
 
@@ -60,8 +61,19 @@ namespace MachineLearning.Layers
 			{
 				foreach (TNeuron targetNeuron in other)
 				{
-					neuron.Connect(targetNeuron, Randomizer.Nextdecimal(-1.0m, 1.0m));
+					neuron.Connect(targetNeuron, Randomizer.NextDecimal(-1.0m, 1.0m));
 				}
+			}
+		}
+
+		/// <summary>
+		/// Clears the list of connections for each neuron.
+		/// </summary>
+		public void Disconnect()
+		{
+			foreach (TNeuron neuron in this)
+			{
+				neuron.Disconnect();
 			}
 		}
 

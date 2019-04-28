@@ -9,7 +9,7 @@ namespace MachineLearning.Interfaces
 	/// <summary>
 	/// Represents a group of perceptrons.
 	/// </summary>
-	public interface ILayer<TNeuron> : IReadOnlyCollection<TNeuron>, IConnectable<ILayer<TNeuron>> where TNeuron : INeuron
+	public interface ILayer<TNeuron> : IReadOnlyCollection<TNeuron>, IConnectable<ILayer<TNeuron>>, IDisconnectable where TNeuron : INeuron
 	{
 		/// <summary>
 		/// Runs the values of any neuron connected to the ones

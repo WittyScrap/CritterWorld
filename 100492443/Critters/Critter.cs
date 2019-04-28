@@ -90,12 +90,12 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// The current health of the critter.
 		/// </summary>
-		protected float Health { get; private set; } = 1f;
+		public float Health { get; private set; } = 1f;
 
 		/// <summary>
 		/// The current energy of the critter.
 		/// </summary>
-		protected float Energy { get; private set; } = 1f;
+		public float Energy { get; private set; } = 1f;
 
 		/// <summary>
 		/// If this is false, no messages can be sent to the CritterWorld

@@ -133,6 +133,97 @@ namespace MachineLearning
 		}
 
 		/// <summary>
+		/// Mutates randomly the amount of layers in the
+		/// network.
+		/// </summary>
+		private void MutateLayerNumber(int maxNewNeurons, int mutationIntensity)
+		{
+			int layerNumberMutation = Randomizer.NextInteger(-mutationIntensity, mutationIntensity);
+			if (layerNumberMutation < 0)
+			{
+				bool networkChanged = false;
+				for (int i = 0; i < -layerNumberMutation && HiddenNeurons.Count > 1; ++i)
+				{
+					HiddenNeurons.RemoveAt(0);
+					networkChanged = true;
+				}
+				if (networkChanged)
+				{
+					InputNeurons.Connect(HiddenNeurons[0]);
+				}
+			}
+			else if (layerNumberMutation > 0)
+			{
+				var outputLayer = OutputNeurons;
+				outputLayer.Disconnect();
+
+				// Remove output layer...
+				HiddenNeurons.RemoveAt(HiddenNeurons.Count - 1);
+				int newLayerSize = Randomizer.NextInteger(1, maxNewNeurons);
+
+				var lastLayer = HiddenNeurons.Count > 0 ? HiddenNeurons[HiddenNeurons.Count - 1] : InputNeurons;
+
+				for (int i = 0; i < layerNumberMutation; ++i)
+				{
+					var newLayer = new Layer<Neuron<SigmoidFunction>>();
+					HiddenNeurons.Add(newLayer);
+					for (int j = 0; j < newLayerSize; ++j)
+					{
+						newLayer.AddNeuron(new Neuron<SigmoidFunction>());
+					}
+					lastLayer.Connect(newLayer);
+					lastLayer = newLayer;
+				}
+
+				// Add back output layer...
+				HiddenNeurons.Add(outputLayer);
+				lastLayer.Connect(outputLayer);
+			}
+		}
+
+		/// <summary>
+		/// Mutates the existing layers (except for the output layer) without
+		/// changing the number of layers.
+		/// </summary>
+		private void MutateInternalNetwork(int mutationIntensity)
+		{
+			var previousLayer = InputNeurons;
+			for (int hiddenLayerID = 0; hiddenLayerID < HiddenNeurons.Count; ++hiddenLayerID)
+			{
+				var currentLayer = HiddenNeurons[hiddenLayerID];
+				for (int previousLayerNeuronID = 0; previousLayerNeuronID < previousLayer.Count; ++previousLayerNeuronID)
+				{
+					if (Randomizer.NextDecimal() > 0.5m)
+					{
+						for (int currentLayerNeuronID = 0; currentLayerNeuronID < currentLayer.Count; ++currentLayerNeuronID)
+						{
+							var previousLayerNeuron = previousLayer[previousLayerNeuronID];
+							var currentLayerNeuron = currentLayer[currentLayerNeuronID];
+
+							decimal weightMutationIntensity = mutationIntensity / 10m;
+							decimal weightDelta = Randomizer.NextDecimal(-weightMutationIntensity, weightMutationIntensity);
+
+							decimal weight = currentLayerNeuron.Connections[previousLayerNeuron];
+							decimal updatedWeight = weight + weightDelta;
+
+							currentLayerNeuron.UpdateConnectionWeight(previousLayerNeuron, updatedWeight);
+						}
+					}
+				}
+				previousLayer = currentLayer;
+			}
+		}
+
+		/// <summary>
+		/// Applies random small mutations to this network
+		/// </summary>
+		public void Mutate(int maxNewNeurons = 50, int mutationIntensity = 2)
+		{
+			MutateLayerNumber(maxNewNeurons, mutationIntensity);
+			MutateInternalNetwork(mutationIntensity);
+		}
+
+		/// <summary>
 		/// Serializes this neural network to a string.
 		/// </summary>
 		/// <returns>A serialized version of this neural network.</returns>
@@ -185,6 +276,16 @@ namespace MachineLearning
 			randomNetwork.Add(outputNeurons);
 
 			return new NeuralNetwork(randomNetwork.ToArray());
+		}
+
+		/// <summary>
+		/// Creates a random neural network with a fixed
+		/// number of output neurons.
+		/// </summary>
+		/// <returns>A random neural network.</returns>
+		public static NeuralNetwork RandomNetwork(int outputNeurons, int minLayers = 0, int maxLayers = 10, int minNeurons = 1, int maxNeurons = 50)
+		{
+			return RandomNetwork(Randomizer.NextInteger(minNeurons, maxNeurons), outputNeurons, minLayers, maxLayers, minNeurons, maxNeurons);
 		}
 	}
 }

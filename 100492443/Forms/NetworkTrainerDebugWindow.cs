@@ -109,5 +109,14 @@ namespace CritterRobots.Forms
 		{
 			networkDrawer.Refresh();
 		}
+
+		/// <summary>
+		/// Randomly mutates the held neural network.
+		/// </summary>
+		private void mutateToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			ReferenceBrain.CritterBrain.Mutate();
+			networkDrawer.Refresh();
+		}
 	}
 }

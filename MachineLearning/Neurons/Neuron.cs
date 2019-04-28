@@ -34,6 +34,28 @@ namespace MachineLearning.Neurons
 		}
 
 		/// <summary>
+		/// Updates the weight of a connection.
+		/// </summary>
+		public void UpdateConnectionWeight(INeuron key, decimal value)
+		{
+			if (!InternalConnections.ContainsKey(key))
+			{
+				return;
+			}
+
+			if (value > 1m)
+			{
+				value = 1m;
+			}
+			if (value < 0m)
+			{
+				value = 0m;
+			}
+
+			InternalConnections[key] = value;
+		}
+
+		/// <summary>
 		/// The output value of this neuron.
 		/// </summary>
 		[DataMember]
@@ -65,6 +87,14 @@ namespace MachineLearning.Neurons
 				weighedSum += connectionNeuron.Output * connectionWeight;
 			}
 			return weighedSum;
+		}
+
+		/// <summary>
+		/// Clears all connections.
+		/// </summary>
+		public void Disconnect()
+		{
+			InternalConnections.Clear();
 		}
 
 		/// <summary>

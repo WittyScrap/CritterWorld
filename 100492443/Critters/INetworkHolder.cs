@@ -1,4 +1,5 @@
-﻿using MachineLearning;
+﻿using CritterRobots.AI;
+using MachineLearning;
 using System;
 using System.Collections.Generic;
 using System.Linq;

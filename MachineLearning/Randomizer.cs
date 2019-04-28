@@ -10,7 +10,7 @@ namespace MachineLearning
 	/// Provides random functionality to external
 	/// classes.
 	/// </summary>
-	internal static class Randomizer
+	public static class Randomizer
 	{
 		/// <summary>
 		/// The random number generator.
@@ -40,23 +40,23 @@ namespace MachineLearning
 		}
 
 		/// <summary>
-		/// Returns a random decimaling point number that is more than 0.0 and less than 1.0.
+		/// Returns a random decimal number that is more than 0.0 and less than 1.0.
 		/// </summary>
-		/// <returns>A non-negative random decimaling point number.</returns>
-		public static decimal Nextdecimal()
+		/// <returns>A non-negative random decimal number.</returns>
+		public static decimal NextDecimal()
 		{
 			return (decimal)Generator.NextDouble();
 		}
 
 		/// <summary>
-		/// Returns a random decimaling point number within the specified range.
+		/// Returns a random decimal number within the specified range.
 		/// </summary>
 		/// <param name="minimum">The lower bound.</param>
 		/// <param name="maximum">The upper bound.</param>
-		/// <returns>A random decimaling point number within the specified range.</returns>
-		public static decimal Nextdecimal(decimal minimum, decimal maximum)
+		/// <returns>A random decimal number within the specified range.</returns>
+		public static decimal NextDecimal(decimal minimum, decimal maximum)
 		{
-			return Nextdecimal() * (maximum - minimum) + minimum;
+			return NextDecimal() * (maximum - minimum) + minimum;
 		}
 	}
 }
