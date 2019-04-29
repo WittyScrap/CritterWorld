@@ -39,24 +39,12 @@ namespace CritterRobots.Critters.Controllers
 		public static bool AnyEscaped { get; private set; }
 
 		/// <summary>
-		/// Total time spent being alive by this critter.
-		/// </summary>
-		public float TimeAlive { get; private set; } = 0;
-
-		/// <summary>
-		/// Timer to keep track of how long the critter is surviving.
-		/// </summary>
-		private System.Timers.Timer AliveTimer { get; }
-
-		/// <summary>
 		/// Constructs a new critter.
 		/// </summary>
 		/// <param name="critterID">A unique representative ID for the critter.</param>
 		public CritterStudent(int critterID) : base("Student that will totally not drop out #" + critterID, 10)
 		{
 			AnyEscaped = false;
-			AliveTimer = new System.Timers.Timer(1000);
-			AliveTimer.Elapsed += (sender, e) => TimeAlive++;
 			CritterCoach.Coach?.AddStudent(this);
 		}
 
@@ -66,7 +54,6 @@ namespace CritterRobots.Critters.Controllers
 		protected override void OnInitialize()
 		{
 			base.OnInitialize();
-			AliveTimer.Start();
 		}
 
 		/// <summary>
@@ -118,7 +105,6 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		protected override void OnStop(string stopReason)
 		{
-			AliveTimer.Stop();
 			if (stopReason == "ESCAPE")
 			{
 				HasEscaped = true;

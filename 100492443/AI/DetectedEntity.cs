@@ -111,7 +111,7 @@ namespace CritterRobots.AI
 			{
 				if (entity == CritterEye.Entity.Critter)
 				{
-					entityLocation = Critter.ParsePoint(entityDetails.ToString().Split(new char[] { ':' }, 1)[0]);
+					entityLocation = Critter.ParsePoint(entityDetails.ToString().Split(new char[] { ':' }, 2)[0]);
 				}
 				else
 				{

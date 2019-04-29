@@ -45,35 +45,53 @@ namespace CritterRobots.AI
 		/// <summary>
 		/// Collection containing all the detected food items.
 		/// </summary>
-		private SortedList<double, DetectedEntity> InternalDetectedFood { get; set; } = new SortedList<double, DetectedEntity>();
+		private SortedSet<DetectedEntity> InternalDetectedFood { get; set; } = new SortedSet<DetectedEntity>();
 
 		/// <summary>
 		/// Collection containing all the detected gifts.
 		/// </summary>
-		private SortedList<double, DetectedEntity> InternalDetectedGifts { get; set; } = new SortedList<double, DetectedEntity>();
+		private SortedSet<DetectedEntity> InternalDetectedGifts { get; set; } = new SortedSet<DetectedEntity>();
 
 		/// <summary>
 		/// Collection containing all the detected threats (Critters, Bombs and Walls).
 		/// </summary>
-		private SortedList<double, DetectedEntity> InternalDetectedThreats { get; set; } = new SortedList<double, DetectedEntity>();
+		private SortedSet<DetectedEntity> InternalDetectedThreats { get; set; } = new SortedSet<DetectedEntity>();
+
+		/// <summary>
+		/// Thread lock for food collection.
+		/// </summary>
+		private object FoodLock { get; } = new object();
+
+		/// <summary>
+		/// Thread lock for gift collection.
+		/// </summary>
+		private object GiftLock { get; } = new object();
+
+		/// <summary>
+		/// Thread lock for threats.
+		/// </summary>
+		private object ThreatLock { get; } = new object();
 
 		/// <summary>
 		/// Refreshes this eye's detected states through a SEE message.
 		/// </summary>
 		public void Update(SeeMessage message, Point critterLocation, Vector critterForward)
 		{
-			InternalDetectedThreats.Clear();
-
-			// Collect every entity and store it in the sorted lists.
-			foreach (DetectedEntity entity in message.Inform(critterLocation, critterForward))
+			lock (ThreatLock)
 			{
-				if (entity.Entity != Entity.EscapeHatch)
+				InternalDetectedThreats.Clear();
+
+				// Collect every entity and store it in the sorted lists.
+				foreach (DetectedEntity entity in message.Inform(critterLocation, critterForward))
 				{
-					InternalDetectedThreats.Add(entity.Distance, entity);
-				}
-				else
-				{
-					DetectedEscapeHatch = entity;
+					if (entity.Entity != Entity.EscapeHatch)
+					{
+						InternalDetectedThreats.Add(entity);
+					}
+					else if (DetectedEscapeHatch == null)
+					{
+						DetectedEscapeHatch = entity;
+					}
 				}
 			}
 		}
@@ -83,19 +101,26 @@ namespace CritterRobots.AI
 		/// </summary>
 		public void Update(ScanMessage message, Point critterLocation, Vector critterForward)
 		{
-			InternalDetectedFood.Clear();
-			InternalDetectedGifts.Clear();
-
-			// Collect every entity and store it in the sorted lists.
-			foreach (DetectedEntity entity in message.Inform(critterLocation, critterForward))
+			lock (FoodLock)
 			{
-				if (entity.Entity == Entity.Food)
+				InternalDetectedFood.Clear();
+
+				lock (GiftLock)
 				{
-					InternalDetectedFood.Add(entity.Distance, entity);
-				}
-				else
-				{
-					InternalDetectedFood.Add(entity.Distance, entity);
+					InternalDetectedGifts.Clear();
+
+					// Collect every entity and store it in the sorted lists.
+					foreach (DetectedEntity entity in message.Inform(critterLocation, critterForward))
+					{
+						if (entity.Entity == Entity.Food)
+						{
+							InternalDetectedFood.Add(entity);
+						}
+						else
+						{
+							InternalDetectedFood.Add(entity);
+						}
+					}
 				}
 			}
 		}
@@ -133,16 +158,16 @@ namespace CritterRobots.AI
 		/// <summary>
 		/// Generic version of all check methods.
 		/// </summary>
-		private decimal CheckEye(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold, double maximumDistance, SortedList<double, DetectedEntity> collectionSource)
+		private decimal CheckEye(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold, double maximumDistance, SortedSet<DetectedEntity> collectionSource)
 		{
 			Ray selectedRay = GetRay(critterLocation, critterForward, eyeID);
 			double angle = Vector.Dot(critterForward, selectedRay.Direction);
 
 			foreach (var detectedEntity in collectionSource)
 			{
-				if (Math.Abs(angle - detectedEntity.Value.Rotation) < angularThreshold)
+				if (Math.Abs(angle - detectedEntity.Rotation) < angularThreshold)
 				{
-					double entityDistance = detectedEntity.Value.Distance;
+					double entityDistance = detectedEntity.Distance;
 					entityDistance = Math.Min(entityDistance, maximumDistance);
 					entityDistance = maximumDistance - entityDistance;
 					entityDistance = entityDistance / maximumDistance;
@@ -150,7 +175,7 @@ namespace CritterRobots.AI
 					return (decimal)entityDistance;
 				}
 			}
-
+			
 			return 0m;
 		}
 
@@ -167,7 +192,10 @@ namespace CritterRobots.AI
 		/// <returns>A scalar from 0 to 1 to indicate the distance from it to the critter.</returns>
 		public decimal CheckFood(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold = 0.1, double maximumDistance = 100.0)
 		{
-			return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedFood);
+			lock (FoodLock)
+			{
+				return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedFood);
+			}
 		}
 
 		/// <summary>
@@ -183,7 +211,10 @@ namespace CritterRobots.AI
 		/// <returns>A scalar from 0 to 1 to indicate the distance from it to the critter.</returns>
 		public decimal CheckGift(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold = 0.1, double maximumDistance = 100.0)
 		{
-			return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedGifts);
+			lock (GiftLock)
+			{
+				return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedGifts);
+			}
 		}
 
 		/// <summary>
@@ -199,7 +230,10 @@ namespace CritterRobots.AI
 		/// <returns>A scalar from 0 to 1 to indicate the distance from it to the critter.</returns>
 		public decimal CheckThreat(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold = 0.1, double maximumDistance = 100.0)
 		{
-			return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedThreats);
+			lock (ThreatLock)
+			{
+				return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedThreats);
+			}
 		}
 
 		/// <summary>

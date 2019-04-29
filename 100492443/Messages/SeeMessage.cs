@@ -20,11 +20,11 @@ namespace CritterRobots.Messages
 		/// </summary>
 		public virtual IEnumerable<DetectedEntity> Inform(Point critterLocation, Vector critterForward)
 		{
-			foreach (string detectedObject in SplitBody)
+			foreach (string detectedObject in SplitBody.Skip(1))
 			{
 				string[] entityComponents = detectedObject.Split(':');
 
-				if (entityComponents[0] == "Critter" || entityComponents[0] == "Bomb" || entityComponents[0] == "Terrain")
+				if (entityComponents[0] == "Critter" || entityComponents[0] == "Bomb" || entityComponents[0] == "Terrain" || entityComponents[0] == "EscapeHatch")
 				{
 					yield return new DetectedEntity(detectedObject, critterLocation, critterForward);
 				}

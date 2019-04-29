@@ -108,6 +108,20 @@ namespace CritterRobots.Critters
 				networkInput[retinaCompartmentAddresser] = Eye.CheckFood(Location, Direction, eyeID);
 			}
 
+			retinaTarget += Eye.Precision;
+
+			for (int eyeID = 0; retinaCompartmentAddresser < retinaTarget; retinaCompartmentAddresser++, eyeID++, eyeID %= Eye.Precision)
+			{
+				networkInput[retinaCompartmentAddresser] = Eye.CheckGift(Location, Direction, eyeID);
+			}
+
+			retinaTarget += Eye.Precision;
+
+			for (int eyeID = 0; retinaCompartmentAddresser < retinaTarget; retinaCompartmentAddresser++, eyeID++, eyeID %= Eye.Precision)
+			{
+				networkInput[retinaCompartmentAddresser] = Eye.CheckThreat(Location, Direction, eyeID);
+			}
+
 			return networkInput;
 		}
 
