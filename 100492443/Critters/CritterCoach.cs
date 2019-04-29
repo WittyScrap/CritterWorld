@@ -15,12 +15,12 @@ namespace CritterRobots.Critters
 	/// This critter handles picking the best
 	/// critter from a generation.
 	/// </summary>
-	class CritterTeacher : Critter
+	class CritterCoach : Critter
 	{
 		/// <summary>
 		/// The active teacher critter.
 		/// </summary>
-		public static CritterTeacher Teacher { get; private set; }
+		public static CritterCoach Coach { get; private set; }
 
 		/// <summary>
 		/// Container for all the critter students.
@@ -56,9 +56,9 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// Creates a teacher critter.
 		/// </summary>
-		public CritterTeacher() : base("Teacher Critter")
+		public CritterCoach() : base("Teacher Critter")
 		{
-			Teacher = this;
+			Coach = this;
 		}
 
 		/// <summary>

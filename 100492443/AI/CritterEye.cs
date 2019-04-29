@@ -12,33 +12,22 @@ namespace CritterRobots.AI
 	/// Represents a series of raycast that are able to detect
 	/// objects of a certain type.
 	/// </summary>
-	public class CritterEye
+	public partial class CritterEye
 	{
 		/// <summary>
-		/// Represents a single eye ray.
+		/// Enumerator to represent what type
+		/// of contents are present within a given
+		/// tile.
 		/// </summary>
-		public struct Ray
+		[Flags]
+		public enum TileContents
 		{
-			/// <summary>
-			/// The origin of the ray.
-			/// </summary>
-			public Point Origin { get; set; }
-
-			/// <summary>
-			/// The direction of the ray.
-			/// </summary>
-			public Vector Direction { get; set; }
-
-			/// <summary>
-			/// Constructs a new ray.
-			/// </summary>
-			/// <param name="origin">The origin point of the ray.</param>
-			/// <param name="direction">The ray's direction.</param>
-			public Ray(Point origin, Vector direction)
-			{
-				Origin = origin;
-				Direction = direction;
-			}
+			Empty = 0,
+			Terrain = 1 << 0,
+			Gift = 1 << 1,
+			Food = 1 << 2,
+			Bomb = 1 << 3,
+			EscapeHatch = 1 << 4
 		}
 
 		/// <summary>

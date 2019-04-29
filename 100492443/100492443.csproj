@@ -46,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AI\CritterEye.cs" />
-    <Compile Include="Arena.cs" />
+    <Compile Include="AI\CritterEye.Ray.cs" />
     <Compile Include="Components\NetworkDrawer.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -54,8 +54,8 @@
       <DependentUpon>NetworkDrawer.cs</DependentUpon>
     </Compile>
     <Compile Include="Critters\Critter.cs" />
+    <Compile Include="Critters\CritterCoach.cs" />
     <Compile Include="Critters\CritterFactory.cs" />
-    <Compile Include="Critters\CritterTeacher.cs" />
     <Compile Include="Critters\INetworkHolder.cs" />
     <Compile Include="Critters\CritterStudent.cs" />
     <Compile Include="Critters\NeuralCritter.cs" />

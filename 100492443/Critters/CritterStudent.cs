@@ -57,7 +57,7 @@ namespace CritterRobots.Critters.Controllers
 			AnyEscaped = false;
 			AliveTimer = new System.Timers.Timer(1000);
 			AliveTimer.Elapsed += (sender, e) => TimeAlive++;
-			CritterTeacher.Teacher?.AddStudent(this);
+			CritterCoach.Coach?.AddStudent(this);
 		}
 
 		/// <summary>

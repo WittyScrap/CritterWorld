@@ -62,11 +62,6 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		protected Debug Debugger { get; private set; }
 
-		/// <summary>
-		/// The full size of the arena map.
-		/// </summary>
-		protected static Arena Map { get; private set; }
-
 		#region Critter properties
 		/// <summary>
 		/// The current velocity of the critter.
@@ -184,7 +179,7 @@ namespace CritterRobots.Critters.Controllers
 					OnVelocityUpdate(requestID, Velocity);
 					break;
 				case "ARENA_SIZE":
-					CreateArena(new Size(message.GetInteger(1), message.GetInteger(2)), new Size(10, 10));
+//					CreateArena(new Size(message.GetInteger(1), message.GetInteger(2)), new Size(10, 10));
 					break;
 				case "SCORED":
 					OnScored(message.GetPoint(0));
@@ -208,23 +203,6 @@ namespace CritterRobots.Critters.Controllers
 				MessageBox.Show("The critter " + ToString() + " failed with an exception: " + e.Message + "\nStacktrace:\n" + e.StackTrace, "Critter crash!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				StopCritter("ERROR");
 			}
-		}
-
-		/// <summary>
-		/// Creates the arena mapper object.
-		/// </summary>
-		/// <param name="arenaWidth">The width of the arena.</param>
-		/// <param name="arenaHeight">The height of the arena.</param>
-		/// <param name="pixelsPerCell">The number of pixels that compose a single cell.</param>
-		private static void CreateArena(Size arenaSize, Size gridSize)
-		{
-			Map = new Arena(gridSize, arenaSize);
-			Map.Desirability[Arena.TileContents.Bomb] = -1;
-			Map.Desirability[Arena.TileContents.Empty] = 0;
-			Map.Desirability[Arena.TileContents.EscapeHatch] = .5f;
-			Map.Desirability[Arena.TileContents.Food] = 1.0f;
-			Map.Desirability[Arena.TileContents.Gift] = .75f;
-			Map.Desirability[Arena.TileContents.Terrain] = -1;
 		}
 
 		/// <summary>
