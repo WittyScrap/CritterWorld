@@ -47,7 +47,6 @@
   <ItemGroup>
     <Compile Include="AI\CritterEye.cs" />
     <Compile Include="AI\CritterEye.Ray.cs" />
-    <Compile Include="AI\DetectedEntity.cs" />
     <Compile Include="Components\NetworkDrawer.cs">
       <SubType>UserControl</SubType>
     </Compile>

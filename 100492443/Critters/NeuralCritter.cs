@@ -100,28 +100,6 @@ namespace CritterRobots.Critters
 			networkInput[1] = (decimal)Energy;
 			networkInput[2] = MaximumTimeSet ? ((decimal)RemainingTime / MaximumTime) : 1.0m;
 
-			int retinaCompartmentAddresser = 3;
-			int retinaTarget = Eye.Precision + retinaCompartmentAddresser;
-
-			for (int eyeID = 0; retinaCompartmentAddresser < retinaTarget; retinaCompartmentAddresser++, eyeID++, eyeID %= Eye.Precision)
-			{
-				networkInput[retinaCompartmentAddresser] = Eye.CheckFood(Location, Direction, eyeID);
-			}
-
-			retinaTarget += Eye.Precision;
-
-			for (int eyeID = 0; retinaCompartmentAddresser < retinaTarget; retinaCompartmentAddresser++, eyeID++, eyeID %= Eye.Precision)
-			{
-				networkInput[retinaCompartmentAddresser] = Eye.CheckGift(Location, Direction, eyeID);
-			}
-
-			retinaTarget += Eye.Precision;
-
-			for (int eyeID = 0; retinaCompartmentAddresser < retinaTarget; retinaCompartmentAddresser++, eyeID++, eyeID %= Eye.Precision)
-			{
-				networkInput[retinaCompartmentAddresser] = Eye.CheckThreat(Location, Direction, eyeID);
-			}
-
 			return networkInput;
 		}
 
@@ -217,24 +195,7 @@ namespace CritterRobots.Critters
 			Responder("GET_HEALTH:0");
 			Responder("GET_ENERGY:0");
 		}
-
-		/// <summary>
-		/// Refresh this eye's state.
-		/// </summary>
-		protected override void OnSee(SeeMessage message)
-		{
-			Eye.Update(message, Location, Direction);
-		}
-
-		/// <summary>
-		/// Refresh this eye's state.
-		/// </summary>
-		/// <param name="message"></param>
-		protected override void OnScan(ScanMessage message)
-		{
-			Eye.Update(message, Location, Direction);
-		}
-
+		
 		/// <summary>
 		/// Loads the neural network through any means necessary.
 		/// </summary>

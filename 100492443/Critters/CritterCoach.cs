@@ -155,7 +155,11 @@ namespace CritterRobots.Critters
 				{
 					string serializedBrain = bestCritter.CritterBrain.Serialize();
 
-					MessageBox.Show("Round complete, " + bestCritter.Name + " is the best critter this time, with a score of " + bestCritter.Score + " Alive state of: " + bestCritter.IsAlive + " and Escape state of: " + bestCritter.HasEscaped, "Teacher!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					MessageBox.Show("Round complete, " + bestCritter.Name +
+									" is the best critter this time, with a score of " + bestCritter.Score + 
+									" Alive state of: " + bestCritter.IsAlive + 
+									" and Escape state of: " + bestCritter.HasEscaped
+									, "Coach!", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 					using (StreamWriter brainWriter = new StreamWriter(Filepath + "best_brain_snapshot.crbn"))
 					{

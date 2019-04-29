@@ -28,21 +28,5 @@ namespace CritterRobots.Messages
 		{
 			RequestID = GetInteger(0);
 		}
-
-		/// <summary>
-		/// Iteratively returns all relevant detected entities.
-		/// </summary>
-		public override IEnumerable<DetectedEntity> Inform(Point critterLocation, Vector critterForward)
-		{
-			foreach (string detectedObject in SplitBody.Skip(1))
-			{
-				string[] entityComponents = detectedObject.Split(':');
-
-				if (entityComponents[0] == "Food" || entityComponents[0] == "Gift")
-				{
-					yield return new DetectedEntity(detectedObject, critterLocation, critterForward);
-				}
-			}
-		}
 	}
 }
