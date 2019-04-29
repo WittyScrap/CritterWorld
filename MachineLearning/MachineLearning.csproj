@@ -47,6 +47,7 @@
     <Compile Include="Interfaces\IConnectable.cs" />
     <Compile Include="Interfaces\IActivationFunction.cs" />
     <Compile Include="Interfaces\IConnectionTarget.cs" />
+    <Compile Include="Interfaces\IDestroyable.cs" />
     <Compile Include="Interfaces\IDisconnectable.cs" />
     <Compile Include="Interfaces\ILayer.cs" />
     <Compile Include="Interfaces\INeuralNetwork.cs" />

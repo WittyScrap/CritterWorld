@@ -15,7 +15,7 @@ namespace MachineLearning.Layers
 	/// Represents a single layer of perceptrons.
 	/// </summary>
 	[DataContract]
-	public class Layer<TNeuron> : ILayer<TNeuron> where TNeuron : INeuron
+	public class Layer<TNeuron> : ILayer<TNeuron> where TNeuron : INeuron, new()
 	{
 		/// <summary>
 		/// Container for every neuron in this layer.
@@ -46,6 +46,13 @@ namespace MachineLearning.Layers
 			get
 			{
 				return InternalNeurons.Count;
+			}
+		}
+
+		public bool IsEmpty {
+			get
+			{
+				return Count == 0;
 			}
 		}
 
@@ -122,12 +129,79 @@ namespace MachineLearning.Layers
 		}
 
 		/// <summary>
+		/// Randomly mutates connections within the neurons
+		/// in this layer.
+		/// </summary>
+		public void Mutate(int mutationIntensity)
+		{
+			foreach (var neuron in this)
+			{
+				neuron.Mutate(mutationIntensity);
+			}
+		}
+
+		/// <summary>
 		/// Adds a new neuron to this network.
 		/// </summary>
 		/// <param name="neuron">The neuron to be added.</param>
 		public void AddNeuron(TNeuron neuron)
 		{
 			InternalNeurons.Add(neuron);
+		}
+
+		/// <summary>
+		/// Removes a specified amount of neurons from this layer.
+		/// </summary>
+		/// <param name="neuronCount">The amount of neurons to remove.</param>
+		public void RemoveNeurons(int neuronCount)
+		{
+			if (neuronCount > 0 && neuronCount <= Count)
+			{
+				InternalNeurons[InternalNeurons.Count - 1].Destroy();
+				InternalNeurons.RemoveAt(InternalNeurons.Count - 1);
+				RemoveNeurons(neuronCount - 1);
+			}
+		}
+
+		/// <summary>
+		/// Removes dangling connections to neurons that no longer
+		/// exist.
+		/// </summary>
+		public void Clean()
+		{
+			foreach (TNeuron neuron in this)
+			{
+				neuron.Clean();
+			}
+		}
+
+		/// <summary>
+		/// Adds the specified amount of neurons to this layer.
+		/// </summary>
+		/// <param name="neuronCount">The amount of neurons to add.</param>
+		public void Fill(int neuronCount)
+		{
+			while (neuronCount > 0)
+			{
+				AddNeuron(new TNeuron());
+				--neuronCount;
+			}
+		}
+
+		/// <summary>
+		/// Adds the specified amount of neurons to this layer.
+		/// </summary>
+		/// <param name="neuronCount">The amount of neurons to add.</param>
+		public IEnumerable<TNeuron> FillIterative(int neuronCount)
+		{
+			while (neuronCount > 0)
+			{
+				TNeuron newNeuron = new TNeuron();
+				AddNeuron(newNeuron);
+				--neuronCount;
+
+				yield return newNeuron;
+			}
 		}
 	}
 }

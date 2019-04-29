@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using CritterController;
 using CritterRobots.Messages;
 
@@ -139,63 +140,73 @@ namespace CritterRobots.Critters.Controllers
 		{
 			int requestID;
 			OnMessageReceived(message);
-			switch (message.Header)
+
+			try
 			{
-			case "LAUNCH":
-				InitializeCritter(message.GetPoint(0));
-				break;
-			case "FATALITY":
-			case "STARVED":
-			case "BOMBED":
-			case "CRASHED":
-			case "ESCAPE":
-			case "SHUTDOWN":
-				StopCritter(message.Header);
-				break;
-			case "LEVEL_DURATION":
-				ElapsedTime = message.GetInteger(1);
-				break;
-			case "LEVEL_TIME_REMAINING":
-				RemainingTime = message.GetInteger(1);
-				break;
-			case "HEALTH":
-				requestID = message.GetInteger(0);
-				Health = message.GetInteger(1) / 100.0f;
-				OnHealthUpdate(requestID, Health);
-				break;
-			case "ENERGY":
-				requestID = message.GetInteger(0);
-				Energy = message.GetInteger(1) / 100.0f;
-				OnEnergyUpdate(requestID, Energy);
-				break;
-			case "LOCATION":
-				requestID = message.GetInteger(0);
-				Location = message.GetPoint(1);
-				OnLocationUpdate(requestID, Location);
-				break;
-			case "SPEED":
-				requestID = message.GetInteger(0);
-				Velocity = new Vector(message.GetDouble(2), message.GetDouble(3));
-				OnVelocityUpdate(requestID, Velocity);
-				break;
-			case "ARENA_SIZE":
-				CreateArena(new Size(message.GetInteger(1), message.GetInteger(2)), new Size(10, 10));
-				break;
-			case "SCORED":
-				OnScored(message.GetPoint(0));
-				break;
-			case "ATE":
-				OnAte(message.GetPoint(0));
-				break;
-			case "FIGHT":
-				OnFight(message.GetPoint(0), message.GetInteger(1), message.GetString(2));
-				break;
-			case "BUMP":
-				OnBump(message.GetPoint(0));
-				break;
-			case "REACHED_DESTINATION":
-				OnDestinationReached(message.GetPoint(0));
-				break;
+				switch (message.Header)
+				{
+				case "LAUNCH":
+					InitializeCritter(message.GetPoint(0));
+					break;
+				case "FATALITY":
+				case "STARVED":
+				case "BOMBED":
+				case "CRASHED":
+				case "ESCAPE":
+				case "SHUTDOWN":
+					StopCritter(message.Header);
+					break;
+				case "LEVEL_DURATION":
+					ElapsedTime = message.GetInteger(1);
+					break;
+				case "LEVEL_TIME_REMAINING":
+					RemainingTime = message.GetInteger(1);
+					OnTimeRemainingUpdate(RemainingTime);
+					break;
+				case "HEALTH":
+					requestID = message.GetInteger(0);
+					Health = (float)message.GetDouble(1) / 100.0f;
+					OnHealthUpdate(requestID, Health);
+					break;
+				case "ENERGY":
+					requestID = message.GetInteger(0);
+					Energy = (float)message.GetDouble(1) / 100.0f;
+					OnEnergyUpdate(requestID, Energy);
+					break;
+				case "LOCATION":
+					requestID = message.GetInteger(0);
+					Location = message.GetPoint(1);
+					OnLocationUpdate(requestID, Location);
+					break;
+				case "SPEED":
+					requestID = message.GetInteger(0);
+					Velocity = new Vector(message.GetDouble(2), message.GetDouble(3));
+					OnVelocityUpdate(requestID, Velocity);
+					break;
+				case "ARENA_SIZE":
+					CreateArena(new Size(message.GetInteger(1), message.GetInteger(2)), new Size(10, 10));
+					break;
+				case "SCORED":
+					OnScored(message.GetPoint(0));
+					break;
+				case "ATE":
+					OnAte(message.GetPoint(0));
+					break;
+				case "FIGHT":
+					OnFight(message.GetPoint(0), message.GetInteger(1), message.GetString(2));
+					break;
+				case "BUMP":
+					OnBump(message.GetPoint(0));
+					break;
+				case "REACHED_DESTINATION":
+					OnDestinationReached(message.GetPoint(0));
+					break;
+				}
+			}
+			catch (Exception e)
+			{
+				MessageBox.Show("The critter " + ToString() + " failed with an exception: " + e.Message + "\nStacktrace:\n" + e.StackTrace, "Critter crash!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				StopCritter("ERROR");
 			}
 		}
 
@@ -361,7 +372,11 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="location">The current critter location.</param>
 		protected virtual void OnDestinationReached(Point location) { }
 
-
+		/// <summary>
+		/// Called when the remaining time has been given.
+		/// </summary>
+		/// <param name="timeRemaining">The amount of time left.</param>
+		protected virtual void OnTimeRemainingUpdate(double timeRemaining) { }
 		#endregion
 
 		#region Event driven methods
@@ -386,63 +401,6 @@ namespace CritterRobots.Critters.Controllers
 		{
 			IsInitialized = false;
 			OnStop(reason);
-		}
-
-		#endregion
-
-		#region Message senders
-
-		/// <summary>
-		/// Runs a SCAN operation.
-		/// </summary>
-		protected void Scan()
-		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Queries the environmnent for the current
-		/// level duration.
-		/// </summary>
-		protected void GetLevelDuration()
-		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Queries the environment for the amount
-		/// of time remaining.
-		/// </summary>
-		protected void GetTimeRemaining()
-		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Queries the environment about this critter's
-		/// health.
-		/// </summary>
-		protected void GetHealth()
-		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Queries the environment about this critter's
-		/// energy.
-		/// </summary>
-		protected void GetEnergy()
-		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Queries the environment about this critter's
-		/// speed.
-		/// </summary>
-		protected void GetSpeed()
-		{
-			throw new NotImplementedException();
 		}
 
 		#endregion

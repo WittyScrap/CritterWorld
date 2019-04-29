@@ -28,7 +28,9 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			this.debugLabel = new System.Windows.Forms.Label();
+			this.networkUpdateCheck = new System.Windows.Forms.Timer(this.components);
 			this.SuspendLayout();
 			// 
 			// debugLabel
@@ -40,6 +42,10 @@
 			this.debugLabel.Size = new System.Drawing.Size(47, 13);
 			this.debugLabel.TabIndex = 0;
 			this.debugLabel.Text = "Ready...";
+			// 
+			// networkUpdateCheck
+			// 
+			this.networkUpdateCheck.Enabled = true;
 			// 
 			// NetworkDrawer
 			// 
@@ -59,5 +65,6 @@
 		#endregion
 
 		private System.Windows.Forms.Label debugLabel;
+		private System.Windows.Forms.Timer networkUpdateCheck;
 	}
 }

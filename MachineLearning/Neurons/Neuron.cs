@@ -36,7 +36,7 @@ namespace MachineLearning.Neurons
 		/// <summary>
 		/// Updates the weight of a connection.
 		/// </summary>
-		public void UpdateConnectionWeight(INeuron key, decimal value)
+		private void UpdateConnectionWeight(INeuron key, decimal value)
 		{
 			if (!InternalConnections.ContainsKey(key))
 			{
@@ -56,10 +56,33 @@ namespace MachineLearning.Neurons
 		}
 
 		/// <summary>
+		/// Randomly mutates connections within this neuron.
+		/// </summary>
+		public void Mutate(int mutationIntensity)
+		{
+			foreach (var connection in Connections)
+			{
+				if (Randomizer.NextDecimal() > 0.5m)
+				{
+					decimal intensity = mutationIntensity / 10m;
+					decimal delta = Randomizer.NextDecimal(-intensity, intensity);
+					decimal updatedWeight = connection.Value + delta;
+
+					UpdateConnectionWeight(connection.Key, updatedWeight);
+				}
+			}
+		}
+
+		/// <summary>
 		/// The output value of this neuron.
 		/// </summary>
 		[DataMember]
 		public decimal Output { get; set; } = 0.0m;
+
+		/// <summary>
+		/// Indicates whether or not this neuron has been deleted.
+		/// </summary>
+		public bool IsDestroyed { get; private set; } = false;
 
 		/// <summary>
 		/// Calculates the output value for this neuron.
@@ -130,6 +153,35 @@ namespace MachineLearning.Neurons
 			{
 				Connect(neuron, weight);
 			}
+		}
+
+		/// <summary>
+		/// Removes dangling connections to nonexisting neurons.
+		/// </summary>
+		public void Clean()
+		{
+			Stack<INeuron> destroyedNeurons = new Stack<INeuron>();
+			foreach (var connection in InternalConnections)
+			{
+				if (connection.Key.IsDestroyed)
+				{
+					destroyedNeurons.Push(connection.Key);
+				}
+			}
+
+			while (destroyedNeurons.Count > 0)
+			{
+				INeuron toRemove = destroyedNeurons.Pop();
+				while (InternalConnections.TryRemove(toRemove, out decimal discardedWeight));
+			}
+		}
+
+		/// <summary>
+		/// Flags this neuron as deleted.
+		/// </summary>
+		public void Destroy()
+		{
+			IsDestroyed = true;
 		}
 	}
 }

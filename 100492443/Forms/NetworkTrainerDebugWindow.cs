@@ -37,7 +37,7 @@ namespace CritterRobots.Forms
 		/// </summary>
 		private void NetworkDrawer_Load(object sender, EventArgs e)
 		{
-			networkDrawer.ReferenceBrain = ReferenceBrain.CritterBrain;
+			networkDrawer.SetTargetNetwork(ReferenceBrain.CritterBrain);
 		}
 
 		public NetworkTrainerDebugWindow()

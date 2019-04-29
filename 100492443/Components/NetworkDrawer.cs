@@ -16,8 +16,16 @@ namespace CritterRobots.Components
 		/// <summary>
 		/// The reference neural network.
 		/// </summary>
-		public NeuralNetwork ReferenceBrain { get; set; }
-		
+		private NeuralNetwork TargetNetwork { get; set; }
+
+		/// <summary>
+		/// Sets the reference neural network.
+		/// </summary>
+		public void SetTargetNetwork(NeuralNetwork value)
+		{
+			TargetNetwork = value;
+		}
+
 		/// <summary>
 		/// The zoom level for the canvas.
 		/// </summary>
@@ -126,6 +134,16 @@ namespace CritterRobots.Components
 		public bool CanPan { get; set; } = true;
 
 		/// <summary>
+		/// The color when a neuron's value is 0.0.
+		/// </summary>
+		public Color OffColor { get; set; }
+
+		/// <summary>
+		/// The color when a neuron's value is 1.0.
+		/// </summary>
+		public Color OnColor { get; set; }
+
+		/// <summary>
 		/// Checks whether or not the cursor is currently panning.
 		/// </summary>
 		private bool IsPanning { get; set; }
@@ -152,6 +170,7 @@ namespace CritterRobots.Components
 			{
 				Cursor = Cursors.SizeAll;
 			}
+			networkUpdateCheck.Tick += (sender, e) => Refresh();
 		}
 
 		/// <summary>
@@ -173,7 +192,7 @@ namespace CritterRobots.Components
 		/// <returns>The interval at which to display the network.</returns>
 		int GetHorizontalInteval()
 		{
-			return Canvas.Width / (ReferenceBrain.HiddenNeurons.Count + 1);
+			return Canvas.Width / (TargetNetwork.HiddenNeurons.Count + 1);
 		}
 
 		/// <summary>
@@ -224,13 +243,30 @@ namespace CritterRobots.Components
 			{
 				return;
 			}
-			var previousLayer = ReferenceBrain.InputNeurons;
-			for (int i = 0; i < ReferenceBrain.HiddenNeurons.Count; ++i)
+			var previousLayer = TargetNetwork.InputNeurons;
+			for (int i = 0; i < TargetNetwork.HiddenNeurons.Count; ++i)
 			{
-				var currentLayer = ReferenceBrain.HiddenNeurons[i];
+				var currentLayer = TargetNetwork.HiddenNeurons[i];
 				DrawConnectionLayers(previousLayer, currentLayer, targetGraphics, i);
 				previousLayer = currentLayer;
 			}
+		}
+
+		/// <summary>
+		/// Linear interpolation.
+		/// </summary>
+		double Lerp(double v0, double v1, double t)
+		{
+			return (1 - t) * v0 + t * v1;
+		}
+
+		/// <summary>
+		/// Interpolates between the two given colors
+		/// through a given alpha gradient value.
+		/// </summary>
+		private Color LerpColor(Color fromColor, Color toColor, double alpha)
+		{
+			return Color.FromArgb((int)Lerp(fromColor.R, toColor.R, alpha), (int)Lerp(fromColor.G, toColor.G, alpha), (int)Lerp(fromColor.B, toColor.B, alpha));
 		}
 
 		/// <summary>
@@ -241,7 +277,7 @@ namespace CritterRobots.Components
 		/// <param name="layerNumber">The layer ID (or its offset).</param>
 		private void DrawNeuronsLayer(Layer<Neuron<SigmoidFunction>> layer, Graphics targetGraphics, int layerNumber, Size neuronSize)
 		{
-			Brush brush = new SolidBrush(Color.Black);
+			SolidBrush brush = new SolidBrush(Color.Black);
 			
 			int horizontalInterval = GetHorizontalInteval();
 			int verticalInterval = GetVerticalInterval(layer.Count);
@@ -252,10 +288,13 @@ namespace CritterRobots.Components
 			int drawX = horizontalOffset + horizontalInterval * layerNumber;
 			for (int neuron = 0; neuron < layer.Count; ++neuron)
 			{
+				Color neuronColor = LerpColor(OffColor, OnColor, (double)layer[neuron].Output);
+
 				int neuronY = verticalOffset + verticalInterval * neuron;
 				Point neuronPosition = new Point(drawX - neuronSize.Width / 2, neuronY - neuronSize.Height / 2);
 				Rectangle neuronRect = new Rectangle(neuronPosition, neuronSize);
 
+				brush.Color = neuronColor;
 				targetGraphics.FillRectangle(brush, neuronRect);
 			}
 		}
@@ -268,18 +307,18 @@ namespace CritterRobots.Components
 		{
 			if (ShowInputNeurons)
 			{
-				DrawNeuronsLayer(ReferenceBrain.InputNeurons, targetGraphics, 0, neuronSize);
+				DrawNeuronsLayer(TargetNetwork.InputNeurons, targetGraphics, 0, neuronSize);
 			}
 			if (ShowHiddenNeurons)
 			{
-				for (int i = 0; i < ReferenceBrain.HiddenNeurons.Count - 1; ++i)
+				for (int i = 0; i < TargetNetwork.HiddenNeurons.Count - 1; ++i)
 				{
-					DrawNeuronsLayer(ReferenceBrain.HiddenNeurons[i], targetGraphics, i + 1, neuronSize);
+					DrawNeuronsLayer(TargetNetwork.HiddenNeurons[i], targetGraphics, i + 1, neuronSize);
 				}
 			}
 			if (ShowOutputNeurons)
 			{
-				DrawNeuronsLayer(ReferenceBrain.OutputNeurons, targetGraphics, ReferenceBrain.HiddenNeurons.Count, neuronSize);
+				DrawNeuronsLayer(TargetNetwork.OutputNeurons, targetGraphics, TargetNetwork.HiddenNeurons.Count, neuronSize);
 			}
 		}
 
@@ -289,7 +328,7 @@ namespace CritterRobots.Components
 		private void NetworkDrawer_Paint(object sender, PaintEventArgs e)
 		{
 			e.Graphics.Clear(Color.White);
-			if (ReferenceBrain != null)
+			if (TargetNetwork != null)
 			{
 				DrawConnections(e.Graphics);
 				DrawNeurons(e.Graphics, NeuronSize);
@@ -338,7 +377,9 @@ namespace CritterRobots.Components
 
 				CanvasOffset = canvasOffset;
 				PreviousMousePosition = e.Location;
-				
+
+				debugLabel.Text = "Panning (X: " + mouseDelta.X + ", Y: " + mouseDelta.Y + ")";
+
 				Refresh();
 			}
 		}
@@ -358,6 +399,8 @@ namespace CritterRobots.Components
 				canvasOffset.Y -= (int)(Height * zoomAmount / 2);
 
 				CanvasOffset = canvasOffset;
+
+				debugLabel.Text = "Zooming (" + (CanvasZoom * 100) + "%)";
 
 				Refresh();
 			}

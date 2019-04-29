@@ -5,6 +5,8 @@ using System.IO;
 using CritterRobots.AI;
 using CritterRobots.Messages;
 using System;
+using System.Timers;
+using System.Windows.Forms;
 
 namespace CritterRobots.Critters.Controllers
 {
@@ -12,19 +14,8 @@ namespace CritterRobots.Critters.Controllers
 	/// This critter will handle training the
 	/// internal Neural Network.
 	/// </summary>
-	public class CritterStudent : Critter, INetworkHolder
+	public class CritterStudent : NeuralCritter
 	{
-		/// <summary>
-		/// The neural network used for handling the critter's
-		/// behaviour.
-		/// </summary>
-		public NeuralNetwork CritterBrain { get; set; }
-
-		/// <summary>
-		/// This critter's eye.
-		/// </summary>
-		public CritterEye Eye { get; private set; }
-
 		/// <summary>
 		/// The current critter's score.
 		/// </summary>
@@ -36,32 +27,53 @@ namespace CritterRobots.Critters.Controllers
 		public bool HasEscaped { get; private set; }
 
 		/// <summary>
+		/// Indicates whether or not this critter is alive.
+		/// </summary>
+		public bool IsAlive {
+			get => Health > .01f;
+		}
+
+		/// <summary>
 		/// Indicates whether any of the student critters in this round successfully escaped.
 		/// </summary>
 		public static bool AnyEscaped { get; private set; }
 
 		/// <summary>
-		/// The network debug window.
+		/// Total time spent being alive by this critter.
 		/// </summary>
-		private NetworkTrainerDebugWindow DebugWindow { get; set; }
+		public float TimeAlive { get; private set; } = 0;
 
 		/// <summary>
-		/// The current walking direction.
+		/// Timer to keep track of how long the critter is surviving.
 		/// </summary>
-		private Vector Direction { get; set; }
-
-		/// <summary>
-		/// The current destination.
-		/// </summary>
-		private Point Destination { get; set; }
+		private System.Timers.Timer AliveTimer { get; }
 
 		/// <summary>
 		/// Constructs a new critter.
 		/// </summary>
 		/// <param name="critterID">A unique representative ID for the critter.</param>
-		public CritterStudent(int critterID) : base("Mortal slave #" + critterID)
+		public CritterStudent(int critterID) : base("Student that will totally not drop out #" + critterID)
 		{
 			AnyEscaped = false;
+			AliveTimer = new System.Timers.Timer(1000);
+			AliveTimer.Elapsed += (sender, e) => TimeAlive++;
+			CritterTeacher.Teacher?.AddStudent(this);
+		}
+
+		/// <summary>
+		/// Initialize alive timer.
+		/// </summary>
+		protected override void OnInitialize()
+		{
+			base.OnInitialize();
+			AliveTimer.Start();
+		}
+
+		/// <summary>
+		/// Handles loading the neural network.
+		/// </summary>
+		protected override void LoadNetwork()
+		{
 			if (!File.Exists(Filepath + "best_brain_snapshot.crbn"))
 			{
 				// 4 outputs:
@@ -69,7 +81,16 @@ namespace CritterRobots.Critters.Controllers
 				// "How convinced am I that I want to turn right?"
 				// "How much, between 0 and 180 degrees, should I turn that direction?"
 				// "At what speed should I be walking?"
-				CritterBrain = NeuralNetwork.RandomNetwork(4);
+				//
+				// The inputs are split between:
+				// 10 eye cells to detect food
+				// 10 eye cells to detect gifts
+				// 10 eye cells to detect critters, bombs and terrain
+				// 10 eye cells to detect the exit
+				// 1 input to determine the health
+				// 1 input to determine the energy
+				// 1 input to determine the remaining level time
+				CritterBrain = NeuralNetwork.RandomNetwork(43, 4, 0, 10, 1, 50);
 			}
 			else
 			{
@@ -80,18 +101,6 @@ namespace CritterRobots.Critters.Controllers
 					CritterBrain.Mutate();
 				}
 			}
-			Eye = new CritterEye(CritterBrain.InputNeurons.Count);
-		}
-
-		/// <summary>
-		/// Launches a UI that displays the neural network's status
-		/// and allows to make changes.
-		/// </summary>
-		public override void LaunchUI()
-		{
-			DebugWindow = new NetworkTrainerDebugWindow(this);
-			DebugWindow.Show();
-			DebugWindow.Focus();
 		}
 
 		/// <summary>
@@ -109,54 +118,12 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		protected override void OnStop(string stopReason)
 		{
+			AliveTimer.Stop();
 			if (stopReason == "ESCAPE")
 			{
 				HasEscaped = true;
 				AnyEscaped = true;
 			}
-		}
-
-		/// <summary>
-		/// Process the network and set the first destination.
-		/// </summary>
-		protected override void OnSee(SeeMessage message)
-		{
-			ProcessNetwork();
-		}
-
-		/// <summary>
-		/// Runs the required data through the network, parses its
-		/// output and updates the current destination and direction.
-		/// </summary>
-		private void ProcessNetwork()
-		{
-			decimal[] inputValues = new decimal[Eye.Precision];
-			for (int i = 0; i < inputValues.Length; ++i)
-			{
-				inputValues[i] = Randomizer.NextDecimal() > .5m ? 1 : 0;
-			}
-			CritterBrain.Feedforward(inputValues);
-			decimal[] output = CritterBrain.GetNetworkOutput();
-
-			decimal wantsToTurnLeft = output[0];
-			decimal wantsToTurnRight = output[1];
-
-			decimal turnAmount = output[2];
-			decimal movementSpeed = output[3];
-
-			double turningAngle = Math.PI / (double)turnAmount;
-
-			if (wantsToTurnRight < wantsToTurnLeft)
-			{
-				Direction = new Vector(Math.Cos(turningAngle), Math.Sin(turningAngle));
-			}
-			else
-			{
-				Direction = new Vector(Math.Cos(turningAngle), -Math.Sin(turningAngle));
-			}
-
-			Destination = new Point((int)(Location.X + Direction.X * 1000), (int)(Location.Y + Direction.Y * 1000));
-			Responder("SET_DESTINATION:" + Destination.X + ":" + Destination.Y + ":" + (int)(movementSpeed * 5));
 		}
 	}
 }

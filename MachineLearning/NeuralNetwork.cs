@@ -19,6 +19,12 @@ namespace MachineLearning
 	public class NeuralNetwork : INeuralNetwork, ISerializable
 	{
 		/// <summary>
+		/// Event called when the network has updated its output
+		/// neurons (aka after a feed-forward).
+		/// </summary>
+		public event EventHandler NetworkUpdated;
+
+		/// <summary>
 		/// The input layer of this neural network.
 		/// </summary>
 		[DataMember]
@@ -114,6 +120,7 @@ namespace MachineLearning
 				}
 			}
 			OutputNeurons.Feedforward();
+			NetworkUpdated?.Invoke(this, EventArgs.Empty);
 		}
 
 		/// <summary>
@@ -133,94 +140,160 @@ namespace MachineLearning
 		}
 
 		/// <summary>
-		/// Mutates randomly the amount of layers in the
-		/// network.
+		/// Applies random small mutations to this network
 		/// </summary>
-		private void MutateLayerNumber(int maxNewNeurons, int mutationIntensity)
+		public void Mutate(int mutationIntensity = 2)
 		{
-			int layerNumberMutation = Randomizer.NextInteger(-mutationIntensity, mutationIntensity);
-			if (layerNumberMutation < 0)
+			int layersDelta = Randomizer.NextInteger(-mutationIntensity, mutationIntensity + 1);
+
+			while (layersDelta < 0)
 			{
-				bool networkChanged = false;
-				for (int i = 0; i < -layerNumberMutation && HiddenNeurons.Count > 1; ++i)
-				{
-					HiddenNeurons.RemoveAt(0);
-					networkChanged = true;
-				}
-				if (networkChanged)
-				{
-					InputNeurons.Connect(HiddenNeurons[0]);
-				}
+				int neuronCount = Randomizer.NextInteger(1, mutationIntensity + 1);
+				int location = Randomizer.NextInteger(0, HiddenNeurons.Count - 1);
+
+				RemoveNeurons(location, neuronCount);
+
+				++layersDelta;
 			}
-			else if (layerNumberMutation > 0)
+
+			while (layersDelta > 0)
 			{
-				var outputLayer = OutputNeurons;
-				outputLayer.Disconnect();
+				int neuronCount = Randomizer.NextInteger(1, mutationIntensity + 1);
+				int location = Randomizer.NextInteger(0, HiddenNeurons.Count - 1);
 
-				// Remove output layer...
-				HiddenNeurons.RemoveAt(HiddenNeurons.Count - 1);
-				int newLayerSize = Randomizer.NextInteger(1, maxNewNeurons);
+				AddNeurons(location, neuronCount, 30);
 
-				var lastLayer = HiddenNeurons.Count > 0 ? HiddenNeurons[HiddenNeurons.Count - 1] : InputNeurons;
+				--layersDelta;
+			}
 
-				for (int i = 0; i < layerNumberMutation; ++i)
-				{
-					var newLayer = new Layer<Neuron<SigmoidFunction>>();
-					HiddenNeurons.Add(newLayer);
-					for (int j = 0; j < newLayerSize; ++j)
-					{
-						newLayer.AddNeuron(new Neuron<SigmoidFunction>());
-					}
-					lastLayer.Connect(newLayer);
-					lastLayer = newLayer;
-				}
+			MutateConnectionWeights(mutationIntensity);
+		}
 
-				// Add back output layer...
-				HiddenNeurons.Add(outputLayer);
-				lastLayer.Connect(outputLayer);
+		/// <summary>
+		/// Mutates the weights of all the connectons in the network.
+		/// </summary>
+		/// <param name="mutationIntensity">The intensity of the mutation.</param>
+		private void MutateConnectionWeights(int mutationIntensity)
+		{
+			foreach (var layer in HiddenNeurons)
+			{
+				layer.Mutate(mutationIntensity);
 			}
 		}
 
 		/// <summary>
-		/// Mutates the existing layers (except for the output layer) without
-		/// changing the number of layers.
+		/// Adds a specified number of neurons to the specified layer index.
 		/// </summary>
-		private void MutateInternalNetwork(int mutationIntensity)
+		/// <param name="positionIndex">The layer to add neurons to.</param>
+		/// <param name="neuronCount">The amunt of neurons to add.</param>
+		/// <param name="threshold">The total amount of neurons the layer can carry before overflowing to a new layer.</param>
+		private void AddNeurons(int positionIndex, int neuronCount, int threshold)
 		{
-			var previousLayer = InputNeurons;
-			for (int hiddenLayerID = 0; hiddenLayerID < HiddenNeurons.Count; ++hiddenLayerID)
+			if (positionIndex >= 0 && positionIndex < HiddenNeurons.Count - 1)
 			{
-				var currentLayer = HiddenNeurons[hiddenLayerID];
-				for (int previousLayerNeuronID = 0; previousLayerNeuronID < previousLayer.Count; ++previousLayerNeuronID)
+				if (HiddenNeurons[positionIndex].Count + neuronCount < threshold)
 				{
-					if (Randomizer.NextDecimal() > 0.5m)
+					var previousLayer = positionIndex == 0 ? InputNeurons : HiddenNeurons[positionIndex - 1];
+					var nextLayer = HiddenNeurons[positionIndex + 1];
+					foreach (var addedNeuron in HiddenNeurons[positionIndex].FillIterative(neuronCount))
 					{
-						for (int currentLayerNeuronID = 0; currentLayerNeuronID < currentLayer.Count; ++currentLayerNeuronID)
+						foreach (var targetNeuron in nextLayer)
 						{
-							var previousLayerNeuron = previousLayer[previousLayerNeuronID];
-							var currentLayerNeuron = currentLayer[currentLayerNeuronID];
-
-							decimal weightMutationIntensity = mutationIntensity / 10m;
-							decimal weightDelta = Randomizer.NextDecimal(-weightMutationIntensity, weightMutationIntensity);
-
-							decimal weight = currentLayerNeuron.Connections[previousLayerNeuron];
-							decimal updatedWeight = weight + weightDelta;
-
-							currentLayerNeuron.UpdateConnectionWeight(previousLayerNeuron, updatedWeight);
+							addedNeuron.Connect(targetNeuron, Randomizer.NextDecimal(-1m, 1m));
+						}
+						foreach (var sourceNeuron in previousLayer)
+						{
+							sourceNeuron.Connect(addedNeuron, Randomizer.NextDecimal(-1m, 1m));
 						}
 					}
 				}
-				previousLayer = currentLayer;
+				else
+				{
+					AddLayer(positionIndex + 1, neuronCount);
+				}
 			}
 		}
 
 		/// <summary>
-		/// Applies random small mutations to this network
+		/// Adds one additional hidden layer at the specified position.
 		/// </summary>
-		public void Mutate(int maxNewNeurons = 50, int mutationIntensity = 2)
+		private void AddLayer(int positionIndex, int neuronCount)
 		{
-			MutateLayerNumber(maxNewNeurons, mutationIntensity);
-			MutateInternalNetwork(mutationIntensity);
+			if (positionIndex >= 0 && positionIndex < HiddenNeurons.Count)
+			{
+				var previousLayer = positionIndex == 0 ? InputNeurons : HiddenNeurons[positionIndex - 1];
+				var currentLayer = HiddenNeurons[positionIndex];
+				currentLayer.Disconnect();
+
+				var generatedLayer = new Layer<Neuron<SigmoidFunction>>();
+				generatedLayer.Fill(neuronCount);
+				HiddenNeurons.Insert(positionIndex, generatedLayer);
+				previousLayer.Connect(generatedLayer);
+				generatedLayer.Connect(currentLayer);
+			}
+		}
+
+		/// <summary>
+		/// Removes a specified amount of neurons from the specified layer.
+		/// </summary>
+		/// <param name="positionIndex">The layer from which to remove neurons.</param>
+		/// <param name="neuronCount">The amount of neurons to remove.</param>
+		private void RemoveNeurons(int positionIndex, int neuronCount)
+		{
+			if (positionIndex >= 0 && positionIndex < HiddenNeurons.Count - 1)
+			{
+				var selectedLayer = HiddenNeurons[positionIndex];
+				if (selectedLayer.Count > neuronCount)
+				{
+					selectedLayer.RemoveNeurons(neuronCount);
+					HiddenNeurons[positionIndex + 1].Clean();
+				}
+				else
+				{
+					RemoveLayer(positionIndex);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Removes a layer at the specified index.
+		/// </summary>
+		/// <param name="positionIndex">The position at which to remove a layer.</param>
+		private void RemoveLayer(int positionIndex)
+		{
+			if (positionIndex >= 0 && positionIndex < HiddenNeurons.Count - 1)
+			{
+				var nextLayer = HiddenNeurons[positionIndex + 1];
+				nextLayer.Disconnect();
+
+				HiddenNeurons.RemoveAt(positionIndex);
+				var previousLayer = positionIndex > 0 ? HiddenNeurons[positionIndex - 1] : InputNeurons;
+				previousLayer.Connect(nextLayer);
+			}
+		}
+
+		/// <summary>
+		/// Removes the last layer in the hidden layers list.
+		/// </summary>
+		private void RemoveLast()
+		{
+			if (HiddenNeurons.Count > 1)
+			{
+				RemoveLayer(HiddenNeurons.Count - 2);
+			}
+		}
+
+		/// <summary>
+		/// Removes a defined amount of layers from the Hidden layers section.
+		/// </summary>
+		/// <param name="count">The amount of layers to remove.</param>
+		private void RemoveLayers(int count)
+		{
+			if (count < HiddenNeurons.Count - 1 && count > 0)
+			{
+				RemoveLast();
+				RemoveLayers(count - 1);
+			}
 		}
 
 		/// <summary>
