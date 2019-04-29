@@ -157,10 +157,12 @@ namespace CritterRobots.Critters
 			decimal wantsToTurnRight = Clamp01(networkOutput[1]);
 			decimal turnAmount = Clamp01(networkOutput[2]);
 			decimal movementSpeed = Clamp01(networkOutput[3]);
-			
-			double turningAngle = (double)turnAmount * Math.PI * ((wantsToTurnRight < wantsToTurnLeft) ? -1 : 1);
 
-			Debugger.LogMessage("Wants to turn left: " + wantsToTurnLeft + "\nWants to turn right: " + wantsToTurnRight);
+			double commitmentMultiplier = (double)Math.Abs(wantsToTurnLeft - wantsToTurnRight);
+			double turningAngle = (double)turnAmount * Math.PI * ((wantsToTurnRight < wantsToTurnLeft) ? -1 : 1);
+			turningAngle *= commitmentMultiplier;
+
+			Debugger.LogMessage("Wants to turn left: " + wantsToTurnLeft + "\nWants to turn right: " + wantsToTurnRight + "\nMultiplier: " + commitmentMultiplier);
 			
 			if (turningAngle < 0)
 			{

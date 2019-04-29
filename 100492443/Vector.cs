@@ -103,7 +103,7 @@ namespace CritterRobots.Critters
 		public void Rotate(double radiansAngle)
 		{
 			X = X * Math.Cos(radiansAngle) - Y * Math.Sin(radiansAngle);
-			Y = Y * Math.Sin(radiansAngle) + Y * Math.Cos(radiansAngle);
+			Y = X * Math.Sin(radiansAngle) + Y * Math.Cos(radiansAngle);
 		}
 
 		/// <summary>
