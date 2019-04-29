@@ -84,6 +84,28 @@ namespace CritterRobots.Critters
 		}
 
 		/// <summary>
+		/// Rotates this vector by the specified amount
+		/// in radians.
+		/// </summary>
+		/// <param name="radiansAngle">The angle to rotate this vector for.</param>
+		public void Rotate(double radiansAngle)
+		{
+			X = X * Math.Cos(radiansAngle) - Y * Math.Sin(radiansAngle);
+			Y = Y * Math.Sin(radiansAngle) + Y * Math.Cos(radiansAngle);
+		}
+
+		/// <summary>
+		/// Returns a copy of this vector, rotated by the given radians angle.
+		/// </summary>
+		/// <param name="radiansAngle">The angle to rotate the copy of this vector for.</param>
+		public Vector Rotated(double radiansAngle)
+		{
+			Vector copied = new Vector(X, Y);
+			copied.Rotate(radiansAngle);
+			return copied;
+		}
+
+		/// <summary>
 		/// Returns the dot product between the
 		/// two vectors.
 		/// </summary>

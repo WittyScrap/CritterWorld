@@ -108,7 +108,8 @@ namespace CritterRobots.Critters
 
 			for (int i = 3; i < networkInput.Length; ++i)
 			{
-				networkInput[i] = Randomizer.NextDecimal(0m, 1m);
+				int eyeID = (i - 3) % 10;
+				networkInput[eyeID] = 
 			}
 
 			return networkInput;
@@ -168,7 +169,7 @@ namespace CritterRobots.Critters
 				turningAngle = Math.PI + (Math.PI + turningAngle);
 			}
 
-			Direction = RotateByAngle(Direction, turningAngle);
+			Direction.Rotate(turningAngle);
 			Destination = (Point)(Location + Direction * 100);
 			LastRequestedSpeed = movementSpeed;
 			
@@ -182,17 +183,6 @@ namespace CritterRobots.Critters
 		{
 			Destination = (Point)(Location + Direction * 100);
 			Responder("SET_DESTINATION:" + Destination.X + ":" + Destination.Y + ":" + (int)(LastRequestedSpeed * 5));
-		}
-
-		/// <summary>
-		/// Rotates the critter by a given angle in radians
-		/// and returns a direction pointing it to the new
-		/// rotation.
-		/// </summary>
-		private Vector RotateByAngle(Vector direction, double radiansAngle)
-		{
-			return new Vector(direction.X * Math.Cos(radiansAngle) - direction.Y * Math.Sin(radiansAngle),
-							  direction.X * Math.Sin(radiansAngle) + direction.Y * Math.Cos(radiansAngle));
 		}
 
 		/// <summary>

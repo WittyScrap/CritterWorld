@@ -18,12 +18,20 @@ namespace MachineLearning
 		private static Random Generator { get; } = new Random();
 
 		/// <summary>
+		/// Thread locker.
+		/// </summary>
+		private static object Locker { get; } = new object();
+
+		/// <summary>
 		/// Returns a non-negative random integer.
 		/// </summary>
 		/// <returns>A non-negative random integer.</returns>
 		public static int NextInteger()
 		{
-			return Generator.Next();
+			lock (Locker)
+			{
+				return Generator.Next();
+			}
 		}
 
 		/// <summary>
@@ -36,7 +44,10 @@ namespace MachineLearning
 		/// range.</returns>
 		public static int NextInteger(int minimum, int maximum)
 		{
-			return Generator.Next(minimum, maximum);
+			lock (Locker)
+			{
+				return Generator.Next(minimum, maximum);
+			}
 		}
 
 		/// <summary>
@@ -45,7 +56,10 @@ namespace MachineLearning
 		/// <returns>A non-negative random decimal number.</returns>
 		public static decimal NextDecimal()
 		{
-			return (decimal)Generator.NextDouble();
+			lock (Locker)
+			{
+				return (decimal)Generator.NextDouble();
+			}
 		}
 
 		/// <summary>
@@ -56,7 +70,10 @@ namespace MachineLearning
 		/// <returns>A random decimal number within the specified range.</returns>
 		public static decimal NextDecimal(decimal minimum, decimal maximum)
 		{
-			return NextDecimal() * (maximum - minimum) + minimum;
+			lock (Locker)
+			{
+				return NextDecimal() * (maximum - minimum) + minimum;
+			}
 		}
 	}
 }
