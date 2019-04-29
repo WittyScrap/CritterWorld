@@ -1,6 +1,7 @@
 ﻿using CritterRobots.AI;
 using CritterRobots.Critters.Controllers;
 using CritterRobots.Forms;
+using CritterRobots.Messages;
 using MachineLearning;
 using System;
 using System.Collections.Generic;
@@ -93,23 +94,13 @@ namespace CritterRobots.Critters
 			networkInput[0] = (decimal)Health;
 			networkInput[1] = (decimal)Energy;
 			networkInput[2] = MaximumTimeSet ? ((decimal)RemainingTime / MaximumTime) : 1.0m;
-			
-			// DO IT DO IT DO IT
-			// DO NOT FORGET IT
-			// DO. NOT. FORGET. IT.
-			// Handle retina input...
-			// For serious, this doesn't do anything!!
-			// The critter is blind for god's sake
-			// Don't be so cruel
-			// He has no sense of touch, smell, sound or sight
-			// All he knows is how well he is and how long he has before his demise
-			// That's it
-			// Please give him working eyes!!!!!
 
-			for (int i = 3; i < networkInput.Length; ++i)
+			int retinaCompartmentAddresser = 3;
+			int retinaTarget = Eye.Precision + retinaCompartmentAddresser;
+
+			for (int eyeID = 0; retinaCompartmentAddresser < retinaTarget; retinaCompartmentAddresser++, eyeID++, eyeID %= Eye.Precision)
 			{
-				int eyeID = (i - 3) % 10;
-				networkInput[i] = 0m;
+				networkInput[retinaCompartmentAddresser] = Eye.CheckFood(Location, Direction, eyeID);
 			}
 
 			return networkInput;
@@ -162,7 +153,10 @@ namespace CritterRobots.Critters
 			double turningAngle = (double)turnAmount * Math.PI * ((wantsToTurnRight < wantsToTurnLeft) ? -1 : 1);
 			turningAngle *= commitmentMultiplier;
 
-			Debugger.LogMessage("Wants to turn left: " + wantsToTurnLeft + "\nWants to turn right: " + wantsToTurnRight + "\nMultiplier: " + commitmentMultiplier);
+			Debugger.LogMessage("Wants to turn left: " + wantsToTurnLeft + 
+								"\n Wants to turn right: " + wantsToTurnRight + 
+								"\n And it wants to do so this much: " + turnAmount + 
+								"\n Multiplier: " + commitmentMultiplier);
 			
 			if (turningAngle < 0)
 			{
@@ -199,6 +193,14 @@ namespace CritterRobots.Critters
 		}
 
 		/// <summary>
+		/// Refresh this eye's state.
+		/// </summary>
+		protected override void OnSee(SeeMessage message)
+		{
+			message.Inform(Eye, Location, Direction);
+		}
+
+		/// <summary>
 		/// Loads the neural network through any means necessary.
 		/// </summary>
 		protected abstract void LoadNetwork();
@@ -206,9 +208,9 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// Creates a new neural network based critter.
 		/// </summary>
-		public NeuralCritter(string critterName) : base(critterName)
+		public NeuralCritter(string critterName, int retinaDensity) : base(critterName)
 		{
-			LoadNetwork();
+			Eye = new CritterEye(retinaDensity);
 
 			// One input neuron per "cone cell" in the eye, with three
 			// input neurons reserved for:
@@ -221,7 +223,7 @@ namespace CritterRobots.Critters
 			//		- Gifts
 			//		- Bombs, Critters, Walls
 			//		- Exit
-			Eye = new CritterEye((CritterBrain.InputNeurons.Count - 3) / 4);
+			LoadNetwork();
 
 			NetworkProcessor = new System.Timers.Timer(50);
 			Retriever = new System.Timers.Timer(50);

@@ -1,9 +1,11 @@
 ﻿using CritterRobots.Critters;
+using CritterRobots.Messages;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CritterRobots.AI
@@ -22,14 +24,15 @@ namespace CritterRobots.AI
 		[Flags]
 		public enum Entity
 		{
-			Empty		= 0,
-			Terrain		= 1 << 0,
-			Gift		= 1 << 1,
-			Food		= 1 << 2,
-			Bomb		= 1 << 3,
+			Empty = 0,
+			Terrain = 1 << 0,
+			Gift = 1 << 1,
+			Food = 1 << 2,
+			Bomb = 1 << 3,
 			EscapeHatch = 1 << 4,
-			Critter		= 1 << 5,
-			All			= Terrain | Gift | Food | Bomb | EscapeHatch
+			Critter = 1 << 5,
+			All = Terrain | Gift | Food | Bomb | EscapeHatch,
+			Threats = Critter | Bomb | Terrain
 		}
 
 		/// <summary>
@@ -38,6 +41,43 @@ namespace CritterRobots.AI
 		/// center of the critter.
 		/// </summary>
 		public int Precision { get; }
+
+		/// <summary>
+		/// Collection containing all the detected food items.
+		/// </summary>
+		private List<DetectedEntity> InternalDetectedFood { get; set; } = new List<DetectedEntity>();
+
+		/// <summary>
+		/// Collection containing all the detected gifts.
+		/// </summary>
+		private List<DetectedEntity> InternalDetectedGifts { get; set; } = new List<DetectedEntity>();
+
+		/// <summary>
+		/// Collection containing all the detected threats (Critters, Bombs and Walls).
+		/// </summary>
+		private List<DetectedEntity> InternalDetectedThreats { get; set; } = new List<DetectedEntity>();
+
+		/// <summary>
+		/// Refreshes this eye's detected states through a SEE message.
+		/// </summary>
+		/// <param name="message"></param>
+		public void Update(SeeMessage message, Point critterLocation, Vector critterForward)
+		{
+			InternalDetectedThreats.Clear();
+
+			// Collect every entity and store it in the linked list in a sorted manner.
+			foreach (DetectedEntity entity in message.Inform(critterLocation, critterForward))
+			{
+				
+			}
+		}
+
+
+
+		/// <summary>
+		/// Indicates the location of the escape hatch.
+		/// </summary>
+		private DetectedEntity DetectedEscapeHatch { get; set; } = null;
 
 		/// <summary>
 		/// Returns a sequence of rays given this eye's accuracy.
@@ -62,6 +102,39 @@ namespace CritterRobots.AI
 			}
 			double angle = (Math.PI * 2 / Precision) * rayID;
 			return new Ray(critterLocation, critterForward.Rotated(angle));
+		}
+
+		/// <summary>
+		/// Generic version of all check methods.
+		/// </summary>
+		private decimal CheckEye(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold, double maximumDistance, IReadOnlyCollection<DetectedEntity> collectionSource)
+		{
+			Ray selectedRay = GetRay(critterLocation, critterForward, eyeID);
+			double angle = Vector.Dot(critterForward, selectedRay.Direction);
+
+			foreach (var detectedEntity in collectionSource)
+			{
+				if (Math.Abs(angle - detectedEntity.Rotation) < angularThreshold)
+				{
+					return (decimal)(detectedEntity.Distance / maximumDistance);
+				}
+			}
+
+			return 0m;
+		}
+
+		/// <summary>
+		/// Checks if the given eye cell can see the specified
+		/// entities, and if so returns a scalar from 0 to 1 to
+		/// indicate the distance from it to the critter.
+		/// </summary>
+		/// <param name="eyeID">Which cell should be looked through.</param>
+		/// <param name="checkEntity">Which entities should be looked for.</param>
+		/// <param name="angularThreshold">The maximum angular distance for an object to be considered detected.</param>
+		/// <returns>A scalar from 0 to 1 to indicate the distance from it to the critter.</returns>
+		public decimal CheckFood(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold = 0.1, double maximumDistance = 100.0)
+		{
+			return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, DetectedFood);
 		}
 
 		/// <summary>

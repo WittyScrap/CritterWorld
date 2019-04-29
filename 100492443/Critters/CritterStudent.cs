@@ -52,7 +52,7 @@ namespace CritterRobots.Critters.Controllers
 		/// Constructs a new critter.
 		/// </summary>
 		/// <param name="critterID">A unique representative ID for the critter.</param>
-		public CritterStudent(int critterID) : base("Student that will totally not drop out #" + critterID)
+		public CritterStudent(int critterID) : base("Student that will totally not drop out #" + critterID, 10)
 		{
 			AnyEscaped = false;
 			AliveTimer = new System.Timers.Timer(1000);
@@ -90,7 +90,7 @@ namespace CritterRobots.Critters.Controllers
 				// 1 input to determine the health
 				// 1 input to determine the energy
 				// 1 input to determine the remaining level time
-				CritterBrain = NeuralNetwork.RandomNetwork(43, 4, 0, 10, 1, 50);
+				CritterBrain = NeuralNetwork.RandomNetwork(Eye.Precision * 4 + 3, 4, 0, 10, 1, 50);
 			}
 			else
 			{

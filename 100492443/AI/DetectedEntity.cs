@@ -13,7 +13,7 @@ namespace CritterRobots.AI
 	/// Represents an entity that has been detected by either
 	/// a SEE or a SCAN message.
 	/// </summary>
-	struct SightElement
+	public class DetectedEntity : IComparable<DetectedEntity>
 	{
 		/// <summary>
 		/// The entity that was detected.
@@ -54,7 +54,7 @@ namespace CritterRobots.AI
 		/// <param name="location">The location of the detected sight element.</param>
 		/// <param name="critterLocation">The location of the critter.</param>
 		/// <param name="critterDirection">The forward direction of the critter.</param>
-		public SightElement(CritterEye.Entity entityType, Point location, Point critterLocation, Vector critterDirection)
+		public DetectedEntity(CritterEye.Entity entityType, Point location, Point critterLocation, Vector critterDirection)
 		{
 			Entity = entityType;
 			Location = location;
@@ -70,7 +70,7 @@ namespace CritterRobots.AI
 		/// <param name="sightElement">The formatted sight element's contents.</param>
 		/// <param name="critterLocation">The location of the critter.</param>
 		/// <param name="critterDirection">The forward direction of the critter.</param>
-		public SightElement(string sightElement, Point critterLocation, Vector critterDirection)
+		public DetectedEntity(string sightElement, Point critterLocation, Vector critterDirection)
 		{
 			DissectEntity(sightElement, out CritterEye.Entity entity, out Point entityLocation);
 
@@ -123,6 +123,15 @@ namespace CritterRobots.AI
 				entity = CritterEye.Entity.Empty;
 				entityLocation = Point.Empty;
 			}
+		}
+
+		/// <summary>
+		/// Compares this entity against a different one.
+		/// </summary>
+		/// <param name="other">The entity to compare against.</param>
+		public int CompareTo(DetectedEntity other)
+		{
+			return Distance.CompareTo(other.Distance);
 		}
 	}
 }
