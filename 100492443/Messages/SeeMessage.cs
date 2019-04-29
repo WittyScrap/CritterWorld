@@ -26,7 +26,7 @@ namespace CritterRobots.Messages
 
 				if (entityComponents[0] == "Critter" || entityComponents[0] == "Bomb" || entityComponents[0] == "Terrain")
 				{
-					yield return new DetectedEntity(detectedObject, critterLocation, critterForward));
+					yield return new DetectedEntity(detectedObject, critterLocation, critterForward);
 				}
 			}
 		}

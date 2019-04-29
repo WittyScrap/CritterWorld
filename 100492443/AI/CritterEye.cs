@@ -45,34 +45,60 @@ namespace CritterRobots.AI
 		/// <summary>
 		/// Collection containing all the detected food items.
 		/// </summary>
-		private List<DetectedEntity> InternalDetectedFood { get; set; } = new List<DetectedEntity>();
+		private SortedList<double, DetectedEntity> InternalDetectedFood { get; set; } = new SortedList<double, DetectedEntity>();
 
 		/// <summary>
 		/// Collection containing all the detected gifts.
 		/// </summary>
-		private List<DetectedEntity> InternalDetectedGifts { get; set; } = new List<DetectedEntity>();
+		private SortedList<double, DetectedEntity> InternalDetectedGifts { get; set; } = new SortedList<double, DetectedEntity>();
 
 		/// <summary>
 		/// Collection containing all the detected threats (Critters, Bombs and Walls).
 		/// </summary>
-		private List<DetectedEntity> InternalDetectedThreats { get; set; } = new List<DetectedEntity>();
+		private SortedList<double, DetectedEntity> InternalDetectedThreats { get; set; } = new SortedList<double, DetectedEntity>();
 
 		/// <summary>
 		/// Refreshes this eye's detected states through a SEE message.
 		/// </summary>
-		/// <param name="message"></param>
 		public void Update(SeeMessage message, Point critterLocation, Vector critterForward)
 		{
 			InternalDetectedThreats.Clear();
 
-			// Collect every entity and store it in the linked list in a sorted manner.
+			// Collect every entity and store it in the sorted lists.
 			foreach (DetectedEntity entity in message.Inform(critterLocation, critterForward))
 			{
-				
+				if (entity.Entity != Entity.EscapeHatch)
+				{
+					InternalDetectedThreats.Add(entity.Distance, entity);
+				}
+				else
+				{
+					DetectedEscapeHatch = entity;
+				}
 			}
 		}
 
+		/// <summary>
+		/// Refreshes this eye's detected states through a SCAN message.
+		/// </summary>
+		public void Update(ScanMessage message, Point critterLocation, Vector critterForward)
+		{
+			InternalDetectedFood.Clear();
+			InternalDetectedGifts.Clear();
 
+			// Collect every entity and store it in the sorted lists.
+			foreach (DetectedEntity entity in message.Inform(critterLocation, critterForward))
+			{
+				if (entity.Entity == Entity.Food)
+				{
+					InternalDetectedFood.Add(entity.Distance, entity);
+				}
+				else
+				{
+					InternalDetectedFood.Add(entity.Distance, entity);
+				}
+			}
+		}
 
 		/// <summary>
 		/// Indicates the location of the escape hatch.
@@ -107,16 +133,21 @@ namespace CritterRobots.AI
 		/// <summary>
 		/// Generic version of all check methods.
 		/// </summary>
-		private decimal CheckEye(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold, double maximumDistance, IReadOnlyCollection<DetectedEntity> collectionSource)
+		private decimal CheckEye(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold, double maximumDistance, SortedList<double, DetectedEntity> collectionSource)
 		{
 			Ray selectedRay = GetRay(critterLocation, critterForward, eyeID);
 			double angle = Vector.Dot(critterForward, selectedRay.Direction);
 
 			foreach (var detectedEntity in collectionSource)
 			{
-				if (Math.Abs(angle - detectedEntity.Rotation) < angularThreshold)
+				if (Math.Abs(angle - detectedEntity.Value.Rotation) < angularThreshold)
 				{
-					return (decimal)(detectedEntity.Distance / maximumDistance);
+					double entityDistance = detectedEntity.Value.Distance;
+					entityDistance = Math.Min(entityDistance, maximumDistance);
+					entityDistance = maximumDistance - entityDistance;
+					entityDistance = entityDistance / maximumDistance;
+
+					return (decimal)entityDistance;
 				}
 			}
 
@@ -124,17 +155,51 @@ namespace CritterRobots.AI
 		}
 
 		/// <summary>
-		/// Checks if the given eye cell can see the specified
-		/// entities, and if so returns a scalar from 0 to 1 to
+		/// Checks if the given eye cell can see any food entity,
+		/// and if so returns a scalar from 0 to 1 to
 		/// indicate the distance from it to the critter.
 		/// </summary>
+		/// <param name="critterLocation">The location of the reference critter.</param>
+		/// <param name="critterForward">The forward direction of the reference critter.</param>
 		/// <param name="eyeID">Which cell should be looked through.</param>
-		/// <param name="checkEntity">Which entities should be looked for.</param>
+		/// <param name="maximumDistance">The maximum distance to locate objects at.</param>
 		/// <param name="angularThreshold">The maximum angular distance for an object to be considered detected.</param>
 		/// <returns>A scalar from 0 to 1 to indicate the distance from it to the critter.</returns>
 		public decimal CheckFood(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold = 0.1, double maximumDistance = 100.0)
 		{
-			return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, DetectedFood);
+			return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedFood);
+		}
+
+		/// <summary>
+		/// Checks if the given eye cell can see any gifts,
+		/// and if so returns a scalar from 0 to 1 to indicate
+		/// the distance from it to the critter.
+		/// </summary>
+		/// <param name="critterLocation">The location of the reference critter.</param>
+		/// <param name="critterForward">The forward direction of the reference critter.</param>
+		/// <param name="eyeID">Which cell should be looked through.</param>
+		/// <param name="maximumDistance">The maximum distance to locate objects at.</param>
+		/// <param name="angularThreshold">The maximum angular distance for an object to be considered detected.</param>
+		/// <returns>A scalar from 0 to 1 to indicate the distance from it to the critter.</returns>
+		public decimal CheckGift(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold = 0.1, double maximumDistance = 100.0)
+		{
+			return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedGifts);
+		}
+
+		/// <summary>
+		/// Checks if the given eye cell can see any threats,
+		/// and if so returns a scalar from 0 to 1 to indicate
+		/// the distance from it to the critter.
+		/// </summary>
+		/// <param name="critterLocation">The location of the reference critter.</param>
+		/// <param name="critterForward">The forward direction of the reference critter.</param>
+		/// <param name="eyeID">Which cell should be looked through.</param>
+		/// <param name="maximumDistance">The maximum distance to locate objects at.</param>
+		/// <param name="angularThreshold">The maximum angular distance for an object to be considered detected.</param>
+		/// <returns>A scalar from 0 to 1 to indicate the distance from it to the critter.</returns>
+		public decimal CheckThreat(Point critterLocation, Vector critterForward, int eyeID, double angularThreshold = 0.1, double maximumDistance = 100.0)
+		{
+			return CheckEye(critterLocation, critterForward, eyeID, angularThreshold, maximumDistance, InternalDetectedThreats);
 		}
 
 		/// <summary>

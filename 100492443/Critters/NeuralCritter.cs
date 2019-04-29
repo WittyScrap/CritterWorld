@@ -63,9 +63,14 @@ namespace CritterRobots.Critters
 		private System.Timers.Timer NetworkProcessor { get; }
 
 		/// <summary>
-		/// This timer will call 
+		/// This timer will call <see cref="RetrieveStats"/>.
 		/// </summary>
 		private System.Timers.Timer Retriever { get; }
+
+		/// <summary>
+		/// This timer will periodically send a SCAN message.
+		/// </summary>
+		private System.Timers.Timer Scanner { get; }
 
 		/// <summary>
 		/// The last requested speed by the network.
@@ -124,9 +129,16 @@ namespace CritterRobots.Critters
 		/// </summary>
 		protected void ProcessNetwork()
 		{
-			decimal[] networkInput = GatherNetworkInput();
-			CritterBrain.Feedforward(networkInput);
-			InterpretNetworkOutput();
+			try
+			{
+				decimal[] networkInput = GatherNetworkInput();
+				CritterBrain.Feedforward(networkInput);
+				InterpretNetworkOutput();
+			}
+			catch (Exception e)
+			{
+				MessageBox.Show("Uncaught exception during network processing for " + Name + " (" + e.Message + "):\n" + e.StackTrace);
+			}
 		}
 
 		/// <summary>
@@ -197,7 +209,16 @@ namespace CritterRobots.Critters
 		/// </summary>
 		protected override void OnSee(SeeMessage message)
 		{
-			message.Inform(Eye, Location, Direction);
+			Eye.Update(message, Location, Direction);
+		}
+
+		/// <summary>
+		/// Refresh this eye's state.
+		/// </summary>
+		/// <param name="message"></param>
+		protected override void OnScan(ScanMessage message)
+		{
+			Eye.Update(message, Location, Direction);
 		}
 
 		/// <summary>
@@ -227,9 +248,11 @@ namespace CritterRobots.Critters
 
 			NetworkProcessor = new System.Timers.Timer(50);
 			Retriever = new System.Timers.Timer(50);
+			Scanner = new System.Timers.Timer(100);
 
 			NetworkProcessor.Elapsed += (sender, args) => ProcessNetwork();
 			Retriever.Elapsed += (sender, args) => RetrieveStats();
+			Scanner.Elapsed += (sender, args) => Responder("SCAN:0");
 		}
 
 		/// <summary>
@@ -239,6 +262,7 @@ namespace CritterRobots.Critters
 		{
 			NetworkProcessor.Start();
 			Retriever.Start();
+			Scanner.Start();
 		}
 	}
 }
