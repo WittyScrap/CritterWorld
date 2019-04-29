@@ -1,4 +1,5 @@
 ﻿using CritterRobots.Critters;
+using CritterRobots.Critters.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -121,7 +122,7 @@ namespace CritterRobots.Messages
 		public Point GetPoint(int offset)
 		{
 			string rawPoint = GetString(offset);
-			return Arena.ParseCoordinate(rawPoint);
+			return Critter.ParsePoint(rawPoint);
 		}
 
 		/// <summary>

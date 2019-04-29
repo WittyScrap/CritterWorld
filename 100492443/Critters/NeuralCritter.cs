@@ -88,7 +88,7 @@ namespace CritterRobots.Critters
 		/// <returns></returns>
 		private decimal[] GatherNetworkInput()
 		{
-			decimal[] networkInput = new decimal[3 + Eye.Precision];
+			decimal[] networkInput = new decimal[3 + Eye.Precision * 4];
 
 			networkInput[0] = (decimal)Health;
 			networkInput[1] = (decimal)Energy;
@@ -109,7 +109,7 @@ namespace CritterRobots.Critters
 			for (int i = 3; i < networkInput.Length; ++i)
 			{
 				int eyeID = (i - 3) % 10;
-				networkInput[eyeID] = 
+				networkInput[i] = 0m;
 			}
 
 			return networkInput;
@@ -157,19 +157,17 @@ namespace CritterRobots.Critters
 			decimal wantsToTurnRight = Clamp01(networkOutput[1]);
 			decimal turnAmount = Clamp01(networkOutput[2]);
 			decimal movementSpeed = Clamp01(networkOutput[3]);
-
-			double commitmentMultiplier = (double)Math.Abs(wantsToTurnLeft - wantsToTurnRight);
+			
 			double turningAngle = (double)turnAmount * Math.PI * ((wantsToTurnRight < wantsToTurnLeft) ? -1 : 1);
-			turningAngle *= commitmentMultiplier;
 
-			Debugger.LogMessage("Wants to turn left: " + wantsToTurnLeft + "\nWants to turn right: " + wantsToTurnRight + "\nMultiplier: " + commitmentMultiplier);
+			Debugger.LogMessage("Wants to turn left: " + wantsToTurnLeft + "\nWants to turn right: " + wantsToTurnRight);
 			
 			if (turningAngle < 0)
 			{
 				turningAngle = Math.PI + (Math.PI + turningAngle);
 			}
 
-			Direction.Rotate(turningAngle);
+			Direction = Direction.Rotated(turningAngle);
 			Destination = (Point)(Location + Direction * 100);
 			LastRequestedSpeed = movementSpeed;
 			

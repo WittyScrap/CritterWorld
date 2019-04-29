@@ -84,6 +84,18 @@ namespace CritterRobots.Critters
 		}
 
 		/// <summary>
+		/// A normalized copy of this vector.
+		/// </summary>
+		public Vector Normalized {
+			get
+			{
+				Vector copy = new Vector(X, Y);
+				copy.Normalize();
+				return copy;
+			}
+		}
+
+		/// <summary>
 		/// Rotates this vector by the specified amount
 		/// in radians.
 		/// </summary>
@@ -103,6 +115,17 @@ namespace CritterRobots.Critters
 			Vector copied = new Vector(X, Y);
 			copied.Rotate(radiansAngle);
 			return copied;
+		}
+
+		/// <summary>
+		/// Turns this vector into a unit vector.
+		/// </summary>
+		public void Normalize()
+		{
+			double magnitude = Magnitude;
+
+			X /= magnitude;
+			Y /= magnitude;
 		}
 
 		/// <summary>
@@ -202,6 +225,14 @@ namespace CritterRobots.Critters
 		public static explicit operator Point(Vector source)
 		{
 			return new Point((int)source.X, (int)source.Y);
+		}
+
+		/// <summary>
+		/// Converts a point into an equivalent vector.
+		/// </summary>
+		public static explicit operator Vector(Point source)
+		{
+			return new Vector(source.X, source.Y);
 		}
 
 		/// <summary>

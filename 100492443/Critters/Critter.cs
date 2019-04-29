@@ -382,5 +382,28 @@ namespace CritterRobots.Critters.Controllers
 		}
 
 		#endregion
+
+		#region Utilities
+
+		/// <summary>
+		/// Parses a location into a <see cref="Point"/>.
+		/// </summary>
+		public static Point ParsePoint(string pointFormat)
+		{
+			string[] components = pointFormat.Replace('{', '\0').Replace('}', '\0').Split(',');
+			string[] xComponent = components[0].Split('=');
+			string[] yComponent = components[1].Split('=');
+
+			if (int.TryParse(xComponent[1], out int x) && int.TryParse(yComponent[1], out int y))
+			{
+				return new Point(x, y);
+			}
+			else
+			{
+				return Point.Empty;
+			}
+		}
+
+		#endregion
 	}
 }

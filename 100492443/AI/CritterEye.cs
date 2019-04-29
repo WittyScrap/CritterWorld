@@ -20,14 +20,16 @@ namespace CritterRobots.AI
 		/// tile.
 		/// </summary>
 		[Flags]
-		public enum TileContents
+		public enum Entity
 		{
-			Empty = 0,
-			Terrain = 1 << 0,
-			Gift = 1 << 1,
-			Food = 1 << 2,
-			Bomb = 1 << 3,
-			EscapeHatch = 1 << 4
+			Empty		= 0,
+			Terrain		= 1 << 0,
+			Gift		= 1 << 1,
+			Food		= 1 << 2,
+			Bomb		= 1 << 3,
+			EscapeHatch = 1 << 4,
+			Critter		= 1 << 5,
+			All			= Terrain | Gift | Food | Bomb | EscapeHatch
 		}
 
 		/// <summary>
