@@ -63,12 +63,15 @@ namespace CritterRobots.AI
 		/// <param name="northTerrain">The distance from any terrain located directly north, or to the north boundary.</param>
 		public EyeResult LookNorth()
 		{
-			EyeResult results = new EyeResult();
+			EyeResult results = new EyeResult
+			{
+				NearestFood = 0.0,
+				NearestGift = 0.0,
+				NearestThreat = 0.0,
+				NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.Y / size.Height)
+			};
 
-			results.NearestFood = 0.0;
-			results.NearestGift = 0.0;
-			results.NearestThreat = 0.0;
-			results.NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.Y / size.Height);
+			return results;
 		}
 
 		/// <summary>
@@ -80,12 +83,15 @@ namespace CritterRobots.AI
 		/// <param name="northTerrain">The distance from any terrain located directly east, or to the east boundary.</param>
 		public EyeResult LookEast()
 		{
-			EyeResult results = new EyeResult();
+			EyeResult results = new EyeResult
+			{
+				NearestFood = 0.0,
+				NearestGift = 0.0,
+				NearestThreat = 0.0,
+				NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.X / size.Width)
+			};
 
-			results.NearestFood = 0.0;
-			results.NearestGift = 0.0;
-			results.NearestThreat = 0.0;
-			results.NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.X / size.Width);
+			return results;
 		}
 
 		/// <summary>
@@ -97,12 +103,15 @@ namespace CritterRobots.AI
 		/// <param name="northTerrain">The distance from any terrain located directly south, or to the south boundary.</param>
 		public EyeResult LookSouth()
 		{
-			EyeResult results = new EyeResult();
+			EyeResult results = new EyeResult
+			{
+				NearestFood = 0.0,
+				NearestGift = 0.0,
+				NearestThreat = 0.0,
+				NearestTerrain = GetWallOrBoundary((size, location) => location.Y / size.Height)
+			};
 
-			results.NearestFood = 0.0;
-			results.NearestGift = 0.0;
-			results.NearestThreat = 0.0;
-			results.NearestTerrain = GetWallOrBoundary((size, location) => location.Y / size.Height);
+			return results;
 		}
 
 		/// <summary>
@@ -114,12 +123,15 @@ namespace CritterRobots.AI
 		/// <param name="northTerrain">The distance from any terrain located directly west, or to the west boundary.</param>
 		public EyeResult LookWest()
 		{
-			EyeResult results = new EyeResult();
+			EyeResult results = new EyeResult
+			{
+				NearestFood = 0.0,
+				NearestGift = 0.0,
+				NearestThreat = 0.0,
+				NearestTerrain = GetWallOrBoundary((size, location) => location.X / size.Width)
+			};
 
-			results.NearestFood = 0.0;
-			results.NearestGift = 0.0;
-			results.NearestThreat = 0.0;
-			results.NearestTerrain = GetWallOrBoundary((size, location) => location.X / size.Width);
+			return results;
 		}
 
 		/// <summary>

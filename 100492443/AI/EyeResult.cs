@@ -9,7 +9,7 @@ namespace CritterRobots.AI
 	/// <summary>
 	/// The results of a look call.
 	/// </summary>
-	struct EyeResult
+	public struct EyeResult
 	{
 		/// <summary>
 		/// The distance to the nearest food item.
