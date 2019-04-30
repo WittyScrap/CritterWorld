@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CritterController;
+using CritterRobots.AI;
 using CritterRobots.Messages;
 
 /// <summary>
@@ -16,7 +17,7 @@ namespace CritterRobots.Critters.Controllers
 	/// Implements basic functionality for
 	/// all types of Critter AI.
 	/// </summary>
-	public abstract class Critter : ICritterController
+	public abstract class Critter : ICritterController, ILocatableCritter
 	{
 		#region ICritterController interface components
 		/// <summary>
@@ -62,16 +63,21 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		protected Debug Debugger { get; private set; }
 
+		/// <summary>
+		/// The detected features in the arena.
+		/// </summary>
+		public Map DetectedMap { get; } = new Map();
+
 		#region Critter properties
 		/// <summary>
 		/// The current velocity of the critter.
 		/// </summary>
-		protected Vector Velocity { get; private set; } = Vector.Zero;
+		public Vector Velocity { get; private set; } = Vector.Zero;
 
 		/// <summary>
 		/// The current location of the critter.
 		/// </summary>
-		protected Point Location { get; private set; } = Point.Empty;
+		public Point Location { get; private set; } = Point.Empty;
 
 		/// <summary>
 		/// The amount of time elapsed since the start of the level.
@@ -115,10 +121,12 @@ namespace CritterRobots.Critters.Controllers
 			if (parsedMessage is SeeMessage seeMessage)
 			{
 				OnSee(seeMessage);
+				DetectedMap.OnSee(seeMessage);
 			}
 			else if (parsedMessage is ScanMessage scanMessage)
 			{
 				OnScan(scanMessage);
+				DetectedMap.OnScan(scanMessage);
 			}
 			else
 			{
@@ -179,7 +187,7 @@ namespace CritterRobots.Critters.Controllers
 					OnVelocityUpdate(requestID, Velocity);
 					break;
 				case "ARENA_SIZE":
-//					CreateArena(new Size(message.GetInteger(1), message.GetInteger(2)), new Size(10, 10));
+					DetectedMap.ReportSize(new Size(message.GetInteger(1), message.GetInteger(2)));
 					break;
 				case "SCORED":
 					OnScored(message.GetPoint(0));
@@ -251,6 +259,7 @@ namespace CritterRobots.Critters.Controllers
 		{
 			Name = critterName;
 			Debugger = new Debug(Logger, "100492443:" + critterName);
+			Map.Reset();
 		}
 
 		#region Critter messages
@@ -367,6 +376,7 @@ namespace CritterRobots.Critters.Controllers
 		{
 			IsInitialized = true;
 			Location = initialLocation;
+			Responder("GET_ARENA_SIZE:0");
 			OnInitialize();
 		}
 

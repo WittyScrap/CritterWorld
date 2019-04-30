@@ -7,10 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
-using System.Windows.Forms;
 
 namespace CritterRobots.Critters
 {
@@ -62,17 +59,17 @@ namespace CritterRobots.Critters
 		/// This timer will call the <see cref="ProcessNetwork"/> method
 		/// on every tick.
 		/// </summary>
-		private System.Timers.Timer NetworkProcessor { get; }
+		private Timer NetworkProcessor { get; }
 
 		/// <summary>
 		/// This timer will call <see cref="RetrieveStats"/>.
 		/// </summary>
-		private System.Timers.Timer Retriever { get; }
+		private Timer Retriever { get; }
 
 		/// <summary>
 		/// This timer will periodically send a SCAN message.
 		/// </summary>
-		private System.Timers.Timer Scanner { get; }
+		private Timer Scanner { get; }
 
 		/// <summary>
 		/// The last requested speed by the network.
@@ -96,11 +93,36 @@ namespace CritterRobots.Critters
 		/// <returns></returns>
 		private decimal[] GatherNetworkInput()
 		{
-			decimal[] networkInput = new decimal[3 + Eye.Precision * 4];
+			decimal[] networkInput = new decimal[19];
 
 			networkInput[0] = (decimal)Health;
 			networkInput[1] = (decimal)Energy;
 			networkInput[2] = MaximumTimeSet ? ((decimal)RemainingTime / MaximumTime) : 1.0m;
+
+			Eye.LookNorth(out double northFood, out double northGift, out double northThreat, out double northTerrain);
+			Eye.LookEast (out double eastFood,  out double eastGift,  out double eastThreat,  out double eastTerrain);
+			Eye.LookSouth(out double southFood, out double southGift, out double southThreat, out double southTerrain);
+			Eye.LookWest (out double westFood,  out double westGift,  out double westThreat,  out double westTerrain);
+
+			networkInput[3] = (decimal)northFood;
+			networkInput[4] = (decimal)northGift;
+			networkInput[5] = (decimal)northThreat;
+			networkInput[6] = (decimal)northTerrain;
+
+			networkInput[7] = (decimal)eastFood;
+			networkInput[8] = (decimal)eastGift;
+			networkInput[9] = (decimal)eastThreat;
+			networkInput[10] = (decimal)eastTerrain;
+
+			networkInput[11] = (decimal)southFood;
+			networkInput[12] = (decimal)southGift;
+			networkInput[13] = (decimal)southThreat;
+			networkInput[14] = (decimal)southTerrain;
+
+			networkInput[15] = (decimal)westFood;
+			networkInput[16] = (decimal)westGift;
+			networkInput[17] = (decimal)westThreat;
+			networkInput[18] = (decimal)westTerrain;
 
 			return networkInput;
 		}
@@ -131,7 +153,7 @@ namespace CritterRobots.Critters
 			}
 			catch (Exception e)
 			{
-				MessageBox.Show("Uncaught exception during network processing for " + Name + " (" + e.Message + "):\n" + e.StackTrace);
+				System.Windows.Forms.MessageBox.Show("Uncaught exception during network processing for " + Name + " (" + e.Message + "):\n" + e.StackTrace);
 			}
 		}
 
@@ -172,7 +194,7 @@ namespace CritterRobots.Critters
 		}
 
 		/// <summary>
-		/// Called when the critter reaches its destination.
+		/// When the critter reaches its desintaion, simply keep it moving the same direction.
 		/// </summary>
 		protected override void OnDestinationReached(Point location)
 		{
@@ -218,9 +240,9 @@ namespace CritterRobots.Critters
 		/// </summary>
 		public NeuralCritter(string critterName, int retinaDensity) : base(critterName)
 		{
-			Eye = new CritterEye(retinaDensity);
+			Eye = new CritterEye(this);
 
-			int networkInput = retinaDensity * 4 + 3;
+			int networkInput = 19;
 			int networkOutput = 5;
 
 			// One input neuron per "cone cell" in the eye, with three
@@ -245,9 +267,9 @@ namespace CritterRobots.Critters
 										  " instead of " + networkOutput);
 			}
 
-			NetworkProcessor = new System.Timers.Timer(50);
-			Retriever = new System.Timers.Timer(25);
-			Scanner = new System.Timers.Timer(1000);
+			NetworkProcessor = new Timer(50);
+			Retriever = new Timer(25);
+			Scanner = new Timer(1000);
 
 			NetworkProcessor.Elapsed += (sender, args) => ProcessNetwork();
 			Retriever.Elapsed += (sender, args) => RetrieveStats();

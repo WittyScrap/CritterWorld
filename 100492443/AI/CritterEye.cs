@@ -14,41 +14,121 @@ namespace CritterRobots.AI
 	/// Represents a series of raycast that are able to detect
 	/// objects of a certain type.
 	/// </summary>
-	public partial class CritterEye
+	public class CritterEye
 	{
 		/// <summary>
-		/// Enumerator to represent what type
-		/// of contents are present within a given
-		/// tile.
+		/// Delegate used to check for boundary distances.
 		/// </summary>
-		[Flags]
-		public enum Entity
+		/// <returns></returns>
+		private delegate double BoundaryCheck(Size mapSize, Point critterLocation);
+		
+		/// <summary>
+		/// The reference critter.
+		/// </summary>
+		public ILocatableCritter ReferenceCritter { get; }
+
+		/// <summary>
+		/// Returns the distance from this critter to
+		/// the specified boundary.
+		/// </summary>
+		private double GetBoundary(BoundaryCheck check)
 		{
-			Empty = 0,
-			Terrain = 1 << 0,
-			Gift = 1 << 1,
-			Food = 1 << 2,
-			Bomb = 1 << 3,
-			EscapeHatch = 1 << 4,
-			Critter = 1 << 5,
-			All = Terrain | Gift | Food | Bomb | EscapeHatch,
-			Threats = Critter | Bomb | Terrain
+			if (ReferenceCritter.DetectedMap.SizeKnown)
+			{
+				return check(ReferenceCritter.DetectedMap.Extents, ReferenceCritter.Location);
+			}
+			else
+			{
+				return 0.0;
+			}
 		}
 
 		/// <summary>
-		/// The precision (or "resolution") of the eye
-		/// is the amount of rays fired outwards from the
-		/// center of the critter.
+		/// Returns the distace to a wall directly near this
+		/// critter or the distance to the boundary.
 		/// </summary>
-		public int Precision { get; }
+		/// <param name="check"></param>
+		/// <returns></returns>
+		private double GetWallOrBoundary(BoundaryCheck check)
+		{
+			return GetBoundary(check);
+		}
+
+		/// <summary>
+		/// Asks the eye to look north and report the closest items of each type.
+		/// </summary>
+		/// <param name="nearestFood">The nearest detected piece of food.</param>
+		/// <param name="nearestGift">The nearest detected gift.</param>
+		/// <param name="nearestThreat">The nearest detected threat.</param>
+		/// <param name="northTerrain">The distance from any terrain located directly north, or to the north boundary.</param>
+		public EyeResult LookNorth()
+		{
+			EyeResult results = new EyeResult();
+
+			results.NearestFood = 0.0;
+			results.NearestGift = 0.0;
+			results.NearestThreat = 0.0;
+			results.NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.Y / size.Height);
+		}
+
+		/// <summary>
+		/// Asks the eye to look east and report the closest items of each type.
+		/// </summary>
+		/// <param name="nearestFood">The nearest detected piece of food.</param>
+		/// <param name="nearestGift">The nearest detected gift.</param>
+		/// <param name="nearestThreat">The nearest detected threat.</param>
+		/// <param name="northTerrain">The distance from any terrain located directly east, or to the east boundary.</param>
+		public EyeResult LookEast()
+		{
+			EyeResult results = new EyeResult();
+
+			results.NearestFood = 0.0;
+			results.NearestGift = 0.0;
+			results.NearestThreat = 0.0;
+			results.NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.X / size.Width);
+		}
+
+		/// <summary>
+		/// Asks the eye to look south and report the closest items of each type.
+		/// </summary>
+		/// <param name="nearestFood">The nearest detected piece of food.</param>
+		/// <param name="nearestGift">The nearest detected gift.</param>
+		/// <param name="nearestThreat">The nearest detected threat.</param>
+		/// <param name="northTerrain">The distance from any terrain located directly south, or to the south boundary.</param>
+		public EyeResult LookSouth()
+		{
+			EyeResult results = new EyeResult();
+
+			results.NearestFood = 0.0;
+			results.NearestGift = 0.0;
+			results.NearestThreat = 0.0;
+			results.NearestTerrain = GetWallOrBoundary((size, location) => location.Y / size.Height);
+		}
+
+		/// <summary>
+		/// Asks the eye to look west and report the closest items of each type.
+		/// </summary>
+		/// <param name="nearestFood">The nearest detected piece of food.</param>
+		/// <param name="nearestGift">The nearest detected gift.</param>
+		/// <param name="nearestThreat">The nearest detected threat.</param>
+		/// <param name="northTerrain">The distance from any terrain located directly west, or to the west boundary.</param>
+		public EyeResult LookWest()
+		{
+			EyeResult results = new EyeResult();
+
+			results.NearestFood = 0.0;
+			results.NearestGift = 0.0;
+			results.NearestThreat = 0.0;
+			results.NearestTerrain = GetWallOrBoundary((size, location) => location.X / size.Width);
+		}
 
 		/// <summary>
 		/// Creates a new critter eye.
 		/// </summary>
 		/// <param name="precision">The density of the eye's "retina".</param>
-		public CritterEye(int precision)
+		public CritterEye(ILocatableCritter referenceCritter)
 		{
-			Precision = precision;
+			ReferenceCritter = referenceCritter;
 		}
 	}
 }

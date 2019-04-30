@@ -79,12 +79,8 @@ namespace CritterRobots.Critters.Controllers
 				// 1 input to determine the energy
 				// 1 input to determine the remaining level time
 				CritterBrain = NeuralNetwork.RandomNetwork(
-					networkInput, 
-					networkOutput, 
-					0,
-					10, 
-					1, 
-					50
+					inputNeurons: networkInput, 
+					outputNeurons: networkOutput
 				);
 			}
 			else
