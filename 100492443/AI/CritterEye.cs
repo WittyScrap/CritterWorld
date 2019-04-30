@@ -68,7 +68,7 @@ namespace CritterRobots.AI
 				NearestFood = 0.0,
 				NearestGift = 0.0,
 				NearestThreat = 0.0,
-				NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.Y / size.Height)
+				NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.Y / (double)size.Height)
 			};
 
 			return results;
@@ -88,7 +88,7 @@ namespace CritterRobots.AI
 				NearestFood = 0.0,
 				NearestGift = 0.0,
 				NearestThreat = 0.0,
-				NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.X / size.Width)
+				NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.X / (double)size.Width)
 			};
 
 			return results;
@@ -108,7 +108,7 @@ namespace CritterRobots.AI
 				NearestFood = 0.0,
 				NearestGift = 0.0,
 				NearestThreat = 0.0,
-				NearestTerrain = GetWallOrBoundary((size, location) => location.Y / size.Height)
+				NearestTerrain = GetWallOrBoundary((size, location) => location.Y / (double)size.Height)
 			};
 
 			return results;
@@ -128,7 +128,7 @@ namespace CritterRobots.AI
 				NearestFood = 0.0,
 				NearestGift = 0.0,
 				NearestThreat = 0.0,
-				NearestTerrain = GetWallOrBoundary((size, location) => location.X / size.Width)
+				NearestTerrain = GetWallOrBoundary((size, location) => location.X / (double)size.Width)
 			};
 
 			return results;

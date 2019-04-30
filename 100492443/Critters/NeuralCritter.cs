@@ -99,30 +99,30 @@ namespace CritterRobots.Critters
 			networkInput[1] = (decimal)Energy;
 			networkInput[2] = MaximumTimeSet ? ((decimal)RemainingTime / MaximumTime) : 1.0m;
 
-			Eye.LookNorth(out double northFood, out double northGift, out double northThreat, out double northTerrain);
-			Eye.LookEast (out double eastFood,  out double eastGift,  out double eastThreat,  out double eastTerrain);
-			Eye.LookSouth(out double southFood, out double southGift, out double southThreat, out double southTerrain);
-			Eye.LookWest (out double westFood,  out double westGift,  out double westThreat,  out double westTerrain);
+			EyeResult north = Eye.LookNorth();
+			EyeResult east  = Eye.LookEast();
+			EyeResult south = Eye.LookSouth();
+			EyeResult west  = Eye.LookWest();
 
-			networkInput[3] = (decimal)northFood;
-			networkInput[4] = (decimal)northGift;
-			networkInput[5] = (decimal)northThreat;
-			networkInput[6] = (decimal)northTerrain;
+			networkInput[3] = (decimal)north.NearestFood;
+			networkInput[4] = (decimal)north.NearestGift;
+			networkInput[5] = (decimal)north.NearestThreat;
+			networkInput[6] = (decimal)north.NearestTerrain;
 
-			networkInput[7] = (decimal)eastFood;
-			networkInput[8] = (decimal)eastGift;
-			networkInput[9] = (decimal)eastThreat;
-			networkInput[10] = (decimal)eastTerrain;
+			networkInput[7] = (decimal)east.NearestFood;
+			networkInput[8] = (decimal)east.NearestGift;
+			networkInput[9] = (decimal)east.NearestThreat;
+			networkInput[10] = (decimal)east.NearestTerrain;
 
-			networkInput[11] = (decimal)southFood;
-			networkInput[12] = (decimal)southGift;
-			networkInput[13] = (decimal)southThreat;
-			networkInput[14] = (decimal)southTerrain;
+			networkInput[11] = (decimal)south.NearestFood;
+			networkInput[12] = (decimal)south.NearestGift;
+			networkInput[13] = (decimal)south.NearestThreat;
+			networkInput[14] = (decimal)south.NearestTerrain;
 
-			networkInput[15] = (decimal)westFood;
-			networkInput[16] = (decimal)westGift;
-			networkInput[17] = (decimal)westThreat;
-			networkInput[18] = (decimal)westTerrain;
+			networkInput[15] = (decimal)west.NearestFood;
+			networkInput[16] = (decimal)west.NearestGift;
+			networkInput[17] = (decimal)west.NearestThreat;
+			networkInput[18] = (decimal)west.NearestTerrain;
 
 			return networkInput;
 		}
