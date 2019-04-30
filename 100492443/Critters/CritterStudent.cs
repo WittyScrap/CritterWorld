@@ -59,15 +59,16 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// Handles loading the neural network.
 		/// </summary>
-		protected override void LoadNetwork()
+		protected override void LoadNetwork(int networkInput, int networkOutput)
 		{
 			if (!File.Exists(Filepath + "best_brain_snapshot.crbn"))
 			{
-				// 4 outputs:
-				// "How convinced am I that I want to turn left?"
-				// "How convinced am I that I want to turn right?"
-				// "How much, between 0 and 180 degrees, should I turn that direction?"
-				// "At what speed should I be walking?"
+				// 5 outputs:
+				// "How much do I want to walk north?"
+				// "How much do I want to walk east?"
+				// "How much do I want to walk south?"
+				// "How much do I want to walk west?"
+				// "At what speed do I want to walk?"
 				//
 				// The inputs are split between:
 				// 10 eye cells to detect food
@@ -77,7 +78,14 @@ namespace CritterRobots.Critters.Controllers
 				// 1 input to determine the health
 				// 1 input to determine the energy
 				// 1 input to determine the remaining level time
-				CritterBrain = NeuralNetwork.RandomNetwork(Eye.Precision * 4 + 3, 4, 0, 10, 1, 50);
+				CritterBrain = NeuralNetwork.RandomNetwork(
+					networkInput, 
+					networkOutput, 
+					0,
+					10, 
+					1, 
+					50
+				);
 			}
 			else
 			{

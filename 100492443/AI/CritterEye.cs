@@ -43,31 +43,6 @@ namespace CritterRobots.AI
 		public int Precision { get; }
 
 		/// <summary>
-		/// Returns a sequence of rays given this eye's accuracy.
-		/// </summary>
-		/// <returns>This eye's "retina".</returns>
-		public IEnumerable<Ray> GetRays(Point critterLocation, Vector critterForward)
-		{
-			for (double angle = 0; angle < 2 * Math.PI; angle += Math.PI * 2 / Precision)
-			{
-				yield return new Ray(critterLocation, critterForward.Rotated(angle));
-			}
-		}
-
-		/// <summary>
-		/// Returns one specific ray.
-		/// </summary>
-		public Ray GetRay(Point critterLocation, Vector critterForward, int rayID)
-		{
-			if (rayID < 0 || rayID >= Precision)
-			{
-				throw new ArgumentOutOfRangeException("rayID");
-			}
-			double angle = (Math.PI * 2 / Precision) * rayID;
-			return new Ray(critterLocation, critterForward.Rotated(angle));
-		}
-
-		/// <summary>
 		/// Creates a new critter eye.
 		/// </summary>
 		/// <param name="precision">The density of the eye's "retina".</param>

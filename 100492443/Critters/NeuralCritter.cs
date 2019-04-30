@@ -31,6 +31,13 @@ namespace CritterRobots.Critters
 		public CritterEye Eye { get; private set; }
 
 		/// <summary>
+		/// The distance in pixels that the critter can cover
+		/// through a single SET_DESTINATION request if one of its
+		/// output neurons indicates a 1.
+		/// </summary>
+		public int MaximumWalkingDistance { get; set; } = 50;
+
+		/// <summary>
 		/// Determines whether or not the maximum amount of time for
 		/// this level has been set.
 		/// </summary>
@@ -50,11 +57,6 @@ namespace CritterRobots.Critters
 		/// The current walking direction.
 		/// </summary>
 		protected Vector Direction { get; set; } = Vector.Up;
-
-		/// <summary>
-		/// The current destination.
-		/// </summary>
-		protected Point Destination { get; set; }
 
 		/// <summary>
 		/// This timer will call the <see cref="ProcessNetwork"/> method
@@ -148,30 +150,25 @@ namespace CritterRobots.Critters
 		{
 			decimal[] networkOutput = CritterBrain.GetNetworkOutput();
 
-			decimal wantsToTurnLeft = Clamp01(networkOutput[0]);
-			decimal wantsToTurnRight = Clamp01(networkOutput[1]);
-			decimal turnAmount = Clamp01(networkOutput[2]);
-			decimal movementSpeed = Clamp01(networkOutput[3]);
+			decimal wantsToWalkNorth = Clamp01(networkOutput[0]);
+			decimal wantsToWalkEast = Clamp01(networkOutput[1]);
+			decimal wantsToWalkSouth = Clamp01(networkOutput[2]);
+			decimal wantsToWalkWest = Clamp01(networkOutput[3]);
+			decimal movementSpeed = Clamp01(networkOutput[4]);
 
-			double commitmentMultiplier = (double)Math.Abs(wantsToTurnLeft - wantsToTurnRight);
-			double turningAngle = (double)turnAmount * Math.PI * ((wantsToTurnRight < wantsToTurnLeft) ? -1 : 1);
-			turningAngle *= commitmentMultiplier;
+			Debugger.LogMessage(" Wants to walk N: " + wantsToWalkNorth +
+								" Wants to walk E: " + wantsToWalkEast + 
+								" Wants to walk S: " + wantsToWalkSouth +
+								" Wants to walk W: " + wantsToWalkWest + 
+								" At this speed: " + movementSpeed);
 
-			Debugger.LogMessage("Wants to turn left: " + wantsToTurnLeft + 
-								"\n Wants to turn right: " + wantsToTurnRight + 
-								"\n And it wants to do so this much: " + turnAmount + 
-								"\n Multiplier: " + commitmentMultiplier);
-			
-			if (turningAngle < 0)
-			{
-				turningAngle = Math.PI + (Math.PI + turningAngle);
-			}
+			decimal verticalDelta = wantsToWalkNorth * MaximumWalkingDistance - wantsToWalkSouth * MaximumWalkingDistance;
+			decimal horizontalDelta = wantsToWalkEast * MaximumWalkingDistance - wantsToWalkWest * MaximumWalkingDistance;
 
-			Direction = Direction.Rotated(turningAngle);
-			Destination = (Point)(Location + Direction * 100);
+			Direction = new Vector((double)horizontalDelta, (double)verticalDelta);
 			LastRequestedSpeed = movementSpeed;
-			
-			Responder("SET_DESTINATION:" + Destination.X + ":" + Destination.Y + ":" + (int)(LastRequestedSpeed * 5));
+
+			OnDestinationReached(Location);
 		}
 
 		/// <summary>
@@ -179,8 +176,8 @@ namespace CritterRobots.Critters
 		/// </summary>
 		protected override void OnDestinationReached(Point location)
 		{
-			Destination = (Point)(Location + Direction * 100);
-			Responder("SET_DESTINATION:" + Destination.X + ":" + Destination.Y + ":" + (int)(LastRequestedSpeed * 5));
+			Vector destination = new Vector(Location.X + Direction.X, Location.Y + Direction.Y);
+			Responder("SET_DESTINATION:" + (int)destination.X + ":" + (int)destination.Y + ":" + (int)(LastRequestedSpeed * 5));
 		}
 
 		/// <summary>
@@ -199,7 +196,22 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// Loads the neural network through any means necessary.
 		/// </summary>
-		protected abstract void LoadNetwork();
+		protected abstract void LoadNetwork(int inputNeurons, int outputNeurons);
+
+		/// <summary>
+		/// Checks that the network contains the correct number of input and
+		/// output neurons.
+		/// </summary>
+		/// <returns>True if the network is configured correctly, false otherwise.</returns>
+		private bool CheckNetworkStructure(int inputNeurons, int outputNeurons)
+		{
+			if (CritterBrain == null || CritterBrain.InputNeurons.Count != inputNeurons || CritterBrain.OutputNeurons.Count != outputNeurons)
+			{
+				return false;
+			}
+
+			return true;
+		}
 
 		/// <summary>
 		/// Creates a new neural network based critter.
@@ -207,6 +219,9 @@ namespace CritterRobots.Critters
 		public NeuralCritter(string critterName, int retinaDensity) : base(critterName)
 		{
 			Eye = new CritterEye(retinaDensity);
+
+			int networkInput = retinaDensity * 4 + 3;
+			int networkOutput = 5;
 
 			// One input neuron per "cone cell" in the eye, with three
 			// input neurons reserved for:
@@ -219,11 +234,20 @@ namespace CritterRobots.Critters
 			//		- Gifts
 			//		- Bombs, Critters, Walls
 			//		- Exit
-			LoadNetwork();
+			LoadNetwork(networkInput, networkOutput);
+
+			if (!CheckNetworkStructure(networkInput, networkOutput))
+			{
+				Debugger.LogError("Invalid network structure!");
+
+				throw new FormatException("Unexpected network structure, detected input count was " + CritterBrain.InputNeurons + 
+										  " instead of " + networkInput + ", and the outputs were " + CritterBrain.OutputNeurons + 
+										  " instead of " + networkOutput);
+			}
 
 			NetworkProcessor = new System.Timers.Timer(50);
-			Retriever = new System.Timers.Timer(50);
-			Scanner = new System.Timers.Timer(100);
+			Retriever = new System.Timers.Timer(25);
+			Scanner = new System.Timers.Timer(1000);
 
 			NetworkProcessor.Elapsed += (sender, args) => ProcessNetwork();
 			Retriever.Elapsed += (sender, args) => RetrieveStats();
