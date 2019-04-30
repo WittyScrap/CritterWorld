@@ -28,8 +28,9 @@ namespace CritterRobots.AI
 			Bomb = 1 << 3,
 			EscapeHatch = 1 << 4,
 			Critter = 1 << 5,
-			All = Terrain | Gift | Food | Bomb | EscapeHatch,
-			Threats = Critter | Bomb | Terrain
+			All = Critter | Terrain | Gift | Food | Bomb | EscapeHatch,
+			SeeComponents = Critter | Bomb | Terrain,
+			ScanComponents = Gift | Food | EscapeHatch
 		}
 
 		/// <summary>

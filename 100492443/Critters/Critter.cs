@@ -410,7 +410,25 @@ namespace CritterRobots.Critters.Controllers
 			}
 			else
 			{
-				return Point.Empty;
+				throw new ArgumentException("Point was not in the correct format.");
+			}
+		}
+
+		/// <summary>
+		/// Attempts to parse a formatted point into a <see cref="Point"/> object.
+		/// </summary>
+
+		public static bool TryParsePoint(string pointFormat, out Point parsedPoint)
+		{
+			try
+			{
+				parsedPoint = ParsePoint(pointFormat);
+				return true;
+			}
+			catch (ArgumentException)
+			{
+				parsedPoint = Point.Empty;
+				return false;
 			}
 		}
 

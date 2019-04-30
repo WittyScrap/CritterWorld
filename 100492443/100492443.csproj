@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AI\Beam.cs" />
     <Compile Include="AI\CritterEye.cs" />
     <Compile Include="AI\EyeResult.cs" />
     <Compile Include="AI\LocatableEntity.cs" />

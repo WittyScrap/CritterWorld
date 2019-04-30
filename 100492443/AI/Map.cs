@@ -16,12 +16,12 @@ namespace CritterRobots.AI
 		/// <summary>
 		/// The dimensions of this map.
 		/// </summary>
-		public Size Extents { get; private set; }
+		public static Size Extents { get; private set; }
 
 		/// <summary>
 		/// Indicates whether or not this map's size is known.
 		/// </summary>
-		public bool SizeKnown {
+		public static bool SizeKnown {
 			get
 			{
 				return !Extents.IsEmpty;
@@ -44,9 +44,19 @@ namespace CritterRobots.AI
 		private List<Point> LocatedThreats { get; } = new List<Point>();
 
 		/// <summary>
-		/// List containig all detected terrain. This list is immutable.
+		/// List containig all detected terrain. This list won't be cleared.
 		/// </summary>
-		private static List<Point> LocatedTerrain { get; } = new List<Point>();
+		private static HashSet<Point> LocatedTerrain { get; } = new HashSet<Point>();
+
+		/// <summary>
+		/// The location of the escape hatch.
+		/// </summary>
+		private static Point LocatedEscapeHatch { get; set; }
+
+		/// <summary>
+		/// Every discovered terrain tile.
+		/// </summary>
+		public static IReadOnlyCollection<Point> Terrain => LocatedTerrain;
 
 		/// <summary>
 		/// Updates the list of located threats through what the
@@ -55,7 +65,21 @@ namespace CritterRobots.AI
 		/// <param name="message">The SEE message.</param>
 		public void OnSee(SeeMessage message)
 		{
+			LocatedThreats.Clear();
 
+			foreach (LocatableEntity detectedEntity in message.GetEntities(entity => LocatableEntity.Entity.SeeComponents.HasFlag(entity.Type)))
+			{
+				switch (detectedEntity.Type)
+				{
+				case LocatableEntity.Entity.Bomb:
+				case LocatableEntity.Entity.Critter:
+					LocatedThreats.Add(detectedEntity.Location);
+					break;
+				case LocatableEntity.Entity.Terrain:
+					LocatedTerrain.Add(detectedEntity.Location);
+					break;
+				}
+			}
 		}
 
 		/// <summary>
@@ -65,7 +89,24 @@ namespace CritterRobots.AI
 		/// <param name="message">The SCAN message.</param>
 		public void OnScan(ScanMessage message)
 		{
+			LocatedFood.Clear();
+			LocatedGifts.Clear();
 
+			foreach (LocatableEntity detectedEntity in message.GetEntities(entity => LocatableEntity.Entity.ScanComponents.HasFlag(entity.Type)))
+			{
+				switch (detectedEntity.Type)
+				{
+				case LocatableEntity.Entity.Food:
+					LocatedFood.Add(detectedEntity.Location);
+					break;
+				case LocatableEntity.Entity.Gift:
+					LocatedGifts.Add(detectedEntity.Location);
+					break;
+				case LocatableEntity.Entity.EscapeHatch:
+					LocatedEscapeHatch = detectedEntity.Location;
+					break;
+				}
+			}
 		}
 
 		/// <summary>
@@ -81,7 +122,7 @@ namespace CritterRobots.AI
 		/// ARENA_SIZE message.
 		/// </summary>
 		/// <param name="arenaSize">The reported arena size.</param>
-		public void ReportSize(Size arenaSize)
+		public static void ReportSize(Size arenaSize)
 		{
 			if (Extents == Size.Empty)
 			{

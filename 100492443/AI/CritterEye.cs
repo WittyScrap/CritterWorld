@@ -28,14 +28,25 @@ namespace CritterRobots.AI
 		public ILocatableCritter ReferenceCritter { get; }
 
 		/// <summary>
+		/// How far off an item can be from a given ray before it's
+		/// ignored.
+		/// </summary>
+		public int ErrorMargin { get; set; } = 20;
+
+		/// <summary>
+		/// The maximum distance after which the eye stops seeing anything.
+		/// </summary>
+		public int MaximumDistance { get; set; } = 1000;
+
+		/// <summary>
 		/// Returns the distance from this critter to
 		/// the specified boundary.
 		/// </summary>
 		private double GetBoundary(BoundaryCheck check)
 		{
-			if (ReferenceCritter.DetectedMap.SizeKnown)
+			if (Map.SizeKnown)
 			{
-				return check(ReferenceCritter.DetectedMap.Extents, ReferenceCritter.Location);
+				return check(Map.Extents, ReferenceCritter.Location);
 			}
 			else
 			{
@@ -49,9 +60,30 @@ namespace CritterRobots.AI
 		/// </summary>
 		/// <param name="check"></param>
 		/// <returns></returns>
-		private double GetWallOrBoundary(BoundaryCheck check)
+		private double GetTerrain(Beam directionBeam, BoundaryCheck check)
 		{
-			return GetBoundary(check);
+			double closestTile = double.PositiveInfinity;
+			bool itemExists = false;
+			IEnumerable<Point> tileIterator = Map.Terrain.Where(terrainPoint => directionBeam.Contains(terrainPoint));
+			
+			foreach (Point terrainTile in tileIterator)
+			{
+				itemExists = true;
+				double distance = ((Vector)terrainTile - ReferenceCritter.Location).SqrMagnitude;
+				if (distance < closestTile)
+				{
+					closestTile = distance;
+				}
+			}
+
+			if (itemExists && closestTile < MaximumDistance)
+			{
+				return closestTile / MaximumDistance;
+			}
+			else
+			{
+				return GetBoundary(check);
+			}
 		}
 
 		/// <summary>
@@ -63,12 +95,17 @@ namespace CritterRobots.AI
 		/// <param name="northTerrain">The distance from any terrain located directly north, or to the north boundary.</param>
 		public EyeResult LookNorth()
 		{
+			Point beamOrigin = new Point(ReferenceCritter.Location.X + ErrorMargin, ReferenceCritter.Location.Y + Map.Extents.Height);
+			Point beamExtent = new Point(ReferenceCritter.Location.X - ErrorMargin, ReferenceCritter.Location.Y);
+
+			Beam beam = new Beam(beamOrigin, beamExtent);
+
 			EyeResult results = new EyeResult
 			{
 				NearestFood = 0.0,
 				NearestGift = 0.0,
 				NearestThreat = 0.0,
-				NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.Y / (double)size.Height)
+				NearestTerrain = GetTerrain(beam, (size, location) => 1 - location.Y / (double)size.Height)
 			};
 
 			return results;
@@ -83,12 +120,17 @@ namespace CritterRobots.AI
 		/// <param name="northTerrain">The distance from any terrain located directly east, or to the east boundary.</param>
 		public EyeResult LookEast()
 		{
+			Point beamOrigin = new Point(ReferenceCritter.Location.X, ReferenceCritter.Location.Y - ErrorMargin);
+			Point beamExtent = new Point(ReferenceCritter.Location.X + Map.Extents.Width, ReferenceCritter.Location.Y + ErrorMargin);
+
+			Beam beam = new Beam(beamOrigin, beamExtent);
+
 			EyeResult results = new EyeResult
 			{
 				NearestFood = 0.0,
 				NearestGift = 0.0,
 				NearestThreat = 0.0,
-				NearestTerrain = GetWallOrBoundary((size, location) => 1 - location.X / (double)size.Width)
+				NearestTerrain = GetTerrain(beam, (size, location) => 1 - location.X / (double)size.Width)
 			};
 
 			return results;
@@ -103,12 +145,17 @@ namespace CritterRobots.AI
 		/// <param name="northTerrain">The distance from any terrain located directly south, or to the south boundary.</param>
 		public EyeResult LookSouth()
 		{
+			Point beamOrigin = new Point(ReferenceCritter.Location.X + ErrorMargin, ReferenceCritter.Location.Y);
+			Point beamExtent = new Point(ReferenceCritter.Location.X - ErrorMargin, ReferenceCritter.Location.Y - Map.Extents.Height);
+
+			Beam beam = new Beam(beamOrigin, beamExtent);
+
 			EyeResult results = new EyeResult
 			{
 				NearestFood = 0.0,
 				NearestGift = 0.0,
 				NearestThreat = 0.0,
-				NearestTerrain = GetWallOrBoundary((size, location) => location.Y / (double)size.Height)
+				NearestTerrain = GetTerrain(beam, (size, location) => location.Y / (double)size.Height)
 			};
 
 			return results;
@@ -123,12 +170,17 @@ namespace CritterRobots.AI
 		/// <param name="northTerrain">The distance from any terrain located directly west, or to the west boundary.</param>
 		public EyeResult LookWest()
 		{
+			Point beamOrigin = new Point(ReferenceCritter.Location.X - Map.Extents.Width, ReferenceCritter.Location.Y - ErrorMargin);
+			Point beamExtent = new Point(ReferenceCritter.Location.X, ReferenceCritter.Location.Y + ErrorMargin);
+
+			Beam beam = new Beam(beamOrigin, beamExtent);
+
 			EyeResult results = new EyeResult
 			{
 				NearestFood = 0.0,
 				NearestGift = 0.0,
 				NearestThreat = 0.0,
-				NearestTerrain = GetWallOrBoundary((size, location) => location.X / (double)size.Width)
+				NearestTerrain = GetTerrain(beam, (size, location) => location.X / (double)size.Width)
 			};
 
 			return results;
