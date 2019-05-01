@@ -6,7 +6,6 @@ using CritterRobots.AI;
 using CritterRobots.Messages;
 using System;
 using System.Timers;
-using System.Windows.Forms;
 
 namespace CritterRobots.Critters.Controllers
 {
@@ -24,7 +23,7 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// Indicates whether or not this critter reached the escape hatch alive.
 		/// </summary>
-		public bool HasEscaped { get; private set; }
+		public bool HasEscaped { get; set; }
 
 		/// <summary>
 		/// Indicates whether or not this critter is alive.
@@ -36,24 +35,86 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// Indicates whether any of the student critters in this round successfully escaped.
 		/// </summary>
-		public static bool AnyEscaped { get; private set; }
+		public static bool AnyEscaped { get; set; }
+
+		/// <summary>
+		/// The starting location of this critter.
+		/// </summary>
+		private Point? StartingLocation { get; set; } = null;
+
+		/// <summary>
+		/// This critter's distance from the spawn point.
+		/// </summary>
+		public Vector DistanceFromSpawn {
+			get
+			{
+				if (StartingLocation == null)
+				{
+					return (Vector)Location;
+				}
+
+				return (Vector)StartingLocation - Location;
+			}
+		}
+
+		/// <summary>
+		/// If this flag is set, the critter will walk downwards at maximum speed
+		/// until it dies.
+		/// </summary>
+		public bool HasFailed {
+			get => Failed;
+			set
+			{
+				if (!Failed && value)
+				{
+					Failed = value;
+
+					Score = 0;
+					Direction = Vector.Up * 10;
+					RequestedSpeed = MaximumMovementSpeed;
+
+					Debugger.LogMessage(Name + " failed to meet the criteria for the next generation and will now die.");
+				}
+			}
+		}
+
+		/// <summary>
+		/// Indicates whether or not this critter failed.
+		/// </summary>
+		private bool Failed { get; set; }
+
+		/// <summary>
+		/// Saves the initial location if it is not set.
+		/// </summary>
+		protected override void OnLocationUpdate(int requestID, Point location)
+		{
+			base.OnLocationUpdate(requestID, location);
+
+			if (StartingLocation == null)
+			{
+				StartingLocation = location;
+			}
+		}
 
 		/// <summary>
 		/// Constructs a new critter.
 		/// </summary>
 		/// <param name="critterID">A unique representative ID for the critter.</param>
-		public CritterStudent(int critterID) : base("Student that will totally not drop out #" + critterID, 10)
+		public CritterStudent(int critterID) : base("Helpless Slave #" + critterID, 10)
 		{
 			AnyEscaped = false;
 			CritterCoach.Coach?.AddStudent(this);
 		}
 
 		/// <summary>
-		/// Initialize alive timer.
+		/// Only execute if the critter hasn't failed.
 		/// </summary>
-		protected override void OnInitialize()
+		protected override void ProcessNetwork()
 		{
-			base.OnInitialize();
+			if (!HasFailed)
+			{
+				base.ProcessNetwork();
+			}
 		}
 
 		/// <summary>
@@ -63,24 +124,13 @@ namespace CritterRobots.Critters.Controllers
 		{
 			if (!File.Exists(Filepath + "best_brain_snapshot.crbn"))
 			{
-				// 5 outputs:
-				// "How much do I want to walk north?"
-				// "How much do I want to walk east?"
-				// "How much do I want to walk south?"
-				// "How much do I want to walk west?"
-				// "At what speed do I want to walk?"
-				//
-				// The inputs are split between:
-				// 10 eye cells to detect food
-				// 10 eye cells to detect gifts
-				// 10 eye cells to detect critters, bombs and terrain
-				// 10 eye cells to detect the exit
-				// 1 input to determine the health
-				// 1 input to determine the energy
-				// 1 input to determine the remaining level time
 				CritterBrain = NeuralNetwork.RandomNetwork(
 					inputNeurons: networkInput, 
-					outputNeurons: networkOutput
+					outputNeurons: networkOutput,
+					minLayers: 0,
+					maxLayers: 2,
+					minNeurons: 1,
+					maxNeurons: 3
 				);
 			}
 			else
@@ -99,7 +149,10 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		protected override void OnScored(Point location)
 		{
-			Score++;
+			if (!Failed)
+			{
+				Score++;
+			}
 		}
 
 		/// <summary>

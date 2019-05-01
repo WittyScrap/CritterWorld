@@ -23,7 +23,7 @@ namespace CritterWorld
         public string LogFileName { get; private set; } = "log.csv";
 
         // Level duration in seconds.
-        public const int LevelDurationInSeconds = 60 * 3;
+        public const int LevelDurationInSeconds = 60;
 
         // Start time of current level. This plus levelDuration is when the level shall end.
         DateTime levelStartTime;

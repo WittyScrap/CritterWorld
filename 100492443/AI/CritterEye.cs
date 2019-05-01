@@ -28,12 +28,6 @@ namespace CritterRobots.AI
 		public ILocatableCritter ReferenceCritter { get; }
 
 		/// <summary>
-		/// How far off an item can be from a given ray before it's
-		/// ignored.
-		/// </summary>
-		public int ErrorMargin { get; set; } = 20;
-
-		/// <summary>
 		/// The maximum distance after which the eye stops seeing anything.
 		/// </summary>
 		public int MaximumDistance { get; set; } = 1000;
@@ -55,135 +49,76 @@ namespace CritterRobots.AI
 		}
 
 		/// <summary>
-		/// Returns the distace to a wall directly near this
-		/// critter or the distance to the boundary.
+		/// Returns the nearest items for every item type.
 		/// </summary>
-		/// <param name="check"></param>
-		/// <returns></returns>
-		private double GetTerrain(Beam directionBeam, BoundaryCheck check)
+		public EyeResult GetNearestItems()
 		{
-			double closestTile = double.PositiveInfinity;
-			bool itemExists = false;
-			IEnumerable<Point> tileIterator = Map.Terrain.Where(terrainPoint => directionBeam.Contains(terrainPoint));
-			
-			foreach (Point terrainTile in tileIterator)
-			{
-				itemExists = true;
-				double distance = ((Vector)terrainTile - ReferenceCritter.Location).SqrMagnitude;
-				if (distance < closestTile)
-				{
-					closestTile = distance;
-				}
-			}
+			Point? nearestGift	  = ReferenceCritter.DetectedMap.GetClosestGift(ReferenceCritter.Location);
+			Point? nearestFood	  = ReferenceCritter.DetectedMap.GetClosestFood(ReferenceCritter.Location);
+			Point? nearestThreat  = ReferenceCritter.DetectedMap.GetClosestThreat(ReferenceCritter.Location);
+			Point? nearestTerrain = ReferenceCritter.DetectedMap.GetClosestTerrain(ReferenceCritter.Location);
+			Point? escapeHatch	  = Map.LocatedEscapeHatch;
 
-			if (itemExists && closestTile < MaximumDistance)
+			bool invalidGift	= nearestGift    == null;
+			bool invalidFood	= nearestFood    == null;
+			bool invalidThreat	= nearestThreat  == null;
+			bool invalidTerrain = nearestTerrain == null;
+			bool invalidEscape  = escapeHatch    == null;
+
+			Vector gift		= invalidGift    ? Vector.Zero : (Vector)nearestGift    - ReferenceCritter.Location;
+			Vector food		= invalidFood    ? Vector.Zero : (Vector)nearestFood    - ReferenceCritter.Location;
+			Vector threat	= invalidThreat  ? Vector.Zero : (Vector)nearestThreat  - ReferenceCritter.Location;
+			Vector terrain	= invalidTerrain ? Vector.Zero : (Vector)nearestTerrain - ReferenceCritter.Location;
+			Vector escape	= invalidEscape  ? Vector.Zero : (Vector)escapeHatch    - ReferenceCritter.Location;
+
+			double foodDistance		= invalidFood    ? 1.0 : Math.Min(food.Magnitude, MaximumDistance)    / MaximumDistance;
+			double giftDistance		= invalidGift    ? 1.0 : Math.Min(gift.Magnitude, MaximumDistance)    / MaximumDistance;
+			double terrainDistance	= invalidTerrain ? 1.0 : Math.Min(terrain.Magnitude, MaximumDistance) / MaximumDistance;
+			double threatDistance	= invalidThreat  ? 1.0 : Math.Min(threat.Magnitude, MaximumDistance)  / MaximumDistance;
+			double escapeDistance	= invalidEscape  ? 1.0 : Math.Min(escape.Magnitude, MaximumDistance)  / MaximumDistance;
+
+			double twoPI = Math.PI * 2;
+
+			return new EyeResult()
 			{
-				return closestTile / MaximumDistance;
-			}
-			else
-			{
-				return GetBoundary(check);
-			}
+				NearestFood		= new Item(foodDistance,	invalidFood    ? 0.0 : Vector.FullAngle(Vector.Up, food)	/ twoPI),
+				NearestGift		= new Item(giftDistance,	invalidGift    ? 0.0 : Vector.FullAngle(Vector.Up, gift)	/ twoPI),
+				NearestTerrain	= new Item(terrainDistance, invalidTerrain ? 0.0 : Vector.FullAngle(Vector.Up, terrain) / twoPI),
+				NearestThreat	= new Item(threatDistance,  invalidThreat  ? 0.0 : Vector.FullAngle(Vector.Up, threat)  / twoPI),
+				EscapeHatch		= new Item(escapeDistance,	invalidEscape  ? 0.0 : Vector.FullAngle(Vector.Up, escape)  / twoPI)
+			};
 		}
 
 		/// <summary>
-		/// Asks the eye to look north and report the closest items of each type.
+		/// Asks the eye to look north and report the distance to the north boundary.
 		/// </summary>
-		/// <param name="nearestFood">The nearest detected piece of food.</param>
-		/// <param name="nearestGift">The nearest detected gift.</param>
-		/// <param name="nearestThreat">The nearest detected threat.</param>
-		/// <param name="northTerrain">The distance from any terrain located directly north, or to the north boundary.</param>
-		public EyeResult LookNorth()
+		public double LookNorth()
 		{
-			Point beamOrigin = new Point(ReferenceCritter.Location.X + ErrorMargin, ReferenceCritter.Location.Y + Map.Extents.Height);
-			Point beamExtent = new Point(ReferenceCritter.Location.X - ErrorMargin, ReferenceCritter.Location.Y);
-
-			Beam beam = new Beam(beamOrigin, beamExtent);
-
-			EyeResult results = new EyeResult
-			{
-				NearestFood = 0.0,
-				NearestGift = 0.0,
-				NearestThreat = 0.0,
-				NearestTerrain = GetTerrain(beam, (size, location) => 1 - location.Y / (double)size.Height)
-			};
-
-			return results;
+			return GetBoundary((size, location) => location.Y / (double)size.Height);
 		}
 
 		/// <summary>
-		/// Asks the eye to look east and report the closest items of each type.
+		/// Asks the eye to look east and report the distance to the east boundary.
 		/// </summary>
-		/// <param name="nearestFood">The nearest detected piece of food.</param>
-		/// <param name="nearestGift">The nearest detected gift.</param>
-		/// <param name="nearestThreat">The nearest detected threat.</param>
-		/// <param name="northTerrain">The distance from any terrain located directly east, or to the east boundary.</param>
-		public EyeResult LookEast()
+		public double LookEast()
 		{
-			Point beamOrigin = new Point(ReferenceCritter.Location.X, ReferenceCritter.Location.Y - ErrorMargin);
-			Point beamExtent = new Point(ReferenceCritter.Location.X + Map.Extents.Width, ReferenceCritter.Location.Y + ErrorMargin);
-
-			Beam beam = new Beam(beamOrigin, beamExtent);
-
-			EyeResult results = new EyeResult
-			{
-				NearestFood = 0.0,
-				NearestGift = 0.0,
-				NearestThreat = 0.0,
-				NearestTerrain = GetTerrain(beam, (size, location) => 1 - location.X / (double)size.Width)
-			};
-
-			return results;
+			return GetBoundary((size, location) => location.X / (double)size.Width);
 		}
 
 		/// <summary>
 		/// Asks the eye to look south and report the closest items of each type.
 		/// </summary>
-		/// <param name="nearestFood">The nearest detected piece of food.</param>
-		/// <param name="nearestGift">The nearest detected gift.</param>
-		/// <param name="nearestThreat">The nearest detected threat.</param>
-		/// <param name="northTerrain">The distance from any terrain located directly south, or to the south boundary.</param>
-		public EyeResult LookSouth()
+		public double LookSouth()
 		{
-			Point beamOrigin = new Point(ReferenceCritter.Location.X + ErrorMargin, ReferenceCritter.Location.Y);
-			Point beamExtent = new Point(ReferenceCritter.Location.X - ErrorMargin, ReferenceCritter.Location.Y - Map.Extents.Height);
-
-			Beam beam = new Beam(beamOrigin, beamExtent);
-
-			EyeResult results = new EyeResult
-			{
-				NearestFood = 0.0,
-				NearestGift = 0.0,
-				NearestThreat = 0.0,
-				NearestTerrain = GetTerrain(beam, (size, location) => location.Y / (double)size.Height)
-			};
-
-			return results;
+			return GetBoundary((size, location) => 1 - location.Y / (double)size.Height);
 		}
 
 		/// <summary>
 		/// Asks the eye to look west and report the closest items of each type.
 		/// </summary>
-		/// <param name="nearestFood">The nearest detected piece of food.</param>
-		/// <param name="nearestGift">The nearest detected gift.</param>
-		/// <param name="nearestThreat">The nearest detected threat.</param>
-		/// <param name="northTerrain">The distance from any terrain located directly west, or to the west boundary.</param>
-		public EyeResult LookWest()
+		public double LookWest()
 		{
-			Point beamOrigin = new Point(ReferenceCritter.Location.X - Map.Extents.Width, ReferenceCritter.Location.Y - ErrorMargin);
-			Point beamExtent = new Point(ReferenceCritter.Location.X, ReferenceCritter.Location.Y + ErrorMargin);
-
-			Beam beam = new Beam(beamOrigin, beamExtent);
-
-			EyeResult results = new EyeResult
-			{
-				NearestFood = 0.0,
-				NearestGift = 0.0,
-				NearestThreat = 0.0,
-				NearestTerrain = GetTerrain(beam, (size, location) => location.X / (double)size.Width)
-			};
-
-			return results;
+			return GetBoundary((size, location) => 1 - location.X / (double)size.Width);
 		}
 
 		/// <summary>

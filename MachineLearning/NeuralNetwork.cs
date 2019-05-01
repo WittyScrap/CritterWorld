@@ -96,6 +96,14 @@ namespace MachineLearning
 		}
 
 		/// <summary>
+		/// Restricts the value to the range 0 - 1.
+		/// </summary>
+		private decimal Normalize(decimal value)
+		{
+			return Math.Max(Math.Min(value, 1m), 0m);
+		}
+
+		/// <summary>
 		/// Feeds the input values into the input layer
 		/// and forwards them through the rest of the network.
 		/// </summary>
@@ -109,7 +117,7 @@ namespace MachineLearning
 
 			for (int neuron = 0; neuron < InputNeurons.Count; ++neuron)
 			{
-				InputNeurons[neuron].Output = inputValues[neuron];
+				InputNeurons[neuron].Output = Normalize(inputValues[neuron]);
 			}
 
 			if (HiddenNeurons.Count != 0)

@@ -48,6 +48,7 @@
     <Compile Include="AI\Beam.cs" />
     <Compile Include="AI\CritterEye.cs" />
     <Compile Include="AI\EyeResult.cs" />
+    <Compile Include="AI\Item.cs" />
     <Compile Include="AI\LocatableEntity.cs" />
     <Compile Include="AI\Map.cs" />
     <Compile Include="AI\Ray.cs" />
@@ -66,6 +67,18 @@
     <Compile Include="Critters\NeuralCritter.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="Critters\DebugCritter.cs" />
+    <Compile Include="Forms\CoachWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CoachWindow.Designer.cs">
+      <DependentUpon>CoachWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\EscapeInformer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\EscapeInformer.Designer.cs">
+      <DependentUpon>EscapeInformer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Messages\IMessage.cs" />
     <Compile Include="Messages\ScanMessage.cs" />
     <Compile Include="Messages\SeeMessage.cs" />
@@ -96,6 +109,12 @@
   <ItemGroup>
     <EmbeddedResource Include="Components\NetworkDrawer.resx">
       <DependentUpon>NetworkDrawer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\CoachWindow.resx">
+      <DependentUpon>CoachWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\EscapeInformer.resx">
+      <DependentUpon>EscapeInformer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\NetworkTrainerDebugWindow.resx">
       <DependentUpon>NetworkTrainerDebugWindow.cs</DependentUpon>

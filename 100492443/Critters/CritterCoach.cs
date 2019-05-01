@@ -1,4 +1,6 @@
 ﻿using CritterRobots.Critters.Controllers;
+using CritterRobots.Forms;
+using CritterRobots.Messages;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,7 +17,7 @@ namespace CritterRobots.Critters
 	/// This critter handles picking the best
 	/// critter from a generation.
 	/// </summary>
-	class CritterCoach : Critter
+	public class CritterCoach : Critter
 	{
 		/// <summary>
 		/// The active teacher critter.
@@ -23,9 +25,19 @@ namespace CritterRobots.Critters
 		public static CritterCoach Coach { get; private set; }
 
 		/// <summary>
+		/// The amount of students registered.
+		/// </summary>
+		public int StudentsCount {
+			get
+			{
+				return CritterStudents.Count;
+			}
+		}
+
+		/// <summary>
 		/// Container for all the critter students.
 		/// </summary>
-		private ConcurrentBag<CritterStudent> CritterStudents { get; } = new ConcurrentBag<CritterStudent>();
+		private List<CritterStudent> CritterStudents { get; } = new List<CritterStudent>();
 
 		/// <summary>
 		/// Represents a method that selects which
@@ -54,6 +66,20 @@ namespace CritterRobots.Critters
 		}
 
 		/// <summary>
+		/// Informs that the selected student has successfully
+		/// escaped.
+		/// </summary>
+		/// <param name="studentID">The ID of the critter that escaped.</param>
+		public void SetStudentEscaped(int studentID)
+		{
+			if (studentID >= 0 && studentID < CritterStudents.Count)
+			{
+				CritterStudents[studentID].HasEscaped = true;
+				CritterStudent.AnyEscaped = true;
+			}
+		}
+
+		/// <summary>
 		/// Creates a teacher critter.
 		/// </summary>
 		public CritterCoach() : base("Teacher Critter")
@@ -66,7 +92,9 @@ namespace CritterRobots.Critters
 		/// </summary>
 		public override void LaunchUI()
 		{
-			throw new NotImplementedException();
+			CoachWindow coachWindow = new CoachWindow(this);
+			coachWindow.Show();
+			coachWindow.Focus();
 		}
 
 		/// <summary>
@@ -101,43 +129,58 @@ namespace CritterRobots.Critters
 
 			return bestCritter;
 		}
-
+		
 		/// <summary>
-		/// Checks if all critters are alive.
-		/// </summary>
-		private bool AllCrittersAlive()
-		{
-			foreach (var critter in CritterStudents)
-			{
-				if (!critter.IsAlive)
-				{
-					return false;
-				}
-			}
-			return true;
-		}
-
-		/// <summary>
-		/// Returns the best student based on the following
-		/// criteria:
-		/// If any of the critters managed to escape, pick among the ones
-		/// that did the one with the highest score.
-		/// 
-		/// If none of the critters managed to escape but all survived, pick
-		/// the one with the highest score.
-		/// 
-		/// If none of the critters managed to escape and only some or none of
-		/// them survived, pick the one that survived for the longest.
+		/// Returns the best student in this generation based on a combination of whether or
+		/// not the critter escaped, is still alive, and has a high enough score.
 		/// </summary>
 		/// <returns>The best critter in this generation.</returns>
 		private CritterStudent GetBestStudent()
 		{
-			if (CritterStudent.AnyEscaped)
+			CritterStudent bestStudent = GetBestStudent(critter => critter.HasEscaped && critter.Score > 0, critter => critter.Score);
+
+			if (bestStudent == null)
 			{
-				return GetBestStudent(critter => critter.HasEscaped, critter => critter.Score);
+				bestStudent = GetBestStudent(critter => critter.IsAlive && critter.Score > 0, critter => critter.Score);
 			}
 			
-			return GetBestStudent(critter => critter.IsAlive, critter => critter.Score);
+			if (bestStudent == null)
+			{
+				bestStudent = GetBestStudent(critter => critter.Score > 0, critter => critter.Score);
+			}
+
+			return bestStudent;
+		}
+
+		/// <summary>
+		/// Picks the winner for this generation and stops working.
+		/// </summary>
+		public void FinishGeneration()
+		{
+			CritterStudent bestCritter = GetBestStudent();
+
+			if (bestCritter != null)
+			{
+				string serializedBrain = bestCritter.CritterBrain.Serialize();
+
+				MessageBox.Show("Round complete, " + bestCritter.Name +
+								" is the best critter this time, with a score of " + bestCritter.Score +
+								" Alive state of: " + bestCritter.IsAlive +
+								" and Escape state of: " + bestCritter.HasEscaped
+								, "Coach!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+				using (StreamWriter brainWriter = new StreamWriter(Filepath + "best_brain_snapshot.crbn"))
+				{
+					brainWriter.Write(serializedBrain);
+				}
+			}
+			else
+			{
+				MessageBox.Show("Round complete. Nobody wins.\nYou guys SUCK.", "Coach!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			}
+
+			TimeChecker.Stop();
+			HasFinished = true;
 		}
 
 		/// <summary>
@@ -147,28 +190,9 @@ namespace CritterRobots.Critters
 		/// <param name="stopReason"></param>
 		protected override void OnTimeRemainingUpdate(double timeRemaining)
 		{
-			if (timeRemaining < 5.0 && !HasFinished)
+			if (timeRemaining < 2.0 && !HasFinished)
 			{
-				CritterStudent bestCritter = GetBestStudent();
-
-				if (bestCritter != null)
-				{
-					string serializedBrain = bestCritter.CritterBrain.Serialize();
-
-					MessageBox.Show("Round complete, " + bestCritter.Name +
-									" is the best critter this time, with a score of " + bestCritter.Score + 
-									" Alive state of: " + bestCritter.IsAlive + 
-									" and Escape state of: " + bestCritter.HasEscaped
-									, "Coach!", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-					using (StreamWriter brainWriter = new StreamWriter(Filepath + "best_brain_snapshot.crbn"))
-					{
-						brainWriter.Write(serializedBrain);
-					}
-				}
-
-				TimeChecker.Stop();
-				HasFinished = true;
+				FinishGeneration();
 			}
 		}
 	}

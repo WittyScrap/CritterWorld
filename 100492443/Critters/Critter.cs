@@ -163,31 +163,36 @@ namespace CritterRobots.Critters.Controllers
 					ElapsedTime = message.GetInteger(1);
 					break;
 				case "LEVEL_TIME_REMAINING":
-					RemainingTime = message.GetInteger(1);
-					OnTimeRemainingUpdate(RemainingTime);
+					float updatedRemainingTime = (float)message.GetDouble(1);
+					OnTimeRemainingUpdate(updatedRemainingTime);
+					RemainingTime = updatedRemainingTime;
 					break;
 				case "HEALTH":
 					requestID = message.GetInteger(0);
-					Health = (float)message.GetDouble(1) / 100.0f;
-					OnHealthUpdate(requestID, Health);
+					float updatedHealth = (float)message.GetDouble(1) / 100.0f;
+					OnHealthUpdate(requestID, updatedHealth);
+					Health = updatedHealth;
 					break;
 				case "ENERGY":
 					requestID = message.GetInteger(0);
-					Energy = (float)message.GetDouble(1) / 100.0f;
-					OnEnergyUpdate(requestID, Energy);
+					float updatedEnergy = (float)message.GetDouble(1) / 100.0f;
+					OnEnergyUpdate(requestID, updatedEnergy);
+					Energy = updatedEnergy;
 					break;
 				case "LOCATION":
 					requestID = message.GetInteger(0);
-					Location = message.GetPoint(1);
-					OnLocationUpdate(requestID, Location);
+					Point updatedLocation = message.GetPoint(1);
+					OnLocationUpdate(requestID, updatedLocation);
+					Location = updatedLocation;
 					break;
 				case "SPEED":
 					requestID = message.GetInteger(0);
-					Velocity = new Vector(message.GetDouble(2), message.GetDouble(3));
-					OnVelocityUpdate(requestID, Velocity);
+					Vector updatedVelocity = new Vector(message.GetDouble(2), message.GetDouble(3));
+					OnVelocityUpdate(requestID, updatedVelocity);
+					Velocity = updatedVelocity;
 					break;
 				case "ARENA_SIZE":
-					DetectedMap.ReportSize(new Size(message.GetInteger(1), message.GetInteger(2)));
+					Map.ReportSize(new Size(message.GetInteger(1), message.GetInteger(2)));
 					break;
 				case "SCORED":
 					OnScored(message.GetPoint(0));

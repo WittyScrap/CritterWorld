@@ -12,24 +12,28 @@ namespace CritterRobots.AI
 	public struct EyeResult
 	{
 		/// <summary>
-		/// The distance to the nearest food item.
+		/// The distance and retlative angle to the nearest food item.
 		/// </summary>
-		public double NearestFood { get; set; }
+		public Item NearestFood { get; set; }
 
 		/// <summary>
-		/// The distance to the nearest gift.
+		/// The distance and retlative angle to the nearest gift.
 		/// </summary>
-		public double NearestGift { get; set; }
+		public Item NearestGift { get; set; }
 
 		/// <summary>
-		/// The distance to the nearest threat (critter or bomb).
+		/// The distance and retlative angle to the nearest threat (critter or bomb).
 		/// </summary>
-		public double NearestThreat { get; set; }
+		public Item NearestThreat { get; set; }
 
 		/// <summary>
-		/// The distance to either the nearest terrain item or the
-		/// map boundary.
+		/// The distance and retlative angle to the nearest terrain item.
 		/// </summary>
-		public double NearestTerrain { get; set; }
+		public Item NearestTerrain { get; set; }
+
+		/// <summary>
+		/// The distance and retlative angle of the escape hatch.
+		/// </summary>
+		public Item EscapeHatch { get; set; }
 	}
 }

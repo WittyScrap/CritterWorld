@@ -30,7 +30,8 @@ namespace CritterRobots.Critters
 		public static Vector Left => -Right;
 
 		/// <summary>
-		/// A zero sized vector.
+		/// A vector with all of its components
+		/// set to 0.
 		/// </summary>
 		public static Vector Zero => new Vector(0, 0);
 
@@ -96,25 +97,16 @@ namespace CritterRobots.Critters
 		}
 
 		/// <summary>
-		/// Rotates this vector by the specified amount
-		/// in radians.
-		/// </summary>
-		/// <param name="radiansAngle">The angle to rotate this vector for.</param>
-		public void Rotate(double radiansAngle)
-		{
-			X = X * Math.Cos(radiansAngle) - Y * Math.Sin(radiansAngle);
-			Y = X * Math.Sin(radiansAngle) + Y * Math.Cos(radiansAngle);
-		}
-
-		/// <summary>
 		/// Returns a copy of this vector, rotated by the given radians angle.
 		/// </summary>
 		/// <param name="radiansAngle">The angle to rotate the copy of this vector for.</param>
 		public Vector Rotated(double radiansAngle)
 		{
-			Vector copied = new Vector(X, Y);
-			copied.Rotate(radiansAngle);
-			return copied;
+			Vector rotated = new Vector();
+			rotated.X = X * Math.Cos(radiansAngle) - Y * Math.Sin(radiansAngle);
+			rotated.Y = X * Math.Sin(radiansAngle) + Y * Math.Cos(radiansAngle);
+
+			return rotated;
 		}
 
 		/// <summary>
@@ -145,6 +137,20 @@ namespace CritterRobots.Critters
 		{
 			double angleCosine = Dot(lhs, rhs) / (lhs.Magnitude * rhs.Magnitude);
 			return Math.Acos(angleCosine);
+		}
+
+		/// <summary>
+		/// Returns the full angle (reaches past 180 degrees) 
+		/// in radians between two vectors.
+		/// </summary>
+		public static double FullAngle(Vector lhs, Vector rhs)
+		{
+			double angle = Math.Atan2(lhs.Y, lhs.X) - Math.Atan2(rhs.Y, rhs.X);
+			if (angle < 0)
+			{
+				angle += 2 * Math.PI;
+			}
+			return angle;
 		}
 
 		/// <summary>

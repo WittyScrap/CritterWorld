@@ -1,4 +1,5 @@
-﻿using CritterRobots.Messages;
+﻿using CritterRobots.Critters;
+using CritterRobots.Messages;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -44,6 +45,16 @@ namespace CritterRobots.AI
 		private List<Point> LocatedThreats { get; } = new List<Point>();
 
 		/// <summary>
+		/// Thread lock for making changes to the map.
+		/// </summary>
+		private static object MapLock { get; } = new object();
+
+		/// <summary>
+		/// Thread lock for making changes to the escape hatch's location.
+		/// </summary>
+		private static object EscapeLock { get; } = new object();
+
+		/// <summary>
 		/// List containig all detected terrain. This list won't be cleared.
 		/// </summary>
 		private static HashSet<Point> LocatedTerrain { get; } = new HashSet<Point>();
@@ -51,12 +62,66 @@ namespace CritterRobots.AI
 		/// <summary>
 		/// The location of the escape hatch.
 		/// </summary>
-		private static Point LocatedEscapeHatch { get; set; }
+		public static Point? LocatedEscapeHatch { get; private set; } = null;
 
 		/// <summary>
 		/// Every discovered terrain tile.
 		/// </summary>
 		public static IReadOnlyCollection<Point> Terrain => LocatedTerrain;
+
+		/// <summary>
+		/// Gets the closest item from a given collection.
+		/// </summary>
+		private Point? GetClosest(ICollection<Point> source, Point critterLocation)
+		{
+			if (source.Count == 0)
+			{
+				return null;
+			}
+
+			Point closest = source.First();
+			foreach (Point element in LocatedGifts)
+			{
+				if (((Vector)closest - critterLocation).SqrMagnitude >
+					((Vector)element - critterLocation).SqrMagnitude)
+				{
+					closest = element;
+				}
+			}
+			return closest;
+		}
+
+		/// <summary>
+		/// Returns the closest located gift.
+		/// </summary>
+		public Point? GetClosestGift(Point critterLocation)
+		{
+			return GetClosest(LocatedGifts, critterLocation);
+		}
+
+		/// <summary>
+		/// Returns the closest located piece of food.
+		/// </summary>
+		public Point? GetClosestFood(Point critterLocation)
+		{
+			return GetClosest(LocatedFood, critterLocation);
+		}
+
+		/// <summary>
+		/// Returns the closest located threat (bomb or critter).
+		/// </summary>
+		public Point? GetClosestThreat(Point critterLocation)
+		{
+			return GetClosest(LocatedThreats, critterLocation);
+		}
+
+		/// <summary>
+		/// Returns the closest located terrain. Will not return boundaries.
+		/// </summary>
+		public Point? GetClosestTerrain(Point critterLocation)
+		{
+			return GetClosest(LocatedTerrain, critterLocation);
+		}
 
 		/// <summary>
 		/// Updates the list of located threats through what the
@@ -76,7 +141,10 @@ namespace CritterRobots.AI
 					LocatedThreats.Add(detectedEntity.Location);
 					break;
 				case LocatableEntity.Entity.Terrain:
-					LocatedTerrain.Add(detectedEntity.Location);
+					lock (MapLock)
+					{
+						LocatedTerrain.Add(detectedEntity.Location);
+					}
 					break;
 				}
 			}
@@ -103,7 +171,13 @@ namespace CritterRobots.AI
 					LocatedGifts.Add(detectedEntity.Location);
 					break;
 				case LocatableEntity.Entity.EscapeHatch:
-					LocatedEscapeHatch = detectedEntity.Location;
+					lock (EscapeLock)
+					{
+						if (EscapeLock == null)
+						{
+							LocatedEscapeHatch = detectedEntity.Location;
+						}
+					}
 					break;
 				}
 			}
@@ -114,7 +188,10 @@ namespace CritterRobots.AI
 		/// </summary>
 		public static void Reset()
 		{
-			LocatedTerrain.Clear();
+			lock (MapLock)
+			{
+				LocatedTerrain.Clear();
+			}
 		}
 
 		/// <summary>

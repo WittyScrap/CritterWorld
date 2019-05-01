@@ -36,7 +36,7 @@ namespace CritterRobots.Critters
 			critters.Add(new CritterCoach());
 			while (students > 0)
 			{
-				critters.Add(new CritterStudent(students));
+				critters.Add(new CritterStudent(24 - students));
 				students--;
 			}
 			return critters.ToArray();

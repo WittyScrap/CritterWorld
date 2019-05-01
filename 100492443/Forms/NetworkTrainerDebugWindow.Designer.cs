@@ -31,7 +31,6 @@
 			this.mainMenu = new System.Windows.Forms.MenuStrip();
 			this.fieToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.mutateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.restoreToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.neuronIconsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.inputsToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -67,8 +66,7 @@
 			// fieToolStripMenuItem
 			// 
 			this.fieToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.mutateToolStripMenuItem,
-            this.restoreToolStripMenuItem});
+            this.mutateToolStripMenuItem});
 			this.fieToolStripMenuItem.Name = "fieToolStripMenuItem";
 			this.fieToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
 			this.fieToolStripMenuItem.Text = "File";
@@ -76,15 +74,9 @@
 			// mutateToolStripMenuItem
 			// 
 			this.mutateToolStripMenuItem.Name = "mutateToolStripMenuItem";
-			this.mutateToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
+			this.mutateToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			this.mutateToolStripMenuItem.Text = "Mutate...";
 			this.mutateToolStripMenuItem.Click += new System.EventHandler(this.mutateToolStripMenuItem_Click);
-			// 
-			// restoreToolStripMenuItem
-			// 
-			this.restoreToolStripMenuItem.Name = "restoreToolStripMenuItem";
-			this.restoreToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
-			this.restoreToolStripMenuItem.Text = "Restore";
 			// 
 			// viewToolStripMenuItem
 			// 
@@ -227,7 +219,6 @@
 			this.networkDrawer.NeuronSize = new System.Drawing.Size(10, 10);
 			this.networkDrawer.OffColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(192)))));
 			this.networkDrawer.OnColor = System.Drawing.Color.Red;
-			this.networkDrawer.SetTargetNetwork(null);
 			this.networkDrawer.ShowConnections = true;
 			this.networkDrawer.ShowHiddenNeurons = true;
 			this.networkDrawer.ShowInputNeurons = true;
@@ -274,6 +265,5 @@
 		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem fieToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem mutateToolStripMenuItem;
-		private System.Windows.Forms.ToolStripMenuItem restoreToolStripMenuItem;
 	}
 }

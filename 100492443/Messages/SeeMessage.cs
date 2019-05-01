@@ -31,6 +31,11 @@ namespace CritterRobots.Messages
 		/// </summary>
 		public IEnumerable<LocatableEntity> GetEntities()
 		{
+			if (SplitBody[1] == "Nothing")
+			{
+				yield break;
+			}
+
 			foreach (string unparsedEntity in CorrectedBody)
 			{
 				string[] entityComponents = unparsedEntity.Split(':');
