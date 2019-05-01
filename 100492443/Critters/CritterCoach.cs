@@ -139,16 +139,16 @@ namespace CritterRobots.Critters
 		/// <returns>The best critter in this generation.</returns>
 		private CritterStudent GetBestStudent()
 		{
-			CritterStudent bestStudent = GetBestStudent(critter => critter.HasEscaped && critter.Score > 0, critter => critter.Score * critter.DistanceCovered);
-
-			if (bestStudent == null)
-			{
-				bestStudent = GetBestStudent(critter => critter.IsAlive && critter.Score > 0, critter => critter.Score * critter.DistanceCovered);
-			}
+			CritterStudent bestStudent = GetBestStudent(critter => critter.IsAlive && critter.Score > 0, critter => (critter.Score + (critter.HasEscaped ? 15 : 0)) / critter.DistanceFromGoal);
 			
 			if (bestStudent == null)
 			{
-				bestStudent = GetBestStudent(critter => critter.Score > 0, critter => critter.Score * critter.DistanceCovered);
+				bestStudent = GetBestStudent(critter => critter.Score > 0, critter => (critter.Score + (critter.HasEscaped ? 15 : 0)) / critter.DistanceFromGoal);
+			}
+
+			if (bestStudent == null)
+			{
+				bestStudent = GetBestStudent(critter => true, critter => Math.Max(critter.Score, 1) / critter.DistanceFromGoal);
 			}
 
 			return bestStudent;
@@ -169,8 +169,8 @@ namespace CritterRobots.Critters
 								" is the best critter this time, with a score of " + bestCritter.Score +
 								"\nAlive state of: " + bestCritter.IsAlive +
 								"\nEscape state of: " + bestCritter.HasEscaped + 
-								"\nA total distance covered of: " + bestCritter.DistanceCovered +
-								"\nAnd an overall score of: " + (bestCritter.Score * bestCritter.DistanceCovered)
+								"\nA distance from the goal of: " + bestCritter.DistanceFromGoal + 
+								"\nAnd an overall score of: " + (bestCritter.Score * bestCritter.DistanceCovered / bestCritter.DistanceFromGoal)
 								, "Coach!", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				using (StreamWriter brainWriter = new StreamWriter(Filepath + "best_brain_snapshot.crbn"))

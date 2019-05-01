@@ -69,7 +69,7 @@ namespace CritterWorld
         private ICritterController controller = null;
         Thread controllerThread = null;
         bool controllerThreadRunning = true;
-
+		
         private static void CritterProcessor(Sprite sprite)
         {
             if (sprite is Critter critter)
@@ -669,6 +669,13 @@ namespace CritterWorld
             Log("shutdown");
 
             Notify("SHUTDOWN:" + Position.ToString());
+
+			// Sleep for one second, this should give us plenty of time to end the thread.
+			new Thread(() =>
+			{
+				Thread.Sleep(1000);
+				controllerThreadRunning = false;
+			}).Start();
         }
 
         // True if this critter is stopped or dead

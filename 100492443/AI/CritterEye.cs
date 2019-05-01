@@ -115,7 +115,7 @@ namespace CritterRobots.AI
 			}
 
 			double distance = Math.Min(critterItemDirection.Magnitude, MaximumDistance) / MaximumDistance;
-			double angle = Vector.FullAngle(Vector.Up, critterItemDirection.Normalized);
+			double angle = Vector.FullAngle(Vector.Up, critterItemDirection.Normalized) / (Math.PI * 2);
 
 			return new Item(distance, angle);
 		}
@@ -123,7 +123,7 @@ namespace CritterRobots.AI
 		/// <summary>
 		/// Returns the nearest items for every item type.
 		/// </summary>
-		public EyeResult GetNearestItems()
+		public EyeResult GetClosestItems()
 		{
 			CritterMap.GetClosest(CritterLocation, out Point closestCollectable, out Point closestThreat);
 

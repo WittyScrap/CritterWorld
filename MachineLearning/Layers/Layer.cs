@@ -203,5 +203,14 @@ namespace MachineLearning.Layers
 				yield return newNeuron;
 			}
 		}
+
+		/// <summary>
+		/// Returns the output of every single neuron in the
+		/// network as-is.
+		/// </summary>
+		public decimal[] Dump()
+		{
+			return InternalNeurons.Select(neuron => neuron.Output).ToArray();
+		}
 	}
 }

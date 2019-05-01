@@ -118,5 +118,25 @@ namespace CritterRobots.Forms
 			ReferenceBrain.CritterBrain.Mutate();
 			networkDrawer.Refresh();
 		}
+
+		/// <summary>
+		/// Shows a network debugger for the input layer.
+		/// </summary>
+		private void showInputValuesToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			NetworkDebuggerForm networkDebugger = new NetworkDebuggerForm("input", () => ReferenceBrain.CritterBrain.InputNeurons.Dump());
+			networkDebugger.Show();
+			networkDebugger.Focus();
+		}
+
+		/// <summary>
+		/// Shows a network debugger for the output layer.
+		/// </summary>
+		private void showOutputValuesToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			NetworkDebuggerForm networkDebugger = new NetworkDebuggerForm("output", () => ReferenceBrain.CritterBrain.OutputNeurons.Dump());
+			networkDebugger.Show();
+			networkDebugger.Focus();
+		}
 	}
 }

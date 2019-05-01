@@ -79,6 +79,12 @@
     <Compile Include="Forms\EscapeInformer.Designer.cs">
       <DependentUpon>EscapeInformer.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\NetworkDebuggerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\NetworkDebuggerForm.Designer.cs">
+      <DependentUpon>NetworkDebuggerForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Messages\IMessage.cs" />
     <Compile Include="Messages\ScanMessage.cs" />
     <Compile Include="Messages\SeeMessage.cs" />
@@ -115,6 +121,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\EscapeInformer.resx">
       <DependentUpon>EscapeInformer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\NetworkDebuggerForm.resx">
+      <DependentUpon>NetworkDebuggerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\NetworkTrainerDebugWindow.resx">
       <DependentUpon>NetworkTrainerDebugWindow.cs</DependentUpon>

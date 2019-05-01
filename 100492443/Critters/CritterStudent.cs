@@ -39,6 +39,22 @@ namespace CritterRobots.Critters.Controllers
 		public double DistanceCovered { get; private set; }
 
 		/// <summary>
+		/// The distance from this critter's location to the
+		/// goalpost.
+		/// </summary>
+		public double DistanceFromGoal {
+			get
+			{
+				if (Map.LocatedEscapeHatch != null)
+				{
+					return ((Vector)Map.LocatedEscapeHatch - Location).Magnitude;
+				}
+
+				return 0.0;
+			}
+		}
+
+		/// <summary>
 		/// Adds the delta between the new position and the last recorded
 		/// position to the total amount walked.
 		/// </summary>

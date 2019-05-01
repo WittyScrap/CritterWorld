@@ -50,7 +50,11 @@ namespace CritterRobots.Forms
 		/// </summary>
 		private void checkEscapedCritter_Click(object sender, EventArgs e)
 		{
+			// It used to have a purpose but it doesn't anymore
+			// I left it just for fun
+			// pls ignore.
 			MessageBox.Show("I don't care.", "Coach!");
+
 			/*
 			EscapeInformer informer = new EscapeInformer();
 

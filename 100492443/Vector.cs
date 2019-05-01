@@ -102,9 +102,11 @@ namespace CritterRobots.Critters
 		/// <param name="radiansAngle">The angle to rotate the copy of this vector for.</param>
 		public Vector Rotated(double radiansAngle)
 		{
-			Vector rotated = new Vector();
-			rotated.X = X * Math.Cos(radiansAngle) - Y * Math.Sin(radiansAngle);
-			rotated.Y = X * Math.Sin(radiansAngle) + Y * Math.Cos(radiansAngle);
+			Vector rotated = new Vector
+			{
+				X = X * Math.Cos(radiansAngle) - Y * Math.Sin(radiansAngle),
+				Y = X * Math.Sin(radiansAngle) + Y * Math.Cos(radiansAngle)
+			};
 
 			return rotated;
 		}

@@ -46,6 +46,8 @@
 			this.seekSalvationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.nothingFoundToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.showInputValuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.showOutputValuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.networkDrawer = new CritterRobots.Components.NetworkDrawer();
 			this.mainMenu.SuspendLayout();
 			this.SuspendLayout();
@@ -66,7 +68,9 @@
 			// fieToolStripMenuItem
 			// 
 			this.fieToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.mutateToolStripMenuItem});
+            this.mutateToolStripMenuItem,
+            this.showInputValuesToolStripMenuItem,
+            this.showOutputValuesToolStripMenuItem});
 			this.fieToolStripMenuItem.Name = "fieToolStripMenuItem";
 			this.fieToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
 			this.fieToolStripMenuItem.Text = "File";
@@ -205,6 +209,20 @@
 			this.aboutToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
 			this.aboutToolStripMenuItem.Text = "About";
 			// 
+			// showInputValuesToolStripMenuItem
+			// 
+			this.showInputValuesToolStripMenuItem.Name = "showInputValuesToolStripMenuItem";
+			this.showInputValuesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.showInputValuesToolStripMenuItem.Text = "Show Input Values";
+			this.showInputValuesToolStripMenuItem.Click += new System.EventHandler(this.showInputValuesToolStripMenuItem_Click);
+			// 
+			// showOutputValuesToolStripMenuItem
+			// 
+			this.showOutputValuesToolStripMenuItem.Name = "showOutputValuesToolStripMenuItem";
+			this.showOutputValuesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.showOutputValuesToolStripMenuItem.Text = "Show Output Values";
+			this.showOutputValuesToolStripMenuItem.Click += new System.EventHandler(this.showOutputValuesToolStripMenuItem_Click);
+			// 
 			// networkDrawer
 			// 
 			this.networkDrawer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -265,5 +283,7 @@
 		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem fieToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem mutateToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem showInputValuesToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem showOutputValuesToolStripMenuItem;
 	}
 }

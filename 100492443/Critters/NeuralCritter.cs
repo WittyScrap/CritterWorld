@@ -33,6 +33,11 @@ namespace CritterRobots.Critters
 		public int MaximumMovementSpeed { get; set; } = 10;
 
 		/// <summary>
+		/// The minimum speed at which critters can move.
+		/// </summary>
+		public int MinimumMovementSpeed { get; set; } = 5;
+
+		/// <summary>
 		/// The maximum amount of time in this level.
 		/// </summary>
 		private decimal MaximumTime { get; } = 60 * 3;
@@ -75,11 +80,43 @@ namespace CritterRobots.Critters
 		}
 
 		/// <summary>
+		/// Keeps the value <paramref name="t"/> within the range 0 to <paramref name="range"/>.
+		/// </summary>
+		private double Repeat(double t, double range)
+		{
+			return t - Math.Floor(t / range) * range;
+		}
+
+		/// <summary>
+		/// Keeps the value <paramref name="t"/> within the range 0 to 1.
+		/// </summary>
+		private double Repeat(double t)
+		{
+			return t - Math.Floor(t);
+		}
+
+		/// <summary>
+		/// Rotates the angles in the eye results by the angle
+		/// formed between the current critter's facing direction and
+		/// the UP vector.
+		/// </summary>
+		/// <param name="results"></param>
+		private void RotateEyeResults(ref EyeResult results)
+		{
+			double critterAngle = Vector.FullAngle(Vector.Up, Direction.Normalized);
+			critterAngle /= Math.PI * 2;
+
+			results.NearestCollectable	= new Item(results.NearestCollectable.Distance, Repeat(results.NearestCollectable.Angle + critterAngle));
+			results.NearestThreat		= new Item(results.NearestThreat.Distance,		Repeat(results.NearestThreat.Angle		+ critterAngle));
+			results.EscapeHatch			= new Item(results.EscapeHatch.Distance,		Repeat(results.EscapeHatch.Angle		+ critterAngle));
+		}
+
+		/// <summary>
 		/// Creates a network input map.
 		/// </summary>
 		private decimal[] GatherNetworkInput()
 		{
-			decimal[] networkInput = new decimal[14];
+			decimal[] networkInput = new decimal[13];
 
 			/* Health */ networkInput[0] = (decimal)Health;
 			/* Energy */ networkInput[1] = (decimal)Energy;
@@ -90,20 +127,20 @@ namespace CritterRobots.Critters
 			double southBoundaryDistance = Eye.LookSouth();
 			double westBoundaryDistance  = Eye.LookWest();
 
-			EyeResult closestItems = Eye.GetNearestItems();
+			EyeResult closestItems = Eye.GetClosestItems();
 			
 			/* Distance of north boundary      */ networkInput[3]  = 1 - (decimal)northBoundaryDistance;
 			/* Distance of east boundary       */ networkInput[4]  = 1 - (decimal)eastBoundaryDistance;
 			/* Distance of south boundary      */ networkInput[5]  = 1 - (decimal)southBoundaryDistance;
 			/* Distance of west boundary       */ networkInput[6]  = 1 - (decimal)westBoundaryDistance;
 			
-			/* Angle of closest collectable    */ networkInput[8]  = (decimal)closestItems.NearestCollectable.Angle;
-			/* Angle of closest threat	       */ networkInput[9]  = (decimal)closestItems.NearestThreat.Angle;
-			/* Angle of escape hatch	       */ networkInput[10] = (decimal)closestItems.EscapeHatch.Angle;
+			/* Angle of closest collectable    */ networkInput[7]  = (decimal)closestItems.NearestCollectable.Angle;
+			/* Angle of closest threat	       */ networkInput[8]  = (decimal)closestItems.NearestThreat.Angle;
+			/* Angle of escape hatch	       */ networkInput[9]  = (decimal)closestItems.EscapeHatch.Angle;
 			
-			/* Distance to closest collectable */ networkInput[11] = 1 - (decimal)closestItems.NearestCollectable.Distance;
-			/* Distance to closest threat      */ networkInput[12] = 1 - (decimal)closestItems.NearestThreat.Distance;
-			/* Distance to escape hatch        */ networkInput[13] = 1 - (decimal)closestItems.EscapeHatch.Distance;
+			/* Distance to closest collectable */ networkInput[10] = 1 - (decimal)closestItems.NearestCollectable.Distance;
+			/* Distance to closest threat      */ networkInput[11] = 1 - (decimal)closestItems.NearestThreat.Distance;
+			/* Distance to escape hatch        */ networkInput[12] = 1 - (decimal)closestItems.EscapeHatch.Distance;
 
 			return networkInput;
 		}
@@ -141,9 +178,9 @@ namespace CritterRobots.Critters
 		{
 			decimal[] networkOutput = CritterBrain.GetNetworkOutput();
 
-			/*
+			
 			decimal wantsToRotateBy = -(decimal)Math.PI + Clamp01(networkOutput[0]) * 2 * (decimal)Math.PI;
-			decimal movementSpeed = Clamp01(networkOutput[1]) * (decimal)MaximumMovementSpeed;
+			decimal movementSpeed = Math.Max(Clamp01(networkOutput[1]) * MaximumMovementSpeed, MinimumMovementSpeed);
 
 			if (wantsToRotateBy < 0)
 			{
@@ -153,9 +190,12 @@ namespace CritterRobots.Critters
 			Debugger.LogMessage(" Wants to rotate by: " + wantsToRotateBy + " rad" +
 								" At this speed: " + movementSpeed);
 			
-			Direction = Direction.Rotated((double)wantsToRotateBy);
-			LastRequestedSpeed = (int)movementSpeed;
-			*/
+			Direction = Direction.Normalized.Rotated((double)wantsToRotateBy) * 1000;
+			/*LastRequestedSpeed = (int)movementSpeed;
+			
+			-- OLD CODE ARCHIVES --
+			-- DO NOT TOUCH --
+			-- Or do, you can do whatever you want --
 
 			decimal wantsToRotateTo = Clamp01(networkOutput[0]) * 2 * (decimal)Math.PI;
 			decimal movementSpeed = Clamp01(networkOutput[1]) * MaximumMovementSpeed;
@@ -163,7 +203,7 @@ namespace CritterRobots.Critters
 			Debugger.LogMessage(" Wants to rotate to: " + wantsToRotateTo + " rad" +
 								" At this speed: " + movementSpeed);
 
-			Direction = Vector.Up.Rotated((double)wantsToRotateTo) * 100;
+			Direction = Vector.Up.Rotated((double)wantsToRotateTo) * 100;*/
 			RequestedSpeed = (int)movementSpeed;
 
 			OnDestinationReached(Location);
@@ -219,7 +259,7 @@ namespace CritterRobots.Critters
 		{
 			Eye = new CritterEye(this);
 
-			int networkInput = 14;
+			int networkInput = 13;
 			int networkOutput = 2;
 
 			// One input neuron per "cone cell" in the eye, with three
