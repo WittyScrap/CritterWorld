@@ -87,6 +87,20 @@ namespace CritterRobots.AI
 
 			return (Vector)itemLocation - CritterLocation;
 		}
+		
+		/// <summary>
+		/// Returns a direction from this critter to
+		/// the given item location.
+		/// </summary>
+		private Vector CritterItemDirection(Point? itemLocation)
+		{
+			if (itemLocation == null)
+			{
+				return Vector.Zero;
+			}
+
+			return (Vector)itemLocation - CritterLocation;
+		}
 
 		/// <summary>
 		/// Returns an item consisting of a distance and an angle
@@ -111,19 +125,17 @@ namespace CritterRobots.AI
 		/// </summary>
 		public EyeResult GetNearestItems()
 		{
-			CritterMap.GetClosest(CritterLocation, out Point closestGift, out Point closestFood, out Point closestThreat, out Point closestTerrain);
+			CritterMap.GetClosest(CritterLocation, out Point closestCollectable, out Point closestThreat);
 
-			Vector giftDirection    = CritterItemDirection(closestGift);
-			Vector foodDirection    = CritterItemDirection(closestFood);
-			Vector threatDirection  = CritterItemDirection(closestThreat);
-			Vector terrainDirection = CritterItemDirection(closestTerrain);
+			Vector collectableDirection = CritterItemDirection(closestCollectable);
+			Vector threatDirection		= CritterItemDirection(closestThreat);
+			Vector escapeDirection		= CritterItemDirection(Map.LocatedEscapeHatch);
 
 			return new EyeResult()
 			{
-				NearestFood    = GetItemFromVector(foodDirection),
-				NearestGift    = GetItemFromVector(giftDirection),
-				NearestThreat  = GetItemFromVector(threatDirection),
-				NearestTerrain = GetItemFromVector(terrainDirection)
+				NearestCollectable	= GetItemFromVector(collectableDirection),
+				NearestThreat		= GetItemFromVector(threatDirection),
+				EscapeHatch			= GetItemFromVector(escapeDirection)
 			};
 		}
 

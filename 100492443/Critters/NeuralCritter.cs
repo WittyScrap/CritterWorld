@@ -57,12 +57,7 @@ namespace CritterRobots.Critters
 		/// This timer will call <see cref="RetrieveStats"/>.
 		/// </summary>
 		private Timer Retriever { get; }
-
-		/// <summary>
-		/// This timer will periodically send a SCAN message.
-		/// </summary>
-		private Timer Scanner { get; }
-
+		
 		/// <summary>
 		/// The last requested speed by the network.
 		/// </summary>
@@ -84,7 +79,7 @@ namespace CritterRobots.Critters
 		/// </summary>
 		private decimal[] GatherNetworkInput()
 		{
-			decimal[] networkInput = new decimal[17];
+			decimal[] networkInput = new decimal[14];
 
 			/* Health */ networkInput[0] = (decimal)Health;
 			/* Energy */ networkInput[1] = (decimal)Energy;
@@ -97,22 +92,18 @@ namespace CritterRobots.Critters
 
 			EyeResult closestItems = Eye.GetNearestItems();
 			
-			/* Distance of north boundary  */ networkInput[3]  = 1 - (decimal)northBoundaryDistance;
-			/* Distance of east boundary   */ networkInput[4]  = 1 - (decimal)eastBoundaryDistance;
-			/* Distance of south boundary  */ networkInput[5]  = 1 - (decimal)southBoundaryDistance;
-			/* Distance of west boundary   */ networkInput[6]  = 1 - (decimal)westBoundaryDistance;
-
-			/* Angle of closest terrain	   */ networkInput[7]  = (decimal)closestItems.NearestTerrain.Angle;
-			/* Angle of closest food item  */ networkInput[8]  = (decimal)closestItems.NearestFood.Angle;
-			/* Angle of closest gift       */ networkInput[9]  = (decimal)closestItems.NearestGift.Angle;
-			/* Angle of closest threat	   */ networkInput[10] = (decimal)closestItems.NearestThreat.Angle;
-			/* Angle of escape hatch	   */ networkInput[11] = (decimal)closestItems.EscapeHatch.Angle;
-
-			/* Distance to closest terrain */ networkInput[12] = 1 - (decimal)closestItems.NearestTerrain.Distance;
-			/* Distance to closest food	   */ networkInput[13] = 1 - (decimal)closestItems.NearestFood.Distance;
-			/* Distance to closest gift	   */ networkInput[14] = 1 - (decimal)closestItems.NearestGift.Distance;
-			/* Distance to closest threat  */ networkInput[15] = 1 - (decimal)closestItems.NearestThreat.Distance;
-			/* Distance to escape hatch    */ networkInput[16] = 1 - (decimal)closestItems.EscapeHatch.Distance;
+			/* Distance of north boundary      */ networkInput[3]  = 1 - (decimal)northBoundaryDistance;
+			/* Distance of east boundary       */ networkInput[4]  = 1 - (decimal)eastBoundaryDistance;
+			/* Distance of south boundary      */ networkInput[5]  = 1 - (decimal)southBoundaryDistance;
+			/* Distance of west boundary       */ networkInput[6]  = 1 - (decimal)westBoundaryDistance;
+			
+			/* Angle of closest collectable    */ networkInput[8]  = (decimal)closestItems.NearestCollectable.Angle;
+			/* Angle of closest threat	       */ networkInput[9]  = (decimal)closestItems.NearestThreat.Angle;
+			/* Angle of escape hatch	       */ networkInput[10] = (decimal)closestItems.EscapeHatch.Angle;
+			
+			/* Distance to closest collectable */ networkInput[11] = 1 - (decimal)closestItems.NearestCollectable.Distance;
+			/* Distance to closest threat      */ networkInput[12] = 1 - (decimal)closestItems.NearestThreat.Distance;
+			/* Distance to escape hatch        */ networkInput[13] = 1 - (decimal)closestItems.EscapeHatch.Distance;
 
 			return networkInput;
 		}
@@ -198,6 +189,7 @@ namespace CritterRobots.Critters
 			Responder("GET_LEVEL_TIME_REMAINING:0");
 			Responder("GET_HEALTH:0");
 			Responder("GET_ENERGY:0");
+			Responder("SCAN:0");
 		}
 		
 		/// <summary>
@@ -227,7 +219,7 @@ namespace CritterRobots.Critters
 		{
 			Eye = new CritterEye(this);
 
-			int networkInput = 17;
+			int networkInput = 14;
 			int networkOutput = 2;
 
 			// One input neuron per "cone cell" in the eye, with three
@@ -253,12 +245,10 @@ namespace CritterRobots.Critters
 			}
 
 			NetworkProcessor = new Timer(50);
-			Retriever = new Timer(25);
-			Scanner = new Timer(50);
+			Retriever = new Timer(50);
 
 			NetworkProcessor.Elapsed += (sender, args) => ProcessNetwork();
 			Retriever.Elapsed += (sender, args) => RetrieveStats();
-			Scanner.Elapsed += (sender, args) => Responder("SCAN:0");
 		}
 
 		/// <summary>
@@ -268,7 +258,6 @@ namespace CritterRobots.Critters
 		{
 			NetworkProcessor.Start();
 			Retriever.Start();
-			Scanner.Start();
 		}
 	}
 }

@@ -44,7 +44,7 @@ namespace CritterRobots.Critters
 		/// component of the student should be used as a discriminator
 		/// to determine which critter student is more fit in the set.
 		/// </summary>
-		private delegate float CritterFitnessDiscriminator(CritterStudent student);
+		private delegate double CritterFitnessDiscriminator(CritterStudent student);
 
 		/// <summary>
 		/// Sends out periodical time check requests.
@@ -65,6 +65,7 @@ namespace CritterRobots.Critters
 			CritterStudents.Add(student);
 		}
 
+		/*
 		/// <summary>
 		/// Informs that the selected student has successfully
 		/// escaped.
@@ -78,6 +79,7 @@ namespace CritterRobots.Critters
 				CritterStudent.AnyEscaped = true;
 			}
 		}
+		*/
 
 		/// <summary>
 		/// Creates a teacher critter.
@@ -114,12 +116,12 @@ namespace CritterRobots.Critters
 		/// <param name="discriminator">The discriminator by which the best critter is picked.</param>
 		private CritterStudent GetBestStudent(Predicate<CritterStudent> filter, CritterFitnessDiscriminator discriminator)
 		{
-			float bestFitness = 0.0f;
+			double bestFitness = 0.0f;
 			CritterStudent bestCritter = null;
 
 			foreach (var studentCritter in CritterStudents)
 			{
-				float currentFitness = discriminator(studentCritter);
+				double currentFitness = discriminator(studentCritter);
 				if (filter(studentCritter) && currentFitness > bestFitness)
 				{
 					bestFitness = currentFitness;
@@ -137,16 +139,16 @@ namespace CritterRobots.Critters
 		/// <returns>The best critter in this generation.</returns>
 		private CritterStudent GetBestStudent()
 		{
-			CritterStudent bestStudent = GetBestStudent(critter => critter.HasEscaped && critter.Score > 0, critter => critter.Score);
+			CritterStudent bestStudent = GetBestStudent(critter => critter.HasEscaped && critter.Score > 0, critter => critter.Score * critter.DistanceCovered);
 
 			if (bestStudent == null)
 			{
-				bestStudent = GetBestStudent(critter => critter.IsAlive && critter.Score > 0, critter => critter.Score);
+				bestStudent = GetBestStudent(critter => critter.IsAlive && critter.Score > 0, critter => critter.Score * critter.DistanceCovered);
 			}
 			
 			if (bestStudent == null)
 			{
-				bestStudent = GetBestStudent(critter => critter.Score > 0, critter => critter.Score);
+				bestStudent = GetBestStudent(critter => critter.Score > 0, critter => critter.Score * critter.DistanceCovered);
 			}
 
 			return bestStudent;
@@ -165,8 +167,10 @@ namespace CritterRobots.Critters
 
 				MessageBox.Show("Round complete, " + bestCritter.Name +
 								" is the best critter this time, with a score of " + bestCritter.Score +
-								" Alive state of: " + bestCritter.IsAlive +
-								" and Escape state of: " + bestCritter.HasEscaped
+								"\nAlive state of: " + bestCritter.IsAlive +
+								"\nEscape state of: " + bestCritter.HasEscaped + 
+								"\nA total distance covered of: " + bestCritter.DistanceCovered +
+								"\nAnd an overall score of: " + (bestCritter.Score * bestCritter.DistanceCovered)
 								, "Coach!", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				using (StreamWriter brainWriter = new StreamWriter(Filepath + "best_brain_snapshot.crbn"))

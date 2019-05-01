@@ -118,15 +118,15 @@ namespace CritterRobots.Critters.Controllers
 			{
 				return;
 			}
-			if (parsedMessage is SeeMessage seeMessage)
-			{
-				OnSee(seeMessage);
-				DetectedMap.OnSee(seeMessage);
-			}
-			else if (parsedMessage is ScanMessage scanMessage)
+			if (parsedMessage is ScanMessage scanMessage)
 			{
 				OnScan(scanMessage);
 				DetectedMap.OnScan(scanMessage);
+			}
+			else if (parsedMessage is SeeMessage seeMessage)
+			{
+				OnSee(seeMessage);
+				DetectedMap.OnSee(seeMessage);
 			}
 			else
 			{
@@ -264,7 +264,6 @@ namespace CritterRobots.Critters.Controllers
 		{
 			Name = critterName;
 			Debugger = new Debug(Logger, "100492443:" + critterName);
-			Map.Reset();
 		}
 
 		#region Critter messages

@@ -1,6 +1,7 @@
 ﻿using CritterRobots.Critters;
 using CritterRobots.Messages;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -30,29 +31,14 @@ namespace CritterRobots.AI
 		}
 
 		/// <summary>
-		/// Located gifts.
+		/// Located gifts and food.
 		/// </summary>
-		private List<Point> LocatedGifts { get; } = new List<Point>();
-
-		/// <summary>
-		/// Located food items.
-		/// </summary>
-		private List<Point> LocatedFood { get; } = new List<Point>();
+		private ConcurrentBag<Point> LocatedCollectables { get; set; } = new ConcurrentBag<Point>();
 
 		/// <summary>
 		/// Located critters and bombs.
 		/// </summary>
-		private List<Point> LocatedThreats { get; } = new List<Point>();
-
-		/// <summary>
-		/// List containig all detected terrain. This list won't be cleared.
-		/// </summary>
-		private static HashSet<Point> LocatedTerrain { get; } = new HashSet<Point>();
-
-		/// <summary>
-		/// Thread lock for making changes to the map.
-		/// </summary>
-		private static object MapLock { get; } = new object();
+		private ConcurrentBag<Point> LocatedThreats { get; set; } = new ConcurrentBag<Point>();
 
 		/// <summary>
 		/// Thread lock for making changes to the escape hatch's location.
@@ -65,20 +51,10 @@ namespace CritterRobots.AI
 		public static Point? LocatedEscapeHatch { get; private set; } = null;
 
 		/// <summary>
-		/// Every discovered terrain tile.
+		/// Every discovered gift and food object.
 		/// </summary>
-		public static IReadOnlyCollection<Point> Terrain => LocatedTerrain;
-
-		/// <summary>
-		/// Every discovered gift object.
-		/// </summary>
-		public IReadOnlyCollection<Point> Gifts => LocatedGifts;
-
-		/// <summary>
-		/// Every discovered food item.
-		/// </summary>
-		public IReadOnlyCollection<Point> Food => LocatedFood;
-
+		public IReadOnlyCollection<Point> Collectables => LocatedCollectables;
+		
 		/// <summary>
 		/// Every located threat.
 		/// </summary>
@@ -92,12 +68,10 @@ namespace CritterRobots.AI
 		/// <param name="closestFood">The food item closest to the location.</param>
 		/// <param name="closestTheat">The threat closest to the location.</param>
 		/// <param name="closestTerrain">The terrain closest to the location.</param>
-		public void GetClosest(Point critterLocation, out Point closestGift, out Point closestFood, out Point closestThreat, out Point closestTerrain)
+		public void GetClosest(Point critterLocation, out Point closestCollectable, out Point closestThreat)
 		{
-			GetClosest(LocatedGifts,	critterLocation, out closestGift);
-			GetClosest(LocatedFood,		critterLocation, out closestFood);
-			GetClosest(LocatedThreats,	critterLocation, out closestThreat);
-			GetClosest(LocatedTerrain,	critterLocation, out closestTerrain);
+			GetClosest(LocatedCollectables,	critterLocation, out closestCollectable);
+			GetClosest(LocatedThreats,		critterLocation, out closestThreat);
 		}
 
 		/// <summary>
@@ -110,9 +84,18 @@ namespace CritterRobots.AI
 				closest = new Point(-1, -1);
 				return false;
 			}
+			
+			try
+			{
+				closest = source.First();
+			}
+			catch
+			{
+				closest = new Point(-1, -1);
+				return false;
+			}
 
-			closest = source.First();
-			foreach (Point element in LocatedGifts)
+			foreach (Point element in source)
 			{
 				if (((Vector)closest - critterLocation).SqrMagnitude >
 					((Vector)element - critterLocation).SqrMagnitude)
@@ -130,21 +113,16 @@ namespace CritterRobots.AI
 		/// <param name="message">The SEE message.</param>
 		public void OnSee(SeeMessage message)
 		{
-			LocatedThreats.Clear();
+			LocatedThreats = new ConcurrentBag<Point>();
 
-			foreach (LocatableEntity detectedEntity in message.GetEntities(entity => LocatableEntity.Entity.SeeComponents.HasFlag(entity.Type)))
+			foreach (LocatableEntity detectedEntity in message.GetEntities())
 			{
 				switch (detectedEntity.Type)
 				{
 				case LocatableEntity.Entity.Bomb:
 				case LocatableEntity.Entity.Critter:
-					LocatedThreats.Add(detectedEntity.Location);
-					break;
 				case LocatableEntity.Entity.Terrain:
-					lock (MapLock)
-					{
-						LocatedTerrain.Add(detectedEntity.Location);
-					}
+					LocatedThreats.Add(detectedEntity.Location);
 					break;
 				}
 			}
@@ -157,40 +135,26 @@ namespace CritterRobots.AI
 		/// <param name="message">The SCAN message.</param>
 		public void OnScan(ScanMessage message)
 		{
-			LocatedFood.Clear();
-			LocatedGifts.Clear();
+			LocatedCollectables = new ConcurrentBag<Point>();
 
-			foreach (LocatableEntity detectedEntity in message.GetEntities(entity => LocatableEntity.Entity.ScanComponents.HasFlag(entity.Type)))
+			foreach (LocatableEntity detectedEntity in message.GetEntities())
 			{
 				switch (detectedEntity.Type)
 				{
 				case LocatableEntity.Entity.Food:
-					LocatedFood.Add(detectedEntity.Location);
-					break;
 				case LocatableEntity.Entity.Gift:
-					LocatedGifts.Add(detectedEntity.Location);
+					LocatedCollectables.Add(detectedEntity.Location);
 					break;
 				case LocatableEntity.Entity.EscapeHatch:
 					lock (EscapeLock)
 					{
-						if (EscapeLock == null)
+						if (LocatedEscapeHatch == null)
 						{
 							LocatedEscapeHatch = detectedEntity.Location;
 						}
 					}
 					break;
 				}
-			}
-		}
-
-		/// <summary>
-		/// Clears all known shared terrain data.
-		/// </summary>
-		public static void Reset()
-		{
-			lock (MapLock)
-			{
-				LocatedTerrain.Clear();
 			}
 		}
 

@@ -190,23 +190,23 @@ namespace CritterRobots.Critters
 		/// </summary>
 		public static Vector operator-(Vector lhs, Vector rhs)
 		{
-			return new Vector(lhs.X - rhs.X, lhs.Y - lhs.Y);
+			return new Vector(lhs.X - rhs.X, lhs.Y - rhs.Y);
 		}
 
 		/// <summary>
 		/// Subtracts one vector from another.
 		/// </summary>
-		public static Vector operator -(Point lhs, Vector rhs)
+		public static Vector operator-(Point lhs, Vector rhs)
 		{
-			return new Vector(lhs.X - rhs.X, lhs.Y - lhs.Y);
+			return new Vector(lhs.X - rhs.X, lhs.Y - rhs.Y);
 		}
 
 		/// <summary>
 		/// Subtracts one vector from another.
 		/// </summary>
-		public static Vector operator -(Vector lhs, Point rhs)
+		public static Vector operator-(Vector lhs, Point rhs)
 		{
-			return new Vector(lhs.X - rhs.X, lhs.Y - lhs.Y);
+			return new Vector(lhs.X - rhs.X, lhs.Y - rhs.Y);
 		}
 
 		/// <summary>

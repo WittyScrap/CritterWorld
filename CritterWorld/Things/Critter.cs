@@ -319,7 +319,7 @@ namespace CritterWorld
             controller = critterController;
 
             LineWidth = 1;
-            Color = Sprite.RandomColor(127);
+            Color = RandomColor(127);
 
             Reset();
 
@@ -669,8 +669,6 @@ namespace CritterWorld
             Log("shutdown");
 
             Notify("SHUTDOWN:" + Position.ToString());
-
-            controllerThreadRunning = false;
         }
 
         // True if this critter is stopped or dead

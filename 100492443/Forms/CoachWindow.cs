@@ -51,6 +51,7 @@ namespace CritterRobots.Forms
 		private void checkEscapedCritter_Click(object sender, EventArgs e)
 		{
 			MessageBox.Show("I don't care.", "Coach!");
+			/*
 			EscapeInformer informer = new EscapeInformer();
 
 			informer.ShowDialog();
@@ -65,6 +66,7 @@ namespace CritterRobots.Forms
 					MessageBox.Show("This is bogus! Are you trying to kill me?", "Coach!", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
 				}
 			}
+			*/
 		}
 	}
 }

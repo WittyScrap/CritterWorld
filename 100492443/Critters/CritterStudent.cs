@@ -23,7 +23,7 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// Indicates whether or not this critter reached the escape hatch alive.
 		/// </summary>
-		public bool HasEscaped { get; set; }
+		public bool HasEscaped { get; private set; }
 
 		/// <summary>
 		/// Indicates whether or not this critter is alive.
@@ -33,67 +33,18 @@ namespace CritterRobots.Critters.Controllers
 		}
 
 		/// <summary>
-		/// Indicates whether any of the student critters in this round successfully escaped.
+		/// The total amount of distance that this critter covered up until
+		/// this point.
 		/// </summary>
-		public static bool AnyEscaped { get; set; }
+		public double DistanceCovered { get; private set; }
 
 		/// <summary>
-		/// The starting location of this critter.
-		/// </summary>
-		private Point? StartingLocation { get; set; } = null;
-
-		/// <summary>
-		/// This critter's distance from the spawn point.
-		/// </summary>
-		public Vector DistanceFromSpawn {
-			get
-			{
-				if (StartingLocation == null)
-				{
-					return (Vector)Location;
-				}
-
-				return (Vector)StartingLocation - Location;
-			}
-		}
-
-		/// <summary>
-		/// If this flag is set, the critter will walk downwards at maximum speed
-		/// until it dies.
-		/// </summary>
-		public bool HasFailed {
-			get => Failed;
-			set
-			{
-				if (!Failed && value)
-				{
-					Failed = value;
-
-					Score = 0;
-					Direction = Vector.Up * 10;
-					RequestedSpeed = MaximumMovementSpeed;
-
-					Debugger.LogMessage(Name + " failed to meet the criteria for the next generation and will now die.");
-				}
-			}
-		}
-
-		/// <summary>
-		/// Indicates whether or not this critter failed.
-		/// </summary>
-		private bool Failed { get; set; }
-
-		/// <summary>
-		/// Saves the initial location if it is not set.
+		/// Adds the delta between the new position and the last recorded
+		/// position to the total amount walked.
 		/// </summary>
 		protected override void OnLocationUpdate(int requestID, Point location)
 		{
-			base.OnLocationUpdate(requestID, location);
-
-			if (StartingLocation == null)
-			{
-				StartingLocation = location;
-			}
+			DistanceCovered += ((Vector)location - Location).Magnitude;
 		}
 
 		/// <summary>
@@ -102,7 +53,6 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="critterID">A unique representative ID for the critter.</param>
 		public CritterStudent(int critterID) : base("Helpless Slave #" + critterID, 10)
 		{
-			AnyEscaped = false;
 			CritterCoach.Coach?.AddStudent(this);
 		}
 
@@ -111,10 +61,7 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		protected override void ProcessNetwork()
 		{
-			if (!HasFailed)
-			{
-				base.ProcessNetwork();
-			}
+			base.ProcessNetwork();
 		}
 
 		/// <summary>
@@ -149,10 +96,7 @@ namespace CritterRobots.Critters.Controllers
 		/// </summary>
 		protected override void OnScored(Point location)
 		{
-			if (!Failed)
-			{
-				Score++;
-			}
+			Score++;
 		}
 
 		/// <summary>
@@ -165,7 +109,6 @@ namespace CritterRobots.Critters.Controllers
 			if (stopReason == "ESCAPE")
 			{
 				HasEscaped = true;
-				AnyEscaped = true;
 			}
 		}
 	}
