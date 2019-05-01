@@ -17,6 +17,17 @@ namespace CritterRobots.AI
 	public class CritterEye
 	{
 		/// <summary>
+		/// Item filter used during searches.
+		/// </summary>
+		private enum ItemType
+		{
+			Food,
+			Gift,
+			Threat,
+			Terrain
+		}
+
+		/// <summary>
 		/// Delegate used to check for boundary distances.
 		/// </summary>
 		/// <returns></returns>
@@ -31,6 +42,20 @@ namespace CritterRobots.AI
 		/// The maximum distance after which the eye stops seeing anything.
 		/// </summary>
 		public int MaximumDistance { get; set; } = 1000;
+
+		/// <summary>
+		/// The map stored inside the reference critter.
+		/// </summary>
+		private Map CritterMap {
+			get => ReferenceCritter.DetectedMap;
+		}
+
+		/// <summary>
+		/// The location of this reference critter.
+		/// </summary>
+		private Point CritterLocation {
+			get => ReferenceCritter.Location;
+		}
 
 		/// <summary>
 		/// Returns the distance from this critter to
@@ -49,43 +74,56 @@ namespace CritterRobots.AI
 		}
 
 		/// <summary>
+		/// Returns a direction from this critter to
+		/// the given item location.
+		/// </summary>
+		private Vector CritterItemDirection(Point itemLocation)
+		{
+			// Invalid location.
+			if (itemLocation.X < 0 || itemLocation.Y < 0)
+			{
+				return Vector.Zero;
+			}
+
+			return (Vector)itemLocation - CritterLocation;
+		}
+
+		/// <summary>
+		/// Returns an item consisting of a distance and an angle
+		/// from a directional non-normalized vector.
+		/// </summary>
+		/// <param name="critterItemDirection">The direction from this critter to the item.</param>
+		private Item GetItemFromVector(Vector critterItemDirection)
+		{
+			if (critterItemDirection.SqrMagnitude < 0.01f)
+			{
+				return new Item(1.0, 0.0);
+			}
+
+			double distance = Math.Min(critterItemDirection.Magnitude, MaximumDistance) / MaximumDistance;
+			double angle = Vector.FullAngle(Vector.Up, critterItemDirection.Normalized);
+
+			return new Item(distance, angle);
+		}
+
+		/// <summary>
 		/// Returns the nearest items for every item type.
 		/// </summary>
 		public EyeResult GetNearestItems()
 		{
-			Point? nearestGift	  = ReferenceCritter.DetectedMap.GetClosestGift(ReferenceCritter.Location);
-			Point? nearestFood	  = ReferenceCritter.DetectedMap.GetClosestFood(ReferenceCritter.Location);
-			Point? nearestThreat  = ReferenceCritter.DetectedMap.GetClosestThreat(ReferenceCritter.Location);
-			Point? nearestTerrain = ReferenceCritter.DetectedMap.GetClosestTerrain(ReferenceCritter.Location);
-			Point? escapeHatch	  = Map.LocatedEscapeHatch;
+			CritterMap.GetClosest(CritterLocation, out Point closestGift, out Point closestFood, out Point closestThreat, out Point closestTerrain);
 
-			bool invalidGift	= nearestGift    == null;
-			bool invalidFood	= nearestFood    == null;
-			bool invalidThreat	= nearestThreat  == null;
-			bool invalidTerrain = nearestTerrain == null;
-			bool invalidEscape  = escapeHatch    == null;
-
-			Vector gift		= invalidGift    ? Vector.Zero : (Vector)nearestGift    - ReferenceCritter.Location;
-			Vector food		= invalidFood    ? Vector.Zero : (Vector)nearestFood    - ReferenceCritter.Location;
-			Vector threat	= invalidThreat  ? Vector.Zero : (Vector)nearestThreat  - ReferenceCritter.Location;
-			Vector terrain	= invalidTerrain ? Vector.Zero : (Vector)nearestTerrain - ReferenceCritter.Location;
-			Vector escape	= invalidEscape  ? Vector.Zero : (Vector)escapeHatch    - ReferenceCritter.Location;
-
-			double foodDistance		= invalidFood    ? 1.0 : Math.Min(food.Magnitude, MaximumDistance)    / MaximumDistance;
-			double giftDistance		= invalidGift    ? 1.0 : Math.Min(gift.Magnitude, MaximumDistance)    / MaximumDistance;
-			double terrainDistance	= invalidTerrain ? 1.0 : Math.Min(terrain.Magnitude, MaximumDistance) / MaximumDistance;
-			double threatDistance	= invalidThreat  ? 1.0 : Math.Min(threat.Magnitude, MaximumDistance)  / MaximumDistance;
-			double escapeDistance	= invalidEscape  ? 1.0 : Math.Min(escape.Magnitude, MaximumDistance)  / MaximumDistance;
-
-			double twoPI = Math.PI * 2;
+			Vector giftDirection    = CritterItemDirection(closestGift);
+			Vector foodDirection    = CritterItemDirection(closestFood);
+			Vector threatDirection  = CritterItemDirection(closestThreat);
+			Vector terrainDirection = CritterItemDirection(closestTerrain);
 
 			return new EyeResult()
 			{
-				NearestFood		= new Item(foodDistance,	invalidFood    ? 0.0 : Vector.FullAngle(Vector.Up, food)	/ twoPI),
-				NearestGift		= new Item(giftDistance,	invalidGift    ? 0.0 : Vector.FullAngle(Vector.Up, gift)	/ twoPI),
-				NearestTerrain	= new Item(terrainDistance, invalidTerrain ? 0.0 : Vector.FullAngle(Vector.Up, terrain) / twoPI),
-				NearestThreat	= new Item(threatDistance,  invalidThreat  ? 0.0 : Vector.FullAngle(Vector.Up, threat)  / twoPI),
-				EscapeHatch		= new Item(escapeDistance,	invalidEscape  ? 0.0 : Vector.FullAngle(Vector.Up, escape)  / twoPI)
+				NearestFood    = GetItemFromVector(foodDirection),
+				NearestGift    = GetItemFromVector(giftDirection),
+				NearestThreat  = GetItemFromVector(threatDirection),
+				NearestTerrain = GetItemFromVector(terrainDirection)
 			};
 		}
 
@@ -102,7 +140,7 @@ namespace CritterRobots.AI
 		/// </summary>
 		public double LookEast()
 		{
-			return GetBoundary((size, location) => location.X / (double)size.Width);
+			return GetBoundary((size, location) => 1 - location.X / (double)size.Width);
 		}
 
 		/// <summary>
@@ -118,7 +156,7 @@ namespace CritterRobots.AI
 		/// </summary>
 		public double LookWest()
 		{
-			return GetBoundary((size, location) => 1 - location.X / (double)size.Width);
+			return GetBoundary((size, location) => location.X / (double)size.Width);
 		}
 
 		/// <summary>

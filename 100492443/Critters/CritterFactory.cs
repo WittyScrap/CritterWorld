@@ -32,11 +32,11 @@ namespace CritterRobots.Critters
 		public ICritterController[] GetCritterControllers()
 		{
 			List<ICritterController> critters = new List<ICritterController>();
-			int students = 24;
+			int students = 1;
 			critters.Add(new CritterCoach());
 			while (students > 0)
 			{
-				critters.Add(new CritterStudent(24 - students));
+				critters.Add(new CritterStudent(students));
 				students--;
 			}
 			return critters.ToArray();

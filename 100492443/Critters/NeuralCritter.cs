@@ -33,15 +33,9 @@ namespace CritterRobots.Critters
 		public int MaximumMovementSpeed { get; set; } = 10;
 
 		/// <summary>
-		/// Determines whether or not the maximum amount of time for
-		/// this level has been set.
-		/// </summary>
-		private bool MaximumTimeSet { get; set; } = false;
-
-		/// <summary>
 		/// The maximum amount of time in this level.
 		/// </summary>
-		private decimal MaximumTime { get; set; }
+		private decimal MaximumTime { get; } = 60 * 3;
 
 		/// <summary>
 		/// The network debug window.
@@ -90,80 +84,37 @@ namespace CritterRobots.Critters
 		/// </summary>
 		private decimal[] GatherNetworkInput()
 		{
-			decimal[] networkInput = new decimal[19];
+			decimal[] networkInput = new decimal[17];
 
 			/* Health */ networkInput[0] = (decimal)Health;
 			/* Energy */ networkInput[1] = (decimal)Energy;
-			/*  Time  */ networkInput[2] = MaximumTimeSet ? ((decimal)RemainingTime / MaximumTime) : 1.0m;
+			/*  Time  */ networkInput[2] = (decimal)RemainingTime / MaximumTime;
 
 			double northBoundaryDistance = Eye.LookNorth();
 			double eastBoundaryDistance  = Eye.LookEast();
 			double southBoundaryDistance = Eye.LookSouth();
 			double westBoundaryDistance  = Eye.LookWest();
 
-			double northBoundaryAngle = 0.5;
-			double eastBoundaryAngle  = 0.75;
-			double southBoundaryAngle = 0;
-			double westBoundaryAngle  = 0.25;
-
-			Item northBoundary = new Item(northBoundaryDistance, northBoundaryAngle);
-			Item eastBoundary  = new Item(eastBoundaryDistance,  eastBoundaryAngle);
-			Item southBoundary = new Item(southBoundaryDistance, southBoundaryAngle);
-			Item westBoundary  = new Item(westBoundaryDistance,  westBoundaryAngle);
-
 			EyeResult closestItems = Eye.GetNearestItems();
+			
+			/* Distance of north boundary  */ networkInput[3]  = 1 - (decimal)northBoundaryDistance;
+			/* Distance of east boundary   */ networkInput[4]  = 1 - (decimal)eastBoundaryDistance;
+			/* Distance of south boundary  */ networkInput[5]  = 1 - (decimal)southBoundaryDistance;
+			/* Distance of west boundary   */ networkInput[6]  = 1 - (decimal)westBoundaryDistance;
 
-			List<Item> closestTerrain = new List<Item>()
-			{
-				northBoundary,
-				eastBoundary,
-				southBoundary,
-				westBoundary,
-				closestItems.NearestTerrain
-			};
+			/* Angle of closest terrain	   */ networkInput[7]  = (decimal)closestItems.NearestTerrain.Angle;
+			/* Angle of closest food item  */ networkInput[8]  = (decimal)closestItems.NearestFood.Angle;
+			/* Angle of closest gift       */ networkInput[9]  = (decimal)closestItems.NearestGift.Angle;
+			/* Angle of closest threat	   */ networkInput[10] = (decimal)closestItems.NearestThreat.Angle;
+			/* Angle of escape hatch	   */ networkInput[11] = (decimal)closestItems.EscapeHatch.Angle;
 
-			// Arrange the list so that the boundaries are always
-			// present but still showed with a lower priority than
-			// the closest terrain tile.
-			closestTerrain.Sort();
-
-			/* Angle of closest terrain 1    */ networkInput[3]  = (decimal)closestTerrain[0].Angle;
-			/* Distance of closest terrain 1 */ networkInput[4]  = 1 - (decimal)closestTerrain[0].Distance;
-
-			/* Angle of closest terrain 2    */ networkInput[5]  = (decimal)closestTerrain[1].Angle;
-			/* Distance of closest terrain 2 */ networkInput[6]  = 1 - (decimal)closestTerrain[1].Distance;
-
-			/* Angle of closest terrain 3    */ networkInput[7]  = (decimal)closestTerrain[2].Angle;
-			/* Distance of closest terrain 3 */ networkInput[8]  = 1 - (decimal)closestTerrain[2].Distance;
-
-			/* Angle of closest terrain 4    */ networkInput[9]  = (decimal)closestTerrain[3].Angle;
-			/* Distance of closest terrain 4 */ networkInput[10] = 1 - (decimal)closestTerrain[3].Distance;
-
-			/* Angle of closest food item    */ networkInput[11] = (decimal)closestItems.NearestFood.Angle;
-			/* Distance of closest food item */ networkInput[12] = 1 - (decimal)closestItems.NearestFood.Distance;
-
-			/* Angle of closest gift         */ networkInput[13] = (decimal)closestItems.NearestGift.Angle;
-			/* Distance of closest gift      */ networkInput[14] = 1 - (decimal)closestItems.NearestGift.Distance;
-
-			/* Angle of closest threat		 */ networkInput[15] = (decimal)closestItems.NearestThreat.Angle;
-			/* Distance of closest threat    */ networkInput[16] = 1 - (decimal)closestItems.NearestThreat.Distance;
-
-			/* Angle of escape hatch		 */ networkInput[17] = (decimal)closestItems.EscapeHatch.Angle;
-			/* Distance of escape hatch		 */ networkInput[18] = 1 - (decimal)closestItems.EscapeHatch.Distance;
+			/* Distance to closest terrain */ networkInput[12] = 1 - (decimal)closestItems.NearestTerrain.Distance;
+			/* Distance to closest food	   */ networkInput[13] = 1 - (decimal)closestItems.NearestFood.Distance;
+			/* Distance to closest gift	   */ networkInput[14] = 1 - (decimal)closestItems.NearestGift.Distance;
+			/* Distance to closest threat  */ networkInput[15] = 1 - (decimal)closestItems.NearestThreat.Distance;
+			/* Distance to escape hatch    */ networkInput[16] = 1 - (decimal)closestItems.EscapeHatch.Distance;
 
 			return networkInput;
-		}
-
-		/// <summary>
-		/// Sets the maximum amount of time.
-		/// </summary>
-		protected override void OnTimeRemainingUpdate(double timeRemaining)
-		{
-			if (!MaximumTimeSet)
-			{
-				MaximumTime = (decimal)timeRemaining;
-				MaximumTimeSet = true;
-			}
 		}
 
 		/// <summary>
@@ -276,7 +227,7 @@ namespace CritterRobots.Critters
 		{
 			Eye = new CritterEye(this);
 
-			int networkInput = 19;
+			int networkInput = 17;
 			int networkOutput = 2;
 
 			// One input neuron per "cone cell" in the eye, with three

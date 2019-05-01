@@ -58,7 +58,7 @@ namespace CritterRobots.Forms
 			{
 				if (informer.CritterID >= 0 && informer.CritterID < ReferenceCoach.StudentsCount)
 				{
-
+					ReferenceCoach.SetStudentEscaped(informer.CritterID);
 				}
 				else
 				{
