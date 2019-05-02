@@ -69,7 +69,7 @@ namespace CritterWorld
         private ICritterController controller = null;
         Thread controllerThread = null;
         bool controllerThreadRunning = true;
-
+		
         private static void CritterProcessor(Sprite sprite)
         {
             if (sprite is Critter critter)
@@ -319,7 +319,7 @@ namespace CritterWorld
             controller = critterController;
 
             LineWidth = 1;
-            Color = Sprite.RandomColor(127);
+            Color = RandomColor(127);
 
             Reset();
 
@@ -642,14 +642,34 @@ namespace CritterWorld
                         catch (Exception e)
                         {
                             Crashed(e);
+                            break;              // prevent infinite loop of Receive crashes that enqueue messages
                         }
                     }
                     Thread.Sleep(5);
                 }
-                // Clear message queues
-                string ignore;
-                while (MessagesFromBody.TryDequeue(out ignore)) ;
-                while (MessagesToBody.TryDequeue(out ignore)) ;
+				/*
+				// Clear message queues
+				string ignore;
+				while (MessagesFromBody.TryDequeue(out ignore);
+				while (MessagesToBody.TryDequeue(out ignore);
+				*/
+
+				// Clear incoming messages to the body as we won't be
+				// doing anything with them.
+				while (MessagesToBody.TryDequeue(out string ignore));
+
+				// Manage all messages from the body so that critters can know that they have to shut down.
+				while (MessagesFromBody.TryDequeue(out string messageFromBody))
+				{
+					try
+					{
+						controller.Receive(messageFromBody);
+					}
+					catch (Exception e)
+					{
+						Crashed(e);
+					}
+				}
             });
             controllerThread.IsBackground = true;
             controllerThread.Start();
@@ -670,7 +690,7 @@ namespace CritterWorld
 
             Notify("SHUTDOWN:" + Position.ToString());
 
-            controllerThreadRunning = false;
+			controllerThreadRunning = true;
         }
 
         // True if this critter is stopped or dead

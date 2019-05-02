@@ -13,7 +13,7 @@ namespace CritterWorld
         private static string MaskPath { get; } = "Resources/TerrainMasks";
 
         public static Level[] TheLevels { get; } = new Level[]
-        {
+		{/*
             new Level((Bitmap)Image.FromFile(MakeFilename("Background00.png")), new Point(600, 228))
             {
                 FoodCount = 20,
@@ -55,7 +55,13 @@ namespace CritterWorld
                 FoodCount = 10,
                 GiftCount = 5,
                 BombCount = 20
-            }
+            },*/
+			new Level((Bitmap)Image.FromFile(MakeFilename("Background07.png")), new Point(280, 360))
+			{
+				FoodCount = 50,
+				GiftCount = 20,
+				BombCount = 10
+			}
         };
 
         private static string MakeFilename(string baseName)

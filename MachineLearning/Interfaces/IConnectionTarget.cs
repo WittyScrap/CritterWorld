@@ -14,5 +14,10 @@ namespace MachineLearning.Interfaces
 		/// <param name="source">The neuron to connect from.</param>
 		/// <param name="weight">The weight of the new connection.</param>
 		void AddConnection(TConnectionTarget source, decimal weight);
+
+		/// <summary>
+		/// Removes invalid connections.
+		/// </summary>
+		void Clean();
 	}
 }

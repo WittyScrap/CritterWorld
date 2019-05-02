@@ -21,7 +21,7 @@ namespace MachineLearning.Neurons
 		/// </summary>
 		[DataMember]
 		private ConcurrentDictionary<INeuron, decimal> InternalConnections { get; set; } = new ConcurrentDictionary<INeuron, decimal>();
-
+		
 		/// <summary>
 		/// The connections to this neurons from any neuron in the previous layer and
 		/// their respective weights.
@@ -34,10 +34,52 @@ namespace MachineLearning.Neurons
 		}
 
 		/// <summary>
+		/// Updates the weight of a connection.
+		/// </summary>
+		private void UpdateConnectionWeight(INeuron key, decimal value)
+		{
+			if (!InternalConnections.ContainsKey(key))
+			{
+				return;
+			}
+
+			if (value > 1m)
+			{
+				value = 1m;
+			}
+			if (value < -1m)
+			{
+				value = -1m;
+			}
+
+			InternalConnections[key] = value;
+		}
+
+		/// <summary>
+		/// Randomly mutates connections within this neuron.
+		/// </summary>
+		public void Mutate(int mutationIntensity)
+		{
+			foreach (var connection in Connections)
+			{
+				decimal intensity = mutationIntensity / 10m;
+				decimal delta = Randomizer.NextDecimal(-intensity, intensity);
+				decimal updatedWeight = connection.Value + delta;
+
+				UpdateConnectionWeight(connection.Key, updatedWeight);
+			}
+		}
+
+		/// <summary>
 		/// The output value of this neuron.
 		/// </summary>
 		[DataMember]
 		public decimal Output { get; set; } = 0.0m;
+
+		/// <summary>
+		/// Indicates whether or not this neuron has been deleted.
+		/// </summary>
+		public bool IsDestroyed { get; private set; } = false;
 
 		/// <summary>
 		/// Calculates the output value for this neuron.
@@ -65,6 +107,14 @@ namespace MachineLearning.Neurons
 				weighedSum += connectionNeuron.Output * connectionWeight;
 			}
 			return weighedSum;
+		}
+
+		/// <summary>
+		/// Clears all connections.
+		/// </summary>
+		public void Disconnect()
+		{
+			InternalConnections.Clear();
 		}
 
 		/// <summary>
@@ -100,6 +150,35 @@ namespace MachineLearning.Neurons
 			{
 				Connect(neuron, weight);
 			}
+		}
+
+		/// <summary>
+		/// Removes dangling connections to nonexisting neurons.
+		/// </summary>
+		public void Clean()
+		{
+			Stack<INeuron> destroyedNeurons = new Stack<INeuron>();
+			foreach (var connection in InternalConnections)
+			{
+				if (connection.Key.IsDestroyed)
+				{
+					destroyedNeurons.Push(connection.Key);
+				}
+			}
+
+			while (destroyedNeurons.Count > 0)
+			{
+				INeuron toRemove = destroyedNeurons.Pop();
+				while (InternalConnections.TryRemove(toRemove, out decimal discardedWeight));
+			}
+		}
+
+		/// <summary>
+		/// Flags this neuron as deleted.
+		/// </summary>
+		public void Destroy()
+		{
+			IsDestroyed = true;
 		}
 	}
 }

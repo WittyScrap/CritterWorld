@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using MachineLearning.ActivationFunctions;
 using MachineLearning.Interfaces;
 using MachineLearning.Neurons;
 
@@ -14,7 +15,7 @@ namespace MachineLearning.Layers
 	/// Represents a single layer of perceptrons.
 	/// </summary>
 	[DataContract]
-	public class Layer<TNeuron> : ILayer<TNeuron> where TNeuron : INeuron
+	public class Layer<TNeuron> : ILayer<TNeuron> where TNeuron : INeuron, new()
 	{
 		/// <summary>
 		/// Container for every neuron in this layer.
@@ -48,6 +49,13 @@ namespace MachineLearning.Layers
 			}
 		}
 
+		public bool IsEmpty {
+			get
+			{
+				return Count == 0;
+			}
+		}
+
 		/// <summary>
 		/// Connects every neuron in this layer to every neuron
 		/// in the target layer. The connection weights will be
@@ -60,8 +68,19 @@ namespace MachineLearning.Layers
 			{
 				foreach (TNeuron targetNeuron in other)
 				{
-					neuron.Connect(targetNeuron, Randomizer.Nextdecimal(-1.0m, 1.0m));
+					neuron.Connect(targetNeuron, Randomizer.NextDecimal(-1.0m, 1.0m));
 				}
+			}
+		}
+
+		/// <summary>
+		/// Clears the list of connections for each neuron.
+		/// </summary>
+		public void Disconnect()
+		{
+			foreach (TNeuron neuron in this)
+			{
+				neuron.Disconnect();
 			}
 		}
 
@@ -110,12 +129,88 @@ namespace MachineLearning.Layers
 		}
 
 		/// <summary>
+		/// Randomly mutates connections within the neurons
+		/// in this layer.
+		/// </summary>
+		public void Mutate(int mutationIntensity)
+		{
+			foreach (var neuron in this)
+			{
+				neuron.Mutate(mutationIntensity);
+			}
+		}
+
+		/// <summary>
 		/// Adds a new neuron to this network.
 		/// </summary>
 		/// <param name="neuron">The neuron to be added.</param>
 		public void AddNeuron(TNeuron neuron)
 		{
 			InternalNeurons.Add(neuron);
+		}
+
+		/// <summary>
+		/// Removes a specified amount of neurons from this layer.
+		/// </summary>
+		/// <param name="neuronCount">The amount of neurons to remove.</param>
+		public void RemoveNeurons(int neuronCount)
+		{
+			if (neuronCount > 0 && neuronCount <= Count)
+			{
+				InternalNeurons[InternalNeurons.Count - 1].Destroy();
+				InternalNeurons.RemoveAt(InternalNeurons.Count - 1);
+				RemoveNeurons(neuronCount - 1);
+			}
+		}
+
+		/// <summary>
+		/// Removes dangling connections to neurons that no longer
+		/// exist.
+		/// </summary>
+		public void Clean()
+		{
+			foreach (TNeuron neuron in this)
+			{
+				neuron.Clean();
+			}
+		}
+
+		/// <summary>
+		/// Adds the specified amount of neurons to this layer.
+		/// </summary>
+		/// <param name="neuronCount">The amount of neurons to add.</param>
+		public void Fill(int neuronCount)
+		{
+			while (neuronCount > 0)
+			{
+				AddNeuron(new TNeuron());
+				--neuronCount;
+			}
+		}
+
+		/// <summary>
+		/// Adds the specified amount of neurons to this layer.
+		/// </summary>
+		/// <param name="neuronCount">The amount of neurons to add.</param>
+		public IEnumerable<TNeuron> FillIterative(int neuronCount)
+		{
+			while (neuronCount > 0)
+			{
+				TNeuron newNeuron = new TNeuron();
+				AddNeuron(newNeuron);
+				--neuronCount;
+
+				yield return newNeuron;
+			}
+		}
+
+		/// <summary>
+		/// Returns the output of every single neuron in the
+		/// network as-is.
+		/// </summary>
+		public decimal[] Dump()
+		{
+			return InternalNeurons.Select(neuron => neuron.Output).ToArray();
 		}
 	}
 }

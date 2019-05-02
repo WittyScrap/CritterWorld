@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using CritterController;
+using CritterRobots.AI;
 using CritterRobots.Messages;
 
 /// <summary>
@@ -15,7 +17,7 @@ namespace CritterRobots.Critters.Controllers
 	/// Implements basic functionality for
 	/// all types of Critter AI.
 	/// </summary>
-	abstract class Critter : ICritterController
+	public abstract class Critter : ICritterController, ILocatableCritter
 	{
 		#region ICritterController interface components
 		/// <summary>
@@ -62,20 +64,20 @@ namespace CritterRobots.Critters.Controllers
 		protected Debug Debugger { get; private set; }
 
 		/// <summary>
-		/// The full size of the arena map.
+		/// The detected features in the arena.
 		/// </summary>
-		protected static Arena Map { get; private set; }
+		public Map DetectedMap { get; } = new Map();
 
 		#region Critter properties
 		/// <summary>
 		/// The current velocity of the critter.
 		/// </summary>
-		protected Vector Velocity { get; private set; } = Vector.Zero;
+		public Vector Velocity { get; private set; } = Vector.Zero;
 
 		/// <summary>
 		/// The current location of the critter.
 		/// </summary>
-		protected Point Location { get; private set; } = Point.Empty;
+		public Point Location { get; private set; } = Point.Empty;
 
 		/// <summary>
 		/// The amount of time elapsed since the start of the level.
@@ -90,12 +92,12 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// The current health of the critter.
 		/// </summary>
-		protected float Health { get; private set; } = 1f;
+		public float Health { get; private set; } = 1f;
 
 		/// <summary>
 		/// The current energy of the critter.
 		/// </summary>
-		protected float Energy { get; private set; } = 1f;
+		public float Energy { get; private set; } = 1f;
 
 		/// <summary>
 		/// If this is false, no messages can be sent to the CritterWorld
@@ -116,13 +118,15 @@ namespace CritterRobots.Critters.Controllers
 			{
 				return;
 			}
-			if (parsedMessage is SeeMessage seeMessage)
-			{
-				OnSee(seeMessage);
-			}
-			else if (parsedMessage is ScanMessage scanMessage)
+			if (parsedMessage is ScanMessage scanMessage)
 			{
 				OnScan(scanMessage);
+				DetectedMap.OnScan(scanMessage);
+			}
+			else if (parsedMessage is SeeMessage seeMessage)
+			{
+				OnSee(seeMessage);
+				DetectedMap.OnSee(seeMessage);
 			}
 			else
 			{
@@ -139,81 +143,79 @@ namespace CritterRobots.Critters.Controllers
 		{
 			int requestID;
 			OnMessageReceived(message);
-			switch (message.Header)
-			{
-			case "LAUNCH":
-				InitializeCritter(message.GetPoint(0));
-				break;
-			case "FATALITY":
-			case "STARVED":
-			case "BOMBED":
-			case "CRASHED":
-			case "ESCAPE":
-			case "SHUTDOWN":
-				StopCritter(message.Header);
-				break;
-			case "LEVEL_DURATION":
-				ElapsedTime = message.GetInteger(1);
-				break;
-			case "LEVEL_TIME_REMAINING":
-				RemainingTime = message.GetInteger(1);
-				break;
-			case "HEALTH":
-				requestID = message.GetInteger(0);
-				Health = message.GetInteger(1) / 100.0f;
-				OnHealthUpdate(requestID, Health);
-				break;
-			case "ENERGY":
-				requestID = message.GetInteger(0);
-				Energy = message.GetInteger(1) / 100.0f;
-				OnEnergyUpdate(requestID, Energy);
-				break;
-			case "LOCATION":
-				requestID = message.GetInteger(0);
-				Location = message.GetPoint(1);
-				OnLocationUpdate(requestID, Location);
-				break;
-			case "SPEED":
-				requestID = message.GetInteger(0);
-				Velocity = new Vector(message.GetDouble(2), message.GetDouble(3));
-				OnVelocityUpdate(requestID, Velocity);
-				break;
-			case "ARENA_SIZE":
-				CreateArena(new Size(message.GetInteger(1), message.GetInteger(2)), new Size(10, 10));
-				break;
-			case "SCORED":
-				OnScored(message.GetPoint(0));
-				break;
-			case "ATE":
-				OnAte(message.GetPoint(0));
-				break;
-			case "FIGHT":
-				OnFight(message.GetPoint(0), message.GetInteger(1), message.GetString(2));
-				break;
-			case "BUMP":
-				OnBump(message.GetPoint(0));
-				break;
-			case "REACHED_DESTINATION":
-				OnDestinationReached(message.GetPoint(0));
-				break;
-			}
-		}
 
-		/// <summary>
-		/// Creates the arena mapper object.
-		/// </summary>
-		/// <param name="arenaWidth">The width of the arena.</param>
-		/// <param name="arenaHeight">The height of the arena.</param>
-		/// <param name="pixelsPerCell">The number of pixels that compose a single cell.</param>
-		private static void CreateArena(Size arenaSize, Size gridSize)
-		{
-			Map = new Arena(gridSize, arenaSize);
-			Map.Desirability[Arena.TileContents.Bomb] = -1;
-			Map.Desirability[Arena.TileContents.Empty] = 0;
-			Map.Desirability[Arena.TileContents.EscapeHatch] = .5f;
-			Map.Desirability[Arena.TileContents.Food] = 1.0f;
-			Map.Desirability[Arena.TileContents.Gift] = .75f;
-			Map.Desirability[Arena.TileContents.Terrain] = -1;
+			try
+			{
+				switch (message.Header)
+				{
+				case "LAUNCH":
+					InitializeCritter(message.GetPoint(0));
+					break;
+				case "FATALITY":
+				case "STARVED":
+				case "BOMBED":
+				case "CRASHED":
+				case "ESCAPE":
+				case "SHUTDOWN":
+					StopCritter(message.Header);
+					break;
+				case "LEVEL_DURATION":
+					ElapsedTime = message.GetInteger(1);
+					break;
+				case "LEVEL_TIME_REMAINING":
+					float updatedRemainingTime = (float)message.GetDouble(1);
+					OnTimeRemainingUpdate(updatedRemainingTime);
+					RemainingTime = updatedRemainingTime;
+					break;
+				case "HEALTH":
+					requestID = message.GetInteger(0);
+					float updatedHealth = (float)message.GetDouble(1) / 100.0f;
+					OnHealthUpdate(requestID, updatedHealth);
+					Health = updatedHealth;
+					break;
+				case "ENERGY":
+					requestID = message.GetInteger(0);
+					float updatedEnergy = (float)message.GetDouble(1) / 100.0f;
+					OnEnergyUpdate(requestID, updatedEnergy);
+					Energy = updatedEnergy;
+					break;
+				case "LOCATION":
+					requestID = message.GetInteger(0);
+					Point updatedLocation = message.GetPoint(1);
+					OnLocationUpdate(requestID, updatedLocation);
+					Location = updatedLocation;
+					break;
+				case "SPEED":
+					requestID = message.GetInteger(0);
+					Vector updatedVelocity = new Vector(message.GetDouble(2), message.GetDouble(3));
+					OnVelocityUpdate(requestID, updatedVelocity);
+					Velocity = updatedVelocity;
+					break;
+				case "ARENA_SIZE":
+					Map.ReportSize(new Size(message.GetInteger(1), message.GetInteger(2)));
+					break;
+				case "SCORED":
+					OnScored(message.GetPoint(0));
+					break;
+				case "ATE":
+					OnAte(message.GetPoint(0));
+					break;
+				case "FIGHT":
+					OnFight(message.GetPoint(0), message.GetInteger(1), message.GetString(2));
+					break;
+				case "BUMP":
+					OnBump(message.GetPoint(0));
+					break;
+				case "REACHED_DESTINATION":
+					OnDestinationReached(message.GetPoint(0));
+					break;
+				}
+			}
+			catch (Exception e)
+			{
+				MessageBox.Show("The critter " + ToString() + " failed with an exception: " + e.Message + "\nStacktrace:\n" + e.StackTrace, "Critter crash!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				StopCritter("ERROR");
+			}
 		}
 
 		/// <summary>
@@ -361,7 +363,11 @@ namespace CritterRobots.Critters.Controllers
 		/// <param name="location">The current critter location.</param>
 		protected virtual void OnDestinationReached(Point location) { }
 
-
+		/// <summary>
+		/// Called when the remaining time has been given.
+		/// </summary>
+		/// <param name="timeRemaining">The amount of time left.</param>
+		protected virtual void OnTimeRemainingUpdate(double timeRemaining) { }
 		#endregion
 
 		#region Event driven methods
@@ -374,6 +380,7 @@ namespace CritterRobots.Critters.Controllers
 		{
 			IsInitialized = true;
 			Location = initialLocation;
+			Responder("GET_ARENA_SIZE:0");
 			OnInitialize();
 		}
 
@@ -390,59 +397,43 @@ namespace CritterRobots.Critters.Controllers
 
 		#endregion
 
-		#region Message senders
+		#region Utilities
 
 		/// <summary>
-		/// Runs a SCAN operation.
+		/// Parses a location into a <see cref="Point"/>.
 		/// </summary>
-		protected void Scan()
+		public static Point ParsePoint(string pointFormat)
 		{
-			throw new NotImplementedException();
+			string[] components = pointFormat.Replace('{', '\0').Replace('}', '\0').Split(',');
+			string[] xComponent = components[0].Split('=');
+			string[] yComponent = components[1].Split('=');
+
+			if (int.TryParse(xComponent[1], out int x) && int.TryParse(yComponent[1], out int y))
+			{
+				return new Point(x, y);
+			}
+			else
+			{
+				throw new ArgumentException("Point was not in the correct format.");
+			}
 		}
 
 		/// <summary>
-		/// Queries the environmnent for the current
-		/// level duration.
+		/// Attempts to parse a formatted point into a <see cref="Point"/> object.
 		/// </summary>
-		protected void GetLevelDuration()
-		{
-			throw new NotImplementedException();
-		}
 
-		/// <summary>
-		/// Queries the environment for the amount
-		/// of time remaining.
-		/// </summary>
-		protected void GetTimeRemaining()
+		public static bool TryParsePoint(string pointFormat, out Point parsedPoint)
 		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Queries the environment about this critter's
-		/// health.
-		/// </summary>
-		protected void GetHealth()
-		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Queries the environment about this critter's
-		/// energy.
-		/// </summary>
-		protected void GetEnergy()
-		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Queries the environment about this critter's
-		/// speed.
-		/// </summary>
-		protected void GetSpeed()
-		{
-			throw new NotImplementedException();
+			try
+			{
+				parsedPoint = ParsePoint(pointFormat);
+				return true;
+			}
+			catch (ArgumentException)
+			{
+				parsedPoint = Point.Empty;
+				return false;
+			}
 		}
 
 		#endregion

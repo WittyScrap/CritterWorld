@@ -19,6 +19,12 @@ namespace MachineLearning
 	public class NeuralNetwork : INeuralNetwork, ISerializable
 	{
 		/// <summary>
+		/// Event called when the network has updated its output
+		/// neurons (aka after a feed-forward).
+		/// </summary>
+		public event EventHandler NetworkUpdated;
+
+		/// <summary>
 		/// The input layer of this neural network.
 		/// </summary>
 		[DataMember]
@@ -90,6 +96,14 @@ namespace MachineLearning
 		}
 
 		/// <summary>
+		/// Restricts the value to the range 0 - 1.
+		/// </summary>
+		private decimal Normalize(decimal value)
+		{
+			return Math.Max(Math.Min(value, 1m), 0m);
+		}
+
+		/// <summary>
 		/// Feeds the input values into the input layer
 		/// and forwards them through the rest of the network.
 		/// </summary>
@@ -103,7 +117,7 @@ namespace MachineLearning
 
 			for (int neuron = 0; neuron < InputNeurons.Count; ++neuron)
 			{
-				InputNeurons[neuron].Output = inputValues[neuron];
+				InputNeurons[neuron].Output = Normalize(inputValues[neuron]);
 			}
 
 			if (HiddenNeurons.Count != 0)
@@ -114,6 +128,7 @@ namespace MachineLearning
 				}
 			}
 			OutputNeurons.Feedforward();
+			NetworkUpdated?.Invoke(this, EventArgs.Empty);
 		}
 
 		/// <summary>
@@ -130,6 +145,167 @@ namespace MachineLearning
 				networkOutput[neuron] = OutputNeurons[neuron].Output;
 			}
 			return networkOutput;
+		}
+
+		/// <summary>
+		/// Applies random small mutations to this network
+		/// </summary>
+		public void Mutate(int mutationIntensity = 2)
+		{
+			// Neuron mutations should be rare
+			if (Randomizer.NextDecimal() > .75m)
+			{
+				int layersDelta = Randomizer.NextInteger(HiddenNeurons.Count >= mutationIntensity ? -mutationIntensity : 0, mutationIntensity + 1);
+
+				while (layersDelta < 0)
+				{
+					int neuronCount = Randomizer.NextInteger(1, mutationIntensity + 1);
+					int location = Randomizer.NextInteger(0, HiddenNeurons.Count - 1);
+
+					RemoveNeurons(location, neuronCount);
+
+					++layersDelta;
+				}
+
+				while (layersDelta > 0)
+				{
+					int neuronCount = Randomizer.NextInteger(1, mutationIntensity + 1);
+					int location = Randomizer.NextInteger(0, HiddenNeurons.Count - 1);
+
+					AddNeurons(location, neuronCount, 30);
+
+					--layersDelta;
+				}
+			}
+
+			MutateConnectionWeights(mutationIntensity);
+		}
+
+		/// <summary>
+		/// Mutates the weights of all the connectons in the network.
+		/// </summary>
+		/// <param name="mutationIntensity">The intensity of the mutation.</param>
+		private void MutateConnectionWeights(int mutationIntensity)
+		{
+			foreach (var layer in HiddenNeurons)
+			{
+				layer.Mutate(mutationIntensity);
+			}
+		}
+
+		/// <summary>
+		/// Adds a specified number of neurons to the specified layer index.
+		/// </summary>
+		/// <param name="positionIndex">The layer to add neurons to.</param>
+		/// <param name="neuronCount">The amunt of neurons to add.</param>
+		/// <param name="threshold">The total amount of neurons the layer can carry before overflowing to a new layer.</param>
+		private void AddNeurons(int positionIndex, int neuronCount, int threshold)
+		{
+			if (positionIndex >= 0 && positionIndex < HiddenNeurons.Count - 1)
+			{
+				if (HiddenNeurons[positionIndex].Count + neuronCount < threshold)
+				{
+					var previousLayer = positionIndex == 0 ? InputNeurons : HiddenNeurons[positionIndex - 1];
+					var nextLayer = HiddenNeurons[positionIndex + 1];
+					foreach (var addedNeuron in HiddenNeurons[positionIndex].FillIterative(neuronCount))
+					{
+						foreach (var targetNeuron in nextLayer)
+						{
+							addedNeuron.Connect(targetNeuron, Randomizer.NextDecimal(-1m, 1m));
+						}
+						foreach (var sourceNeuron in previousLayer)
+						{
+							sourceNeuron.Connect(addedNeuron, Randomizer.NextDecimal(-1m, 1m));
+						}
+					}
+				}
+				else
+				{
+					AddLayer(positionIndex + 1, neuronCount);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Adds one additional hidden layer at the specified position.
+		/// </summary>
+		private void AddLayer(int positionIndex, int neuronCount)
+		{
+			if (positionIndex >= 0 && positionIndex < HiddenNeurons.Count)
+			{
+				var previousLayer = positionIndex == 0 ? InputNeurons : HiddenNeurons[positionIndex - 1];
+				var currentLayer = HiddenNeurons[positionIndex];
+				currentLayer.Disconnect();
+
+				var generatedLayer = new Layer<Neuron<SigmoidFunction>>();
+				generatedLayer.Fill(neuronCount);
+				HiddenNeurons.Insert(positionIndex, generatedLayer);
+				previousLayer.Connect(generatedLayer);
+				generatedLayer.Connect(currentLayer);
+			}
+		}
+
+		/// <summary>
+		/// Removes a specified amount of neurons from the specified layer.
+		/// </summary>
+		/// <param name="positionIndex">The layer from which to remove neurons.</param>
+		/// <param name="neuronCount">The amount of neurons to remove.</param>
+		private void RemoveNeurons(int positionIndex, int neuronCount)
+		{
+			if (positionIndex >= 0 && positionIndex < HiddenNeurons.Count - 1)
+			{
+				var selectedLayer = HiddenNeurons[positionIndex];
+				if (selectedLayer.Count > neuronCount)
+				{
+					selectedLayer.RemoveNeurons(neuronCount);
+					HiddenNeurons[positionIndex + 1].Clean();
+				}
+				else
+				{
+					RemoveLayer(positionIndex);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Removes a layer at the specified index.
+		/// </summary>
+		/// <param name="positionIndex">The position at which to remove a layer.</param>
+		private void RemoveLayer(int positionIndex)
+		{
+			if (positionIndex >= 0 && positionIndex < HiddenNeurons.Count - 1)
+			{
+				var nextLayer = HiddenNeurons[positionIndex + 1];
+				nextLayer.Disconnect();
+
+				HiddenNeurons.RemoveAt(positionIndex);
+				var previousLayer = positionIndex > 0 ? HiddenNeurons[positionIndex - 1] : InputNeurons;
+				previousLayer.Connect(nextLayer);
+			}
+		}
+
+		/// <summary>
+		/// Removes the last layer in the hidden layers list.
+		/// </summary>
+		private void RemoveLast()
+		{
+			if (HiddenNeurons.Count > 1)
+			{
+				RemoveLayer(HiddenNeurons.Count - 2);
+			}
+		}
+
+		/// <summary>
+		/// Removes a defined amount of layers from the Hidden layers section.
+		/// </summary>
+		/// <param name="count">The amount of layers to remove.</param>
+		private void RemoveLayers(int count)
+		{
+			if (count < HiddenNeurons.Count - 1 && count > 0)
+			{
+				RemoveLast();
+				RemoveLayers(count - 1);
+			}
 		}
 
 		/// <summary>
@@ -166,6 +342,35 @@ namespace MachineLearning
 				DataContractSerializer deserializer = new DataContractSerializer(typeof(NeuralNetwork));
 				return (NeuralNetwork)deserializer.ReadObject(memoryStream);
 			}
+		}
+
+		/// <summary>
+		/// Creates a random neural network with a fixed
+		/// number of input and output neurons.
+		/// </summary>
+		/// <returns>A random neural network.</returns>
+		public static NeuralNetwork RandomNetwork(int inputNeurons, int outputNeurons, int minLayers = 0, int maxLayers = 10, int minNeurons = 1, int maxNeurons = 50)
+		{
+			int networkSize = Randomizer.NextInteger(minLayers, maxLayers);
+			List<int> randomNetwork = new List<int>(networkSize);
+			for (int i = 0; i < networkSize; ++i)
+			{
+				randomNetwork.Add(Randomizer.NextInteger(minNeurons, maxNeurons));
+			}
+			randomNetwork.Insert(0, inputNeurons);
+			randomNetwork.Add(outputNeurons);
+
+			return new NeuralNetwork(randomNetwork.ToArray());
+		}
+
+		/// <summary>
+		/// Creates a random neural network with a fixed
+		/// number of output neurons.
+		/// </summary>
+		/// <returns>A random neural network.</returns>
+		public static NeuralNetwork RandomNetwork(int outputNeurons, int minLayers = 0, int maxLayers = 10, int minNeurons = 1, int maxNeurons = 50)
+		{
+			return RandomNetwork(Randomizer.NextInteger(minNeurons, maxNeurons), outputNeurons, minLayers, maxLayers, minNeurons, maxNeurons);
 		}
 	}
 }

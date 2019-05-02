@@ -12,7 +12,7 @@ namespace CritterRobots.Messages
 	/// methods and properties shared by 
 	/// all messages.
 	/// </summary>
-	interface IMessage
+	public interface IMessage
 	{
 		/// <summary>
 		/// The header for this message.

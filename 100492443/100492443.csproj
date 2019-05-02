@@ -35,6 +35,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Drawing.Design" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -44,17 +45,57 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Arena.cs" />
+    <Compile Include="AI\Beam.cs" />
+    <Compile Include="AI\CritterEye.cs" />
+    <Compile Include="AI\EyeResult.cs" />
+    <Compile Include="AI\Item.cs" />
+    <Compile Include="AI\LocatableEntity.cs" />
+    <Compile Include="AI\Map.cs" />
+    <Compile Include="AI\Ray.cs" />
+    <Compile Include="Components\NetworkDrawer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Components\NetworkDrawer.Designer.cs">
+      <DependentUpon>NetworkDrawer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Critters\Critter.cs" />
+    <Compile Include="Critters\CritterCoach.cs" />
     <Compile Include="Critters\CritterFactory.cs" />
-    <Compile Include="Critters\NetworkTrainer.cs" />
+    <Compile Include="Critters\ILocatableCritter.cs" />
+    <Compile Include="Critters\INetworkHolder.cs" />
+    <Compile Include="Critters\CritterStudent.cs" />
+    <Compile Include="Critters\NeuralCritter.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="Critters\DebugCritter.cs" />
+    <Compile Include="Forms\CoachWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CoachWindow.Designer.cs">
+      <DependentUpon>CoachWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\EscapeInformer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\EscapeInformer.Designer.cs">
+      <DependentUpon>EscapeInformer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\NetworkDebuggerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\NetworkDebuggerForm.Designer.cs">
+      <DependentUpon>NetworkDebuggerForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Messages\IMessage.cs" />
     <Compile Include="Messages\ScanMessage.cs" />
     <Compile Include="Messages\SeeMessage.cs" />
     <Compile Include="Messages\SimpleMessage.cs" />
     <Compile Include="Messages\ITrackedMessage.cs" />
+    <Compile Include="Forms\NetworkTrainerDebugWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\NetworkTrainerDebugWindow.Designer.cs">
+      <DependentUpon>NetworkTrainerDebugWindow.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
@@ -70,7 +111,23 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="ClassDiagram.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\NetworkDrawer.resx">
+      <DependentUpon>NetworkDrawer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\CoachWindow.resx">
+      <DependentUpon>CoachWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\EscapeInformer.resx">
+      <DependentUpon>EscapeInformer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\NetworkDebuggerForm.resx">
+      <DependentUpon>NetworkDebuggerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\NetworkTrainerDebugWindow.resx">
+      <DependentUpon>NetworkTrainerDebugWindow.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

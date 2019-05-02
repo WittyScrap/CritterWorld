@@ -10,7 +10,7 @@ namespace CritterRobots.Critters.Controllers
 	/// <summary>
 	/// Handles logging messages.
 	/// </summary>
-	class Debug
+	public class Debug
 	{
 		private Send m_loggerObject;
 		private readonly string m_critterID;

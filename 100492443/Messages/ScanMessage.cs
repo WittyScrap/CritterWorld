@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CritterRobots.AI;
+using CritterRobots.Critters;
 
 namespace CritterRobots.Messages
 {
@@ -10,7 +13,7 @@ namespace CritterRobots.Messages
 	/// Represents the SCAN message in an object
 	/// oriented form.
 	/// </summary>
-	class ScanMessage : SeeMessage, ITrackedMessage
+	public class ScanMessage : SeeMessage, ITrackedMessage
 	{
 		/// <summary>
 		/// This message's request ID.
