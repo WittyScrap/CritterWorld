@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace CritterRobots.Critters
 {
+	/// <summary>
+	/// Represents a two dimensional vector.
+	/// </summary>
 	public struct Vector
 	{
 		/// <summary>
@@ -244,12 +247,57 @@ namespace CritterRobots.Critters
 		}
 
 		/// <summary>
+		/// Returns true if the values of the two vectors approximatively
+		/// match.
+		/// </summary>
+		public static bool operator==(Vector lhs, Vector rhs)
+		{
+			return Math.Abs(lhs.X - rhs.X) < 0.01 && Math.Abs(lhs.Y - rhs.Y) < 0.01;
+		}
+
+		/// <summary>
+		/// Returns true if the values of the two vectors differ significantly.
+		/// </summary>
+		public static bool operator!=(Vector lhs, Vector rhs)
+		{
+			return !(lhs == rhs);
+		}
+
+		/// <summary>
+		/// Checks for vector equality.
+		/// </summary>
+		public override bool Equals(object obj)
+		{
+			if (obj is Vector vector)
+			{
+				return this == vector;
+			}
+
+			return false;
+		}
+
+		/// <summary>
 		/// Converts this vector to the {X=<x-coord>,Y=<y-coord>} format.
 		/// </summary>
 		/// <returns></returns>
 		public override string ToString()
 		{
 			return "{X=" + X + ",Y=" + Y + "}";
+		}
+
+		/// <summary>
+		/// Returns a uniquie HashCode for this vector.
+		/// </summary>
+		/// <returns></returns>
+		public override int GetHashCode()
+		{
+			var hashCode = 998981473;
+			hashCode=hashCode*-1521134295+X.GetHashCode();
+			hashCode=hashCode*-1521134295+Y.GetHashCode();
+			hashCode=hashCode*-1521134295+SqrMagnitude.GetHashCode();
+			hashCode=hashCode*-1521134295+Magnitude.GetHashCode();
+			hashCode=hashCode*-1521134295+EqualityComparer<Vector>.Default.GetHashCode(Normalized);
+			return hashCode;
 		}
 	}
 }

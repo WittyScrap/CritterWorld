@@ -111,13 +111,13 @@ namespace CritterRobots.AI
 		{
 			if (critterItemDirection.SqrMagnitude < 0.01f)
 			{
-				return new Item(1.0, 0.0);
+				return new Item(1.0, 0.0, Vector.Zero);
 			}
 
 			double distance = Math.Min(critterItemDirection.Magnitude, MaximumDistance) / MaximumDistance;
 			double angle = Vector.FullAngle(Vector.Up, critterItemDirection.Normalized) / (Math.PI * 2);
 
-			return new Item(distance, angle);
+			return new Item(distance, angle, critterItemDirection);
 		}
 
 		/// <summary>

@@ -21,6 +21,11 @@ namespace CritterRobots.AI
 		public static Size Extents { get; private set; }
 
 		/// <summary>
+		/// The number of sectors for this map.
+		/// </summary>
+		public static Size Sectors { get; set; } = new Size(10, 10);
+
+		/// <summary>
 		/// Indicates whether or not this map's size is known.
 		/// </summary>
 		public static bool SizeKnown {
@@ -49,6 +54,14 @@ namespace CritterRobots.AI
 		/// The location of the escape hatch.
 		/// </summary>
 		public static Point? LocatedEscapeHatch { get; private set; } = null;
+
+		/// <summary>
+		/// Returns the relative sector given a set of pixels coordinate.
+		/// </summary>
+		public static Point GetSector(Point pixelCoordinate)
+		{
+			return new Point((int)Math.Floor(pixelCoordinate.X / (float)Extents.Width * Sectors.Width), (int)Math.Floor(pixelCoordinate.Y / (float)Extents.Height * Sectors.Height));
+		}
 
 		/// <summary>
 		/// Every discovered gift and food object.

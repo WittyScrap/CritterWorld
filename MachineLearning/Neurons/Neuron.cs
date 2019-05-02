@@ -47,9 +47,9 @@ namespace MachineLearning.Neurons
 			{
 				value = 1m;
 			}
-			if (value < 0m)
+			if (value < -1m)
 			{
-				value = 0m;
+				value = -1m;
 			}
 
 			InternalConnections[key] = value;
@@ -62,14 +62,11 @@ namespace MachineLearning.Neurons
 		{
 			foreach (var connection in Connections)
 			{
-				if (Randomizer.NextDecimal() > 0.5m)
-				{
-					decimal intensity = mutationIntensity / 10m;
-					decimal delta = Randomizer.NextDecimal(-intensity, intensity);
-					decimal updatedWeight = connection.Value + delta;
+				decimal intensity = mutationIntensity / 10m;
+				decimal delta = Randomizer.NextDecimal(-intensity, intensity);
+				decimal updatedWeight = connection.Value + delta;
 
-					UpdateConnectionWeight(connection.Key, updatedWeight);
-				}
+				UpdateConnectionWeight(connection.Key, updatedWeight);
 			}
 		}
 

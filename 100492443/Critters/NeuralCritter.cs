@@ -17,6 +17,16 @@ namespace CritterRobots.Critters
 	public abstract class NeuralCritter : Critter, INetworkHolder
 	{
 		/// <summary>
+		/// The amount of input neurons for this critter's neural network.
+		/// </summary>
+		public static int NetworkInput { get; } = 9;
+
+		/// <summary>
+		/// The amount of output neurons for this critter's neural network.
+		/// </summary>
+		public static int NetworkOutput { get; } = 2;
+
+		/// <summary>
 		/// The neural network used for handling the critter's
 		/// behaviour.
 		/// </summary>
@@ -30,12 +40,12 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// The maximum speed the critter can request.
 		/// </summary>
-		public int MaximumMovementSpeed { get; set; } = 10;
+		public int MaximumMovementSpeed { get; set; } = 5;
 
 		/// <summary>
 		/// The minimum speed at which critters can move.
 		/// </summary>
-		public int MinimumMovementSpeed { get; set; } = 5;
+		public int MinimumMovementSpeed { get; set; } = 1;
 
 		/// <summary>
 		/// The maximum amount of time in this level.
@@ -84,15 +94,7 @@ namespace CritterRobots.Critters
 		/// </summary>
 		private double Repeat(double t, double range)
 		{
-			return t - Math.Floor(t / range) * range;
-		}
-
-		/// <summary>
-		/// Keeps the value <paramref name="t"/> within the range 0 to 1.
-		/// </summary>
-		private double Repeat(double t)
-		{
-			return t - Math.Floor(t);
+			return t % range;
 		}
 
 		/// <summary>
@@ -103,12 +105,17 @@ namespace CritterRobots.Critters
 		/// <param name="results"></param>
 		private void RotateEyeResults(ref EyeResult results)
 		{
-			double critterAngle = Vector.FullAngle(Vector.Up, Direction.Normalized);
-			critterAngle /= Math.PI * 2;
+			Vector nearestCollectable	= results.NearestCollectable.Direction;
+			Vector nearestThreat		= results.NearestCollectable.Direction;
+			Vector escapeHatch			= results.EscapeHatch.Direction;
 
-			results.NearestCollectable	= new Item(results.NearestCollectable.Distance, Repeat(results.NearestCollectable.Angle + critterAngle));
-			results.NearestThreat		= new Item(results.NearestThreat.Distance,		Repeat(results.NearestThreat.Angle		+ critterAngle));
-			results.EscapeHatch			= new Item(results.EscapeHatch.Distance,		Repeat(results.EscapeHatch.Angle		+ critterAngle));
+			double collectableAngle		= Repeat(Vector.FullAngle(Direction.Normalized, nearestCollectable.Normalized)	+ Math.PI, Math.PI * 2) / (Math.PI * 2);
+			double threatAngle			= Repeat(Vector.FullAngle(Direction.Normalized, nearestThreat.Normalized)		+ Math.PI, Math.PI * 2) / (Math.PI * 2);
+			double escapeAngle			= Repeat(Vector.FullAngle(Direction.Normalized, escapeHatch.Normalized)			+ Math.PI, Math.PI * 2) / (Math.PI * 2);
+
+			results.NearestCollectable	= new Item(results.NearestCollectable.Distance, collectableAngle, nearestCollectable);
+			results.NearestThreat		= new Item(results.NearestThreat.Distance,		threatAngle,	  nearestThreat);
+			results.EscapeHatch			= new Item(results.EscapeHatch.Distance,		escapeAngle,	  escapeHatch);
 		}
 
 		/// <summary>
@@ -116,31 +123,34 @@ namespace CritterRobots.Critters
 		/// </summary>
 		private decimal[] GatherNetworkInput()
 		{
-			decimal[] networkInput = new decimal[13];
+			decimal[] networkInput = new decimal[9];
 
 			/* Health */ networkInput[0] = (decimal)Health;
 			/* Energy */ networkInput[1] = (decimal)Energy;
 			/*  Time  */ networkInput[2] = (decimal)RemainingTime / MaximumTime;
 
+			/*
 			double northBoundaryDistance = Eye.LookNorth();
 			double eastBoundaryDistance  = Eye.LookEast();
 			double southBoundaryDistance = Eye.LookSouth();
 			double westBoundaryDistance  = Eye.LookWest();
+			*/
 
 			EyeResult closestItems = Eye.GetClosestItems();
 			
-			/* Distance of north boundary      */ networkInput[3]  = 1 - (decimal)northBoundaryDistance;
-			/* Distance of east boundary       */ networkInput[4]  = 1 - (decimal)eastBoundaryDistance;
-			/* Distance of south boundary      */ networkInput[5]  = 1 - (decimal)southBoundaryDistance;
-			/* Distance of west boundary       */ networkInput[6]  = 1 - (decimal)westBoundaryDistance;
+
+//			/* Distance of north boundary      */ networkInput[3] = (decimal)northBoundaryDistance;
+//			/* Distance of east boundary       */ networkInput[4] = (decimal)eastBoundaryDistance;
+//			/* Distance of south boundary      */ networkInput[5] = (decimal)southBoundaryDistance;
+//			/* Distance of west boundary       */ networkInput[6] = (decimal)westBoundaryDistance;
 			
-			/* Angle of closest collectable    */ networkInput[7]  = (decimal)closestItems.NearestCollectable.Angle;
-			/* Angle of closest threat	       */ networkInput[8]  = (decimal)closestItems.NearestThreat.Angle;
-			/* Angle of escape hatch	       */ networkInput[9]  = (decimal)closestItems.EscapeHatch.Angle;
+			/* Angle of closest collectable    */ networkInput[3] = (decimal)closestItems.NearestCollectable.Angle;
+			/* Angle of closest threat	       */ networkInput[4] = (decimal)closestItems.NearestThreat.Angle;
+			/* Angle of escape hatch	       */ networkInput[5] = (decimal)closestItems.EscapeHatch.Angle;
 			
-			/* Distance to closest collectable */ networkInput[10] = 1 - (decimal)closestItems.NearestCollectable.Distance;
-			/* Distance to closest threat      */ networkInput[11] = 1 - (decimal)closestItems.NearestThreat.Distance;
-			/* Distance to escape hatch        */ networkInput[12] = 1 - (decimal)closestItems.EscapeHatch.Distance;
+			/* Distance to closest collectable */ networkInput[6] = 1 - (decimal)closestItems.NearestCollectable.Distance;
+			/* Distance to closest threat      */ networkInput[7] = 1 - (decimal)closestItems.NearestThreat.Distance;
+			/* Distance to escape hatch        */ networkInput[8] = 1 - (decimal)closestItems.EscapeHatch.Distance;
 
 			return networkInput;
 		}
@@ -235,21 +245,16 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// Loads the neural network through any means necessary.
 		/// </summary>
-		protected abstract void LoadNetwork(int inputNeurons, int outputNeurons);
+		protected abstract void LoadNetwork();
 
 		/// <summary>
 		/// Checks that the network contains the correct number of input and
 		/// output neurons.
 		/// </summary>
 		/// <returns>True if the network is configured correctly, false otherwise.</returns>
-		private bool CheckNetworkStructure(int inputNeurons, int outputNeurons)
+		private bool CheckNetworkStructure()
 		{
-			if (CritterBrain == null || CritterBrain.InputNeurons.Count != inputNeurons || CritterBrain.OutputNeurons.Count != outputNeurons)
-			{
-				return false;
-			}
-
-			return true;
+			return CritterBrain != null && CritterBrain.InputNeurons.Count == NetworkInput && CritterBrain.OutputNeurons.Count == NetworkOutput;
 		}
 
 		/// <summary>
@@ -258,30 +263,32 @@ namespace CritterRobots.Critters
 		public NeuralCritter(string critterName, int retinaDensity) : base(critterName)
 		{
 			Eye = new CritterEye(this);
+			
+			/*
+			 * Input layout is done as follows:
+			 *		[0] -> The current critter's health
+			 *		[1] -> The current critter's energy
+			 *		[2] -> The total time remaining in the level
+			 *		[3] -> The angle (normalized between 0 and 1) of the closest gift or food item
+			 *		[4] -> The angle (normalized between 0 and 1) of the closest critter, wall or bomb
+			 *		[5] -> The angle (normalized between 0 and 1) of the escape hatch
+			 *		[6] -> The distance to the closest gift or food item
+			 *		[7] -> The distance to the closest critter, wall or bomb
+			 *		[8] -> The distance to the escape hatch.
+			 *		
+			 *	Ouput layout is done as follows:
+			 *		[0] -> The angle delta that the critter wants to rotate by (normalized between 0 and 1, with 0 being -180 degrees and 1 being 180 degrees, and 0.5 being no rotation).
+			 *		[1] -> The desired walking speed.
+			 */
+			LoadNetwork();
 
-			int networkInput = 13;
-			int networkOutput = 2;
-
-			// One input neuron per "cone cell" in the eye, with three
-			// input neurons reserved for:
-			//		- Remaining health (0.0 - 1.0)
-			//		- Remaining energy (0.0 - 1.0)
-			//		- Remaining time (0.0 - 1.0)
-			// The remaining neurons are split in groups of 4 of variable length, each
-			// will represent one purpose specific eye to detect:
-			//		- Food
-			//		- Gifts
-			//		- Bombs, Critters, Walls
-			//		- Exit
-			LoadNetwork(networkInput, networkOutput);
-
-			if (!CheckNetworkStructure(networkInput, networkOutput))
+			if (!CheckNetworkStructure())
 			{
 				Debugger.LogError("Invalid network structure!");
 
 				throw new FormatException("Unexpected network structure, detected input count was " + CritterBrain.InputNeurons + 
-										  " instead of " + networkInput + ", and the outputs were " + CritterBrain.OutputNeurons + 
-										  " instead of " + networkOutput);
+										  " instead of " + NetworkInput + ", and the outputs were " + CritterBrain.OutputNeurons + 
+										  " instead of " + NetworkOutput);
 			}
 
 			NetworkProcessor = new Timer(50);

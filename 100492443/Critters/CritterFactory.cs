@@ -33,7 +33,7 @@ namespace CritterRobots.Critters
 		{
 			List<ICritterController> critters = new List<ICritterController>();
 			int students = 24;
-			critters.Add(new CritterCoach());
+			critters.Add(new CritterCoach(students));
 			while (students > 0)
 			{
 				critters.Add(new CritterStudent(students));

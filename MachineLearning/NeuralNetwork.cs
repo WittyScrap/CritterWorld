@@ -152,26 +152,30 @@ namespace MachineLearning
 		/// </summary>
 		public void Mutate(int mutationIntensity = 2)
 		{
-			int layersDelta = Randomizer.NextInteger(-mutationIntensity, mutationIntensity + 1);
-
-			while (layersDelta < 0)
+			// Neuron mutations should be rare
+			if (Randomizer.NextDecimal() > .75m)
 			{
-				int neuronCount = Randomizer.NextInteger(1, mutationIntensity + 1);
-				int location = Randomizer.NextInteger(0, HiddenNeurons.Count - 1);
+				int layersDelta = Randomizer.NextInteger(HiddenNeurons.Count >= mutationIntensity ? -mutationIntensity : 0, mutationIntensity + 1);
 
-				RemoveNeurons(location, neuronCount);
+				while (layersDelta < 0)
+				{
+					int neuronCount = Randomizer.NextInteger(1, mutationIntensity + 1);
+					int location = Randomizer.NextInteger(0, HiddenNeurons.Count - 1);
 
-				++layersDelta;
-			}
+					RemoveNeurons(location, neuronCount);
 
-			while (layersDelta > 0)
-			{
-				int neuronCount = Randomizer.NextInteger(1, mutationIntensity + 1);
-				int location = Randomizer.NextInteger(0, HiddenNeurons.Count - 1);
+					++layersDelta;
+				}
 
-				AddNeurons(location, neuronCount, 30);
+				while (layersDelta > 0)
+				{
+					int neuronCount = Randomizer.NextInteger(1, mutationIntensity + 1);
+					int location = Randomizer.NextInteger(0, HiddenNeurons.Count - 1);
 
-				--layersDelta;
+					AddNeurons(location, neuronCount, 30);
+
+					--layersDelta;
+				}
 			}
 
 			MutateConnectionWeights(mutationIntensity);

@@ -1,11 +1,8 @@
-﻿using MachineLearning;
-using CritterRobots.Forms;
+﻿using CritterRobots.AI;
+using MachineLearning;
 using System.Drawing;
 using System.IO;
-using CritterRobots.AI;
-using CritterRobots.Messages;
-using System;
-using System.Timers;
+using System.Linq;
 
 namespace CritterRobots.Critters.Controllers
 {
@@ -28,15 +25,24 @@ namespace CritterRobots.Critters.Controllers
 		/// <summary>
 		/// Indicates whether or not this critter is alive.
 		/// </summary>
-		public bool IsAlive {
-			get => Health > .01f;
-		}
+		public bool IsAlive { get; private set; } = true;
 
 		/// <summary>
-		/// The total amount of distance that this critter covered up until
-		/// this point.
+		/// Map of all the previously visited sectors.
 		/// </summary>
-		public double DistanceCovered { get; private set; }
+		private bool[,] VisitedSectorsMap { get; } = new bool[Map.Sectors.Width, Map.Sectors.Height];
+
+		/// <summary>
+		/// The amount of sectors that this critter visited.
+		/// </summary>
+		public int VisitedSectors {
+			get
+			{
+				return (from bool wasVisited in VisitedSectorsMap
+					    where wasVisited
+					    select wasVisited).Count();
+			}
+		}
 
 		/// <summary>
 		/// The distance from this critter's location to the
@@ -55,62 +61,41 @@ namespace CritterRobots.Critters.Controllers
 		}
 
 		/// <summary>
-		/// Adds the delta between the new position and the last recorded
-		/// position to the total amount walked.
-		/// </summary>
-		protected override void OnLocationUpdate(int requestID, Point location)
-		{
-			DistanceCovered += ((Vector)location - Location).Magnitude;
-		}
-
-		/// <summary>
-		/// Constructs a new critter.
+		/// Constructs a new student critter.
 		/// </summary>
 		/// <param name="critterID">A unique representative ID for the critter.</param>
 		public CritterStudent(int critterID) : base("Helpless Slave #" + critterID, 10)
+		{ }
+
+		/// <summary>
+		/// Handles loading the neural network.
+		/// </summary>
+		protected override void LoadNetwork()
 		{
 			CritterCoach.Coach?.AddStudent(this);
 		}
 
 		/// <summary>
-		/// Only execute if the critter hasn't failed.
+		/// Records the current visited sectors into the visited sectors map.
 		/// </summary>
-		protected override void ProcessNetwork()
+		protected override void OnLocationUpdate(int requestID, Point location)
 		{
-			base.ProcessNetwork();
-		}
-
-		/// <summary>
-		/// Handles loading the neural network.
-		/// </summary>
-		protected override void LoadNetwork(int networkInput, int networkOutput)
-		{
-			if (!File.Exists(Filepath + "best_brain_snapshot.crbn"))
-			{
-				CritterBrain = NeuralNetwork.RandomNetwork(
-					inputNeurons: networkInput, 
-					outputNeurons: networkOutput,
-					minLayers: 0,
-					maxLayers: 2,
-					minNeurons: 1,
-					maxNeurons: 3
-				);
-			}
-			else
-			{
-				using (StreamReader brainReader = new StreamReader(Filepath + "best_brain_snapshot.crbn"))
-				{
-					string serializedBrain = brainReader.ReadToEnd();
-					CritterBrain = NeuralNetwork.Deserialize(serializedBrain);
-					CritterBrain.Mutate();
-				}
-			}
+			Point locationOnSectorGrid = Map.GetSector(location);
+			VisitedSectorsMap[locationOnSectorGrid.X, locationOnSectorGrid.Y] = true;
 		}
 
 		/// <summary>
 		/// Indicates that the critter has scored.
 		/// </summary>
 		protected override void OnScored(Point location)
+		{
+			Score++;
+		}
+
+		/// <summary>
+		/// Indicates that the critter has eaten.
+		/// </summary>
+		protected override void OnAte(Point location)
 		{
 			Score++;
 		}
@@ -125,6 +110,10 @@ namespace CritterRobots.Critters.Controllers
 			if (stopReason == "ESCAPE")
 			{
 				HasEscaped = true;
+			}
+			else
+			{
+				IsAlive = false;
 			}
 		}
 	}

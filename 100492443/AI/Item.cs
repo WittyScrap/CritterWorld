@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CritterRobots.Critters;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,12 +27,19 @@ namespace CritterRobots.AI
 		public double Angle { get; set; }
 
 		/// <summary>
+		/// The direction from the reference critter's location
+		/// to this item's location.
+		/// </summary>
+		public Vector Direction { get; set; }
+
+		/// <summary>
 		/// Creates a new item.
 		/// </summary>
-		public Item(double distance, double angle)
+		public Item(double distance, double angle, Vector direction)
 		{
 			Distance = distance;
 			Angle = angle;
+			Direction = direction;
 		}
 
 		/// <summary>
