@@ -64,7 +64,7 @@ namespace CritterRobots.Critters.Controllers
 		/// Constructs a new student critter.
 		/// </summary>
 		/// <param name="critterID">A unique representative ID for the critter.</param>
-		public CritterStudent(int critterID) : base("Helpless Slave #" + critterID, 10)
+		public CritterStudent(int critterID) : base("Helpless Slave #" + critterID)
 		{ }
 
 		/// <summary>

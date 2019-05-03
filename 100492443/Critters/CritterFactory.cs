@@ -33,10 +33,13 @@ namespace CritterRobots.Critters
 		{
 			List<ICritterController> critters = new List<ICritterController>();
 			int students = 24;
-			critters.Add(new CritterCoach(students));
+
+			/* Invert comment order to switch from competition to training and vice versa */
+//			critters.Add(new CritterCoach(students));
 			while (students > 0)
 			{
-				critters.Add(new CritterStudent(students));
+//				critters.Add(new CritterStudent(students));
+				critters.Add(new CritterNetwork(students));
 				students--;
 			}
 			return critters.ToArray();

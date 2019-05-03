@@ -260,7 +260,7 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// Creates a new neural network based critter.
 		/// </summary>
-		public NeuralCritter(string critterName, int retinaDensity) : base(critterName)
+		public NeuralCritter(string critterName) : base(critterName)
 		{
 			Eye = new CritterEye(this);
 			
