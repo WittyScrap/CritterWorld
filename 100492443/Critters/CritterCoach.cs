@@ -151,7 +151,7 @@ namespace CritterRobots.Critters
 				while (studentsCount > 1)
 				{
 					NeuralNetwork nextNetwork = NeuralNetwork.Deserialize(serializedBestNetwork);
-					nextNetwork.Mutate(5);
+					nextNetwork.Mutate(10);
 					NetworksQueue.Enqueue(nextNetwork);
 
 					studentsCount--;

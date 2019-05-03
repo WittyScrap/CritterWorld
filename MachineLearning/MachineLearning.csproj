@@ -55,6 +55,7 @@
     <Compile Include="Interfaces\ISerializable.cs" />
     <Compile Include="Layers\Layer.cs" />
     <Compile Include="NeuralNetwork.cs" />
+    <Compile Include="Neurons\BiasNeuron.cs" />
     <Compile Include="Neurons\Neuron.cs" />
     <Compile Include="Randomizer.cs" />
     <Compile Include="ActivationFunctions\SigmoidFunction.cs" />

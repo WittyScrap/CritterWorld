@@ -648,10 +648,21 @@ namespace CritterWorld
                     Thread.Sleep(5);
                 }
 				// Clear message queues
-				string ignore;
-				while (MessagesFromBody.TryDequeue(out ignore));
-				while (MessagesToBody.TryDequeue(out ignore));
-            });
+				while (MessagesToBody.TryDequeue(out string ignore));
+				while (MessagesFromBody.TryDequeue(out string messageFromBody))
+				{
+					try
+					{
+						controller.Receive(messageFromBody);
+					}
+					catch (Exception e)
+					{
+						Crashed(e);
+						break;              // prevent infinite loop of Receive crashes that enqueue messages
+					}
+				}
+
+			});
             controllerThread.IsBackground = true;
             controllerThread.Start();
         }

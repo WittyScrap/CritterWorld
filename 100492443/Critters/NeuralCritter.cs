@@ -60,7 +60,7 @@ namespace CritterRobots.Critters
 		/// <summary>
 		/// The current walking direction.
 		/// </summary>
-		protected Vector Direction { get; set; } = Vector.Up;
+		protected Vector Direction { get; set; } = Vector.Down;
 
 		/// <summary>
 		/// This timer will call the <see cref="ProcessNetwork"/> method
@@ -189,7 +189,7 @@ namespace CritterRobots.Critters
 			decimal[] networkOutput = CritterBrain.GetNetworkOutput();
 
 			
-			decimal wantsToRotateBy = -(decimal)Math.PI + Clamp01(networkOutput[0]) * 2 * (decimal)Math.PI;
+			decimal wantsToRotateBy = (decimal)Repeat((double)networkOutput[0] * (Math.PI * 0.05) - (Math.PI * 0.025), Math.PI * 2);
 			decimal movementSpeed = Math.Max(Clamp01(networkOutput[1]) * MaximumMovementSpeed, MinimumMovementSpeed);
 
 			if (wantsToRotateBy < 0)
@@ -197,8 +197,8 @@ namespace CritterRobots.Critters
 				wantsToRotateBy = 2 * (decimal)Math.PI - Math.Abs(wantsToRotateBy);
 			}
 
-			Debugger.LogMessage(" Wants to rotate by: " + wantsToRotateBy + " rad" +
-								" At this speed: " + movementSpeed);
+			Debugger.LogMessage("Wants to rotate by: " + wantsToRotateBy + " rad " +
+								"At this speed: " + movementSpeed);
 			
 			Direction = Direction.Normalized.Rotated((double)wantsToRotateBy) * 1000;
 			/*LastRequestedSpeed = (int)movementSpeed;
@@ -254,7 +254,7 @@ namespace CritterRobots.Critters
 		/// <returns>True if the network is configured correctly, false otherwise.</returns>
 		private bool CheckNetworkStructure()
 		{
-			return CritterBrain != null && CritterBrain.InputNeurons.Count == NetworkInput && CritterBrain.OutputNeurons.Count == NetworkOutput;
+			return CritterBrain != null && CritterBrain.InputNeurons.Count - 1 == NetworkInput && CritterBrain.OutputNeurons.Count == NetworkOutput;
 		}
 
 		/// <summary>

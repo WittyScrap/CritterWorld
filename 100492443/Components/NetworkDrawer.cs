@@ -228,8 +228,11 @@ namespace CritterRobots.Components
 					var leftNeuron = layerLeft[leftNeuronID];
 					var rightNeuron = layerRight[rightNeuronID];
 
-					pen.Width = (float)rightNeuron.Connections[leftNeuron] * 2;
-					targetGraphics.DrawLine(pen, neuronLeft, neuronRight);
+					if (rightNeuron.Connections.ContainsKey(leftNeuron))
+					{
+						pen.Width = (float)rightNeuron.Connections[leftNeuron] * 2;
+						targetGraphics.DrawLine(pen, neuronLeft, neuronRight);
+					}
 				}
 			}
 		}
