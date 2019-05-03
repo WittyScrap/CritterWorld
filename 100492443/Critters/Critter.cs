@@ -16,6 +16,11 @@ namespace CritterRobots.Critters.Controllers
 	/// <summary>
 	/// Implements basic functionality for
 	/// all types of Critter AI.
+	/// 
+	/// Due to the assignment's AI being Neural Network driven, only one
+	/// type of derived AI can realistically be created since training multiple
+	/// networks towards multiple objectives is impractical given the short spans of
+	/// time that were left to work with them.
 	/// </summary>
 	public abstract class Critter : ICritterController, ILocatableCritter
 	{

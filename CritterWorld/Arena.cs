@@ -311,7 +311,7 @@ namespace CritterWorld
 
             if (sprite1 is Critter critter_a1 && sprite2 is Critter critter_a2)
             {
- //               Collide(critter_a1, critter_a2); Just for now eh!
+                Collide(critter_a1, critter_a2);
             }
             else if (sprite1 is Critter critter_a3 && sprite2 is Terrain terrain)
             {

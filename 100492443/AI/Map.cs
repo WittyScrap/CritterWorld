@@ -133,7 +133,7 @@ namespace CritterRobots.AI
 				switch (detectedEntity.Type)
 				{
 				case LocatableEntity.Entity.Bomb:
-				case LocatableEntity.Entity.Critter:
+//				case LocatableEntity.Entity.Critter:
 				case LocatableEntity.Entity.Terrain:
 					LocatedThreats.Add(detectedEntity.Location);
 					break;

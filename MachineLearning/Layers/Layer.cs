@@ -40,6 +40,16 @@ namespace MachineLearning.Layers
 		}
 
 		/// <summary>
+		/// Checks whether or not this layer contains a bias neuron.
+		/// </summary>
+		public bool HasBias {
+			get
+			{
+				return InternalNeurons.Exists(neuron => neuron is BiasNeuron);
+			}
+		}
+
+		/// <summary>
 		/// The number of neurons in this layer.
 		/// </summary>
 		public int Count {
@@ -49,6 +59,9 @@ namespace MachineLearning.Layers
 			}
 		}
 
+		/// <summary>
+		/// Indicates whether or not the layer is empty.
+		/// </summary>
 		public bool IsEmpty {
 			get
 			{

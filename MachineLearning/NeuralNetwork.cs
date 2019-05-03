@@ -15,7 +15,7 @@ namespace MachineLearning
 	/// <summary>
 	/// Generic neural network model.
 	/// </summary>
-	[DataContract, KnownType(typeof(Layer<Neuron<SigmoidFunction>>)), KnownType(typeof(Neuron<SigmoidFunction>)), KnownType(typeof(SigmoidFunction))]
+	[DataContract, KnownType(typeof(Layer<Neuron<SigmoidFunction>>)), KnownType(typeof(Neuron<SigmoidFunction>)), KnownType(typeof(SigmoidFunction)), KnownType(typeof(BiasNeuron))]
 	public class NeuralNetwork : INeuralNetwork, ISerializable
 	{
 		/// <summary>
@@ -62,6 +62,7 @@ namespace MachineLearning
 			{
 				InputNeurons.AddNeuron(new Neuron<SigmoidFunction>());
 			}
+			InputNeurons.AddNeuron(new BiasNeuron());
 			// Create hidden and output neurons
 			for (int i = 1; i < networkConfiguration.Length; ++i)
 			{
@@ -70,6 +71,10 @@ namespace MachineLearning
 				for (int j = 0; j < networkConfiguration[i]; ++j)
 				{
 					lastLayer.AddNeuron(new Neuron<SigmoidFunction>());
+				}
+				if (i != networkConfiguration.Length - 1)
+				{
+					lastLayer.AddNeuron(new BiasNeuron());
 				}
 			}
 			FullyConnect();
@@ -110,12 +115,13 @@ namespace MachineLearning
 		/// <param name="inputValues">The input values to feed through the network.</param>
 		public void Feedforward(params decimal[] inputValues)
 		{
-			if (inputValues.Length != InputNeurons.Count)
+			// Subtract 1 to remove the bias neuron
+			if (inputValues.Length != InputNeurons.Count - 1)
 			{
 				throw new ArgumentOutOfRangeException("inputValues");
 			}
 
-			for (int neuron = 0; neuron < InputNeurons.Count; ++neuron)
+			for (int neuron = 0; neuron < inputValues.Length; ++neuron)
 			{
 				InputNeurons[neuron].Output = Normalize(inputValues[neuron]);
 			}

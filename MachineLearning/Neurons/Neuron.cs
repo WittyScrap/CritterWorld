@@ -74,7 +74,7 @@ namespace MachineLearning.Neurons
 		/// The output value of this neuron.
 		/// </summary>
 		[DataMember]
-		public decimal Output { get; set; } = 0.0m;
+		public virtual decimal Output { get; set; } = 0.0m;
 
 		/// <summary>
 		/// Indicates whether or not this neuron has been deleted.
@@ -123,7 +123,7 @@ namespace MachineLearning.Neurons
 		/// </summary>
 		/// <param name="source">The source neuron.</param>
 		/// <param name="weight">The connection weight.</param>
-		public void AddConnection(INeuron source, decimal weight)
+		public virtual void AddConnection(INeuron source, decimal weight)
 		{
 			InternalConnections[source] = weight;
 		}
